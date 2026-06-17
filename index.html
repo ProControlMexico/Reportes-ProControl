@@ -243,6 +243,29 @@
             -webkit-appearance: none;
             appearance: none;
         }
+
+        /* === EVIDENCIA FOTOGRÁFICA === */
+        .photo-title-print { display: none; }
+        @media print {
+            #photos-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1rem !important;
+            }
+            #photos-empty-state    { display: none !important; }
+            .photo-title-input     { display: none !important; }
+            .photo-title-print {
+                display: block !important;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: #374151;
+                text-align: center;
+                padding: 4px 0 2px;
+                border-top: 1px solid #d1d5db;
+                margin-top: 4px;
+                min-height: 1.2rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
@@ -642,6 +665,35 @@
                         <div class="relative h-80">
                             <canvas id="baitChart"></canvas>
                         </div>
+                    </div>
+
+                    <!-- MÓDULO DE EVIDENCIA FOTOGRÁFICA -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
+                        <div class="flex items-center justify-between gap-3 mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-100 text-blue-800 p-2 rounded-lg no-print">
+                                    <i class="fa-solid fa-images text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Evidencia Fotográfica</h3>
+                                    <p class="text-xs text-slate-400 no-print">Agrega fotos del servicio · añade un título descriptivo a cada imagen</p>
+                                </div>
+                            </div>
+                            <label for="photo-file-input" class="no-print cursor-pointer bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Agregar Foto
+                            </label>
+                            <input type="file" id="photo-file-input" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)">
+                        </div>
+
+                        <!-- Estado vacío -->
+                        <div id="photos-empty-state" class="border-2 border-dashed border-slate-200 rounded-xl py-10 text-center no-print">
+                            <i class="fa-solid fa-image text-4xl text-slate-300 mb-3 block"></i>
+                            <p class="text-sm font-semibold text-slate-400">Ninguna foto agregada</p>
+                            <p class="text-xs text-slate-300 mt-1">Haz clic en "Agregar Foto" para seleccionar imágenes del dispositivo</p>
+                        </div>
+
+                        <!-- Grilla de fotos -->
+                        <div id="photos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
                     </div>
 
                     <!-- MÓDULO DE OBSERVACIONES -->
@@ -3563,6 +3615,7 @@
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
                 obsContent:      (document.getElementById('obs-editor') ? document.getElementById('obs-editor').innerHTML : ''),
+                photos:          JSON.parse(JSON.stringify(photoData)),
                 header: {
                     date:    hDate ? hDate.value : '',
                     version: hVer  ? hVer.value  : 'VER 1.0'
@@ -3702,6 +3755,10 @@
                         var obsEd = document.getElementById('obs-editor');
                         if (obsEd) { obsEd.innerHTML = data.obsContent; checkObsLimit(obsEd); }
                     }
+
+                    // Restaurar fotos
+                    photoData = Array.isArray(data.photos) ? data.photos : [];
+                    renderPhotosGrid();
 
                     renderStationsGrid();
                     renderHistoryList();
@@ -4020,6 +4077,80 @@
             canvas.addEventListener('touchmove',  draw,      { passive: false });
             canvas.addEventListener('touchend',   stopDraw);
         }
+
+        /************************************************************************
+         * MÓDULO DE EVIDENCIA FOTOGRÁFICA
+         ************************************************************************/
+        var photoData = [];
+
+        window.handlePhotoUpload = function(event) {
+            var files = Array.from(event.target.files);
+            event.target.value = '';
+            if (!files.length) return;
+            var pending = files.length;
+            files.forEach(function(file) {
+                if (!file.type.startsWith('image/')) { pending--; return; }
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    photoData.push({
+                        id:     'ph-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                        dataUrl: e.target.result,
+                        title:  ''
+                    });
+                    pending--;
+                    if (pending <= 0) renderPhotosGrid();
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        function renderPhotosGrid() {
+            var grid  = document.getElementById('photos-grid');
+            var empty = document.getElementById('photos-empty-state');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (photoData.length === 0) {
+                if (empty) empty.style.display = '';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            photoData.forEach(function(photo) {
+                var safeId    = photo.id;
+                var safeTitle = (photo.title || '').replace(/"/g, '&quot;');
+                var card = document.createElement('div');
+                card.className = 'flex flex-col border border-slate-100 rounded-xl overflow-hidden shadow-sm';
+                card.id = 'photo-card-' + safeId;
+                card.innerHTML =
+                    '<div class="relative bg-slate-50">' +
+                        '<img src="' + photo.dataUrl + '" alt="Evidencia" class="w-full object-contain max-h-56">' +
+                        '<button onclick="removePhoto(\'' + safeId + '\')" title="Eliminar foto" ' +
+                                'class="no-print absolute top-2 right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-all">' +
+                            '<i class="fa-solid fa-xmark text-xs"></i>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="px-3 py-2">' +
+                        '<input type="text" placeholder="Añadir título a la imagen..." value="' + safeTitle + '" ' +
+                               'class="photo-title-input w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-slate-700 font-medium" ' +
+                               'oninput="updatePhotoTitle(\'' + safeId + '\', this.value)">' +
+                        '<p class="photo-title-print" id="photo-title-print-' + safeId + '">' + (photo.title || '') + '</p>' +
+                    '</div>';
+                grid.appendChild(card);
+            });
+        }
+
+        window.removePhoto = function(id) {
+            photoData = photoData.filter(function(p) { return p.id !== id; });
+            renderPhotosGrid();
+        };
+
+        window.updatePhotoTitle = function(id, value) {
+            var photo = photoData.find(function(p) { return p.id === id; });
+            if (!photo) return;
+            photo.title = value;
+            var printEl = document.getElementById('photo-title-print-' + id);
+            if (printEl) printEl.textContent = value;
+        };
 
         /************************************************************************
          * INICIALIZADOR GENERAL
