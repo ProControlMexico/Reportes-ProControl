@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($file = Get-ChildItem \"G:\\\\Mi unidad\\\\Procontrol\\\\ERP Pocontrol\\\\Grafica de tendencia\\\\Procontrol-bljka_skjn_ \\(1\\).json\"; [PSCustomObject]@{ Name = $file.Name; SizeKB = [math]::Round\\($file.Length / 1KB, 2\\); Lines = \\(Get-Content $file.FullName | Measure-Object -Line\\).Lines })"
+    ]
+  }
+}
