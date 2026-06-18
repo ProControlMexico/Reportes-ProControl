@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario — Procontrol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .section-anchor { scroll-margin-top: 80px; }
+        .step-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-size: 12px; font-weight: 800; flex-shrink: 0;
+        }
+        .toc-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; border-radius: 10px;
+            color: #475569; font-size: 13px; font-weight: 500;
+            text-decoration: none; transition: all .15s;
+        }
+        .toc-link:hover { background: #f0fdfa; color: #0f766e; }
+        .toc-link.active { background: #ccfbf1; color: #0f766e; font-weight: 700; }
+        .info-box {
+            border-left: 4px solid;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-slate-900 to-teal-950 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <img src="https://github.com/gavainc/Procontrol-Mexico/blob/main/Logo%20Procontrol%20Vectores.png?raw=true"
+                     alt="Procontrol" class="h-10 w-auto object-contain"
+                     onerror="this.src='https://placehold.co/120x40/0f766e/ffffff?text=Procontrol';">
+                <div>
+                    <p class="text-sm font-bold text-white leading-none">Manual de Usuario</p>
+                    <p class="text-xs text-teal-300 mt-0.5">Plataforma de Control de Plagas</p>
+                </div>
+            </div>
+            <a href="index.html"
+               class="flex items-center gap-2 bg-teal-700 hover:bg-teal-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Sistema
+            </a>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
+
+        <!-- SIDEBAR — ÍNDICE -->
+        <aside class="hidden lg:block w-64 flex-shrink-0">
+            <div class="sticky top-24 bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 px-2">Contenido</p>
+                <nav class="space-y-0.5" id="toc-nav">
+                    <a href="#sec-intro"       class="toc-link"><i class="fa-solid fa-house text-teal-500 w-4"></i> Introducción</a>
+                    <a href="#sec-config"      class="toc-link"><i class="fa-solid fa-sliders text-teal-500 w-4"></i> 1. Configuración</a>
+                    <a href="#sec-estaciones"  class="toc-link"><i class="fa-solid fa-map-location-dot text-teal-500 w-4"></i> 2. Estaciones</a>
+                    <a href="#sec-servicio"    class="toc-link"><i class="fa-solid fa-play text-teal-500 w-4"></i> 3. Registro de Servicio</a>
+                    <a href="#sec-capturas"    class="toc-link"><i class="fa-solid fa-bug text-teal-500 w-4"></i> 4. Capturas</a>
+                    <a href="#sec-graficas"    class="toc-link"><i class="fa-solid fa-chart-pie text-teal-500 w-4"></i> 5. Gráficas</a>
+                    <a href="#sec-fotos"       class="toc-link"><i class="fa-solid fa-images text-teal-500 w-4"></i> 6. Evidencia Fotográfica</a>
+                    <a href="#sec-obs"         class="toc-link"><i class="fa-solid fa-note-sticky text-teal-500 w-4"></i> 7. Observaciones</a>
+                    <a href="#sec-firmas"      class="toc-link"><i class="fa-solid fa-signature text-teal-500 w-4"></i> 8. Firmas</a>
+                    <a href="#sec-pdf"         class="toc-link"><i class="fa-solid fa-file-pdf text-teal-500 w-4"></i> 9. Exportar PDF</a>
+                    <a href="#sec-exportar"    class="toc-link"><i class="fa-solid fa-file-export text-teal-500 w-4"></i> 10. Exportar / Importar</a>
+                    <a href="#sec-historial"   class="toc-link"><i class="fa-solid fa-clock-rotate-left text-teal-500 w-4"></i> 11. Historial</a>
+                    <a href="#sec-test"        class="toc-link"><i class="fa-solid fa-flask text-teal-500 w-4"></i> 12. Modo TEST</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-grow min-w-0 space-y-8">
+
+            <!-- INTRODUCCIÓN -->
+            <section id="sec-intro" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-teal-100 text-teal-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-house text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Introducción</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">¿Qué es y para qué sirve esta plataforma?</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                    La <strong>Plataforma de Control Procontrol</strong> es una herramienta digital para el registro, seguimiento y análisis de servicios de control de plagas. Permite configurar estaciones de monitoreo, capturar organismos por visita, generar gráficas de tendencias y exportar reportes profesionales en PDF.
+                </p>
+                <div class="mb-5">
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20102220.png"
+                             alt="Vista general de la plataforma Procontrol"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Vista general — panel de configuración, estaciones por cordón, historial de servicios y botones de acción</figcaption>
+                    </figure>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-map-location-dot text-2xl text-teal-600 mb-2"></i>
+                        <p class="text-xs font-bold text-teal-800">Estaciones</p>
+                        <p class="text-xs text-teal-600 mt-1">Configura y gestiona puntos de monitoreo por cordón</p>
+                    </div>
+                    <div class="bg-sky-50 border border-sky-100 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-chart-line text-2xl text-sky-600 mb-2"></i>
+                        <p class="text-xs font-bold text-sky-800">Tendencias</p>
+                        <p class="text-xs text-sky-600 mt-1">Visualiza la evolución histórica de capturas por especie</p>
+                    </div>
+                    <div class="bg-violet-50 border border-violet-100 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-file-pdf text-2xl text-violet-600 mb-2"></i>
+                        <p class="text-xs font-bold text-violet-800">Reportes PDF</p>
+                        <p class="text-xs text-violet-600 mt-1">Genera informes profesionales listos para entregar</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. CONFIGURACIÓN -->
+            <section id="sec-config" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-teal-100 text-teal-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-sliders text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">1. Configuración del Proyecto</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">1</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Nombre del Cliente</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Escribe el nombre de la empresa o cliente en el campo <em>"Nombre del Cliente"</em>. Este nombre aparecerá en el encabezado del reporte PDF.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">2</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Agregar Estaciones</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Selecciona el <strong>Cordón de Seguridad</strong>, el <strong>Tipo de Estación</strong> y la <strong>cantidad</strong> a generar. Haz clic en <em>"Generar Estaciones"</em> para añadirlas al panel.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">3</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Terminar Configuración</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Una vez agregadas todas las estaciones, haz clic en <em>"Terminar Configuración"</em> para habilitar el registro de servicios. Puedes editar la configuración después con el botón <em>"Editar Configuración"</em>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imágenes de configuración -->
+                <div class="mt-6">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Vista del panel de configuración</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095209.png"
+                                 alt="Panel completo de configuración"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Panel completo de configuración</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095240.png"
+                                 alt="Selector de Cordón de Seguridad"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Opciones de Cordón de Seguridad</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095245.png"
+                                 alt="Selector de Tipo de Estación"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Opciones de Tipo de Estación</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <div class="mt-5 info-box border-amber-400 bg-amber-50 text-amber-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    <strong>Importante:</strong> Terminar la configuración es necesario antes de poder iniciar un servicio. Sin este paso, las estaciones no son interactivas.
+                </div>
+            </section>
+
+            <!-- 2. ESTACIONES -->
+            <section id="sec-estaciones" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-teal-100 text-teal-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-map-location-dot text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">2. Tipos de Estaciones y Cordones</h2>
+                </div>
+
+                <p class="text-sm text-slate-500 mb-4">Cada estación se identifica con un código único compuesto por el cordón, tipo y número consecutivo. Ejemplo: <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-xs">C1-CEB-03</code></p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Tipos de Estación</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3 p-2.5 bg-amber-50 border border-amber-100 rounded-xl">
+                                <i class="fa-solid fa-box-open text-amber-600 w-5 text-center"></i>
+                                <div>
+                                    <p class="text-xs font-bold text-amber-800">Cebadera (CEB)</p>
+                                    <p class="text-xs text-amber-600">Estaciones con cebo rodenticida. Registra % de consumo.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-purple-50 border border-purple-100 rounded-xl">
+                                <i class="fa-solid fa-lightbulb text-purple-600 w-5 text-center"></i>
+                                <div>
+                                    <p class="text-xs font-bold text-purple-800">UV (TUV)</p>
+                                    <p class="text-xs text-purple-600">Trampas de luz ultravioleta para insectos voladores.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-rose-50 border border-rose-100 rounded-xl">
+                                <i class="fa-solid fa-square-check text-rose-600 w-5 text-center"></i>
+                                <div>
+                                    <p class="text-xs font-bold text-rose-800">Captura (CAP)</p>
+                                    <p class="text-xs text-rose-600">Trampas de captura directa.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                                <i class="fa-solid fa-eye text-emerald-600 w-5 text-center"></i>
+                                <div>
+                                    <p class="text-xs font-bold text-emerald-800">Monitoreo (MON)</p>
+                                    <p class="text-xs text-emerald-600">Puntos de inspección visual sin captura activa.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Cordones de Seguridad</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                <p class="text-xs font-semibold text-emerald-800">1er Cordón — Interior (Zonas Limpias)</p>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-sky-50 border border-sky-200 rounded-xl">
+                                <span class="w-5 h-5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                                <p class="text-xs font-semibold text-sky-800">2do Cordón — Exterior (Fachada)</p>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                <span class="w-5 h-5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                                <p class="text-xs font-semibold text-amber-800">3er Cordón — Exterior (Perímetro)</p>
+                            </div>
+                            <div class="flex items-center gap-3 p-2.5 bg-violet-50 border border-violet-200 rounded-xl">
+                                <span class="w-5 h-5 rounded-full bg-violet-500 flex-shrink-0"></span>
+                                <p class="text-xs font-semibold text-violet-800">4to Cordón — Exterior</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ejemplos visuales de tarjetas -->
+                <div class="mt-6">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Ejemplos de tarjetas de estación</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095540.png"
+                                 alt="Tarjeta Monitoreo"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Monitoreo (MON)</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095547.png"
+                                 alt="Tarjeta UV"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">UV (TUV)</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095558.png"
+                                 alt="Tarjeta Captura"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Captura (CAP)</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095606.png"
+                                 alt="Tarjeta Cebadera"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Cebadera (CEB)</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <div class="mt-5 info-box border-sky-400 bg-sky-50 text-sky-800">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Puedes renombrar cada estación haciendo clic en el ícono de lápiz sobre la tarjeta. Para eliminarla, usa el ícono de basurero.
+                </div>
+            </section>
+
+            <!-- 3. SERVICIO -->
+            <section id="sec-servicio" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-cyan-100 text-cyan-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-play text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">3. Registro de Servicio</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-cyan-100 text-cyan-700">1</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Seleccionar Fecha</p>
+                            <p class="text-sm text-slate-500 mt-0.5">En el campo <em>"Fecha del Servicio"</em> elige la fecha de la visita que vas a registrar.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-cyan-100 text-cyan-700">2</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Iniciar Reporte</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Haz clic en <em>"Iniciar Reporte de Captura"</em>. Las estaciones cambian a color verde indicando que están listas para registrar capturas.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-cyan-100 text-cyan-700">3</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Terminar Servicio</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Al finalizar, haz clic en <em>"Terminar Servicio Actual"</em>. Los datos se guardan en el historial y las gráficas se actualizan automáticamente.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-rose-100 text-rose-600">!</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Cancelar Servicio</p>
+                            <p class="text-sm text-slate-500 mt-0.5"><em>"Cancelar / Descartar"</em> elimina el servicio en curso sin guardarlo en el historial. Úsalo solo si el registro fue un error.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Controles del servicio</p>
+                    <div class="flex flex-wrap items-start gap-4">
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100417.png"
+                                 alt="Campo Fecha del Servicio"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[220px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Campo de fecha del servicio</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100430.png"
+                                 alt="Botón Iniciar Reporte de Captura"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[220px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Iniciar reporte de captura</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100728.png"
+                                 alt="Botón Terminar Servicio Actual"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[220px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Terminar y guardar el servicio</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100735.png"
+                                 alt="Botón Cancelar / Descartar"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[220px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Cancelar sin guardar</figcaption>
+                        </figure>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Confirmación al cancelar</p>
+                        <figure class="flex flex-col items-center gap-2 max-w-xs">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100936.png"
+                                 alt="Modal de confirmación al cancelar servicio"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Al cancelar aparece este modal para confirmar la acción</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CAPTURAS -->
+            <section id="sec-capturas" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-rose-100 text-rose-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-bug text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">4. Registro de Capturas por Estación</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-rose-100 text-rose-700">1</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Abrir estación</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Con un servicio activo, haz clic sobre cualquier tarjeta de estación. Se abrirá un modal con la lista de organismos disponibles.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-rose-100 text-rose-700">2</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Seleccionar organismos y cantidades</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Activa la casilla del organismo identificado e ingresa la cantidad capturada. Puedes registrar múltiples especies en una misma estación.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-rose-100 text-rose-700">3</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Consumo de cebo (solo Cebadera)</p>
+                            <p class="text-sm text-slate-500 mt-0.5">En estaciones tipo CEB aparece un campo adicional para registrar el <strong>porcentaje de consumo de cebo</strong> (0–100%). Este dato alimenta la gráfica de consumo.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-rose-100 text-rose-700">4</span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Guardar</p>
+                            <p class="text-sm text-slate-500 mt-0.5">Haz clic en <em>"Guardar Capturas"</em>. La tarjeta de la estación mostrará un badge rojo con el total de organismos capturados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imágenes modal de capturas -->
+                <div class="mt-6">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Modal de registro de capturas</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20095728.png"
+                                 alt="Modal de capturas — Monitoreo"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Modal estándar (MON/UV/CAP) — lista de organismos con casilla y cantidad</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20100918.png"
+                                 alt="Modal de capturas — Cebadera con campo de consumo"
+                                 class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                            <figcaption class="text-xs text-slate-400 text-center">Modal Cebadera (CEB) — incluye campo de consumo de cebo (%)</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Organismos disponibles</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Mosca Doméstica</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Palomilla</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Mosquitos</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Escarabajos</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Abeja</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Otros Insectos</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Roedores</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Insectos</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Arácnido</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Moluscos</span>
+                        <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full">Otros Organismos</span>
+                        <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">Cucaracha Americana</span>
+                        <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">Cucaracha Germánica</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. GRÁFICAS -->
+            <section id="sec-graficas" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-indigo-100 text-indigo-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-chart-pie text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">5. Gráficas de Analítica</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="border border-slate-100 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-circle-half-stroke text-indigo-500"></i>
+                            <p class="text-sm font-bold text-slate-800">Distribución por Visita (Dona)</p>
+                        </div>
+                        <p class="text-sm text-slate-500">Muestra el porcentaje de cada especie capturada en el servicio seleccionado. Usa el selector desplegable para cambiar entre servicios del historial.</p>
+                    </div>
+                    <div class="border border-slate-100 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-chart-line text-teal-500"></i>
+                            <p class="text-sm font-bold text-slate-800">Tendencias Históricas por Especie (Líneas)</p>
+                        </div>
+                        <p class="text-sm text-slate-500">Muestra la evolución de capturas a lo largo del tiempo para cada especie. Puedes activar o desactivar especies individuales desde los filtros en la parte inferior. Solo muestra valores mayores a 0.</p>
+                    </div>
+                    <div class="border border-slate-100 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-box-open text-amber-500"></i>
+                            <p class="text-sm font-bold text-slate-800">Consumo de Cebo por Estación (Líneas)</p>
+                        </div>
+                        <p class="text-sm text-slate-500">Visible solo cuando existen estaciones tipo Cebadera (CEB). Muestra la tendencia de consumo de cebo (%) por cada estación a lo largo del tiempo.</p>
+                    </div>
+                </div>
+                <div class="mt-6 space-y-4">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400">Vista de las gráficas</p>
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101007.png"
+                             alt="Gráfica de distribución por visita"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Distribución por visita — gráfica de dona con porcentaje por especie</figcaption>
+                    </figure>
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101040.png"
+                             alt="Tendencias históricas por especie"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Tendencias históricas — líneas por especie con filtros activables en la parte inferior</figcaption>
+                    </figure>
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101100.png"
+                             alt="Consumo de cebo por estación cebadera"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Consumo de cebo — una línea por estación CEB a lo largo del tiempo</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-4 info-box border-indigo-400 bg-indigo-50 text-indigo-800">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Cada gráfica tiene un botón <strong>Maximizar</strong> para verla en pantalla completa con mayor detalle.
+                </div>
+            </section>
+
+            <!-- 6. FOTOS -->
+            <section id="sec-fotos" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-blue-100 text-blue-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-images text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">6. Evidencia Fotográfica</h2>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">1</span>
+                        <p class="text-sm text-slate-600">Haz clic en <em>"Agregar Foto"</em>. Se abrirá el explorador de archivos de tu dispositivo (también funciona desde móvil con la cámara o galería).</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">2</span>
+                        <p class="text-sm text-slate-600">Selecciona una o varias imágenes. Aparecerán como tarjetas en la cuadrícula.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">3</span>
+                        <p class="text-sm text-slate-600">Escribe un <strong>título descriptivo</strong> en el campo debajo de cada imagen. Este título aparecerá en el PDF como pie de foto.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">4</span>
+                        <p class="text-sm text-slate-600">Para eliminar una foto, haz clic en el botón <strong>×</strong> rojo que aparece en la esquina superior derecha de cada imagen.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101109.png"
+                             alt="Módulo de evidencia fotográfica vacío"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Estado inicial del módulo — haz clic en "Agregar Foto" para cargar imágenes</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-4 info-box border-blue-400 bg-blue-50 text-blue-800">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Las fotos se guardan en el archivo de exportación (.json), por lo que al importar un proyecto las fotos también se restauran.
+                </div>
+            </section>
+
+            <!-- 7. OBSERVACIONES -->
+            <section id="sec-obs" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-amber-100 text-amber-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-note-sticky text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">7. Observaciones Técnicas</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-4">El módulo de observaciones permite redactar notas técnicas del servicio con formato enriquecido.</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center text-xs text-slate-600">
+                        <strong>B / I / U</strong><br>Negrita, cursiva, subrayado
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center text-xs text-slate-600">
+                        <i class="fa-solid fa-align-left"></i> Alineación<br>Izq / Centro / Der
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center text-xs text-slate-600">
+                        <i class="fa-solid fa-list-ul"></i> Listas<br>Con viñetas o numeradas
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center text-xs text-slate-600">
+                        Fuente y<br>tamaño de texto
+                    </div>
+                </div>
+                <p class="text-sm text-slate-500">Límite: <strong>5 000 caracteres</strong>. El contador en la parte inferior muestra el uso actual.</p>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101116.png"
+                             alt="Editor de observaciones técnicas"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Editor con barra de formato — fuente, tamaño, negritas, alineación y listas</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <!-- 8. FIRMAS -->
+            <section id="sec-firmas" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-teal-100 text-teal-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-signature text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">8. Firmas de Conformidad</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-4">La sección de firmas cuenta con dos espacios: <strong>Elaborado Por</strong> y <strong>Autorizado Por</strong>.</p>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">1</span>
+                        <p class="text-sm text-slate-600">Haz clic o toca el recuadro punteado. Se abrirá el modal de captura de firma.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">2</span>
+                        <p class="text-sm text-slate-600">Firma con el dedo (móvil/tablet) o con el mouse (escritorio). Haz clic en <em>"Guardar Firma"</em>.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">3</span>
+                        <p class="text-sm text-slate-600">Escribe el <strong>nombre completo</strong> y selecciona o escribe el <strong>puesto</strong> del firmante.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101128.png"
+                             alt="Sección de Firmas de Conformidad"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Sección de firmas — Elaborado Por y Autorizado Por con recuadros para firma digital</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <!-- 9. PDF -->
+            <section id="sec-pdf" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-slate-100 text-slate-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-file-pdf text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">9. Exportar a PDF</h2>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-slate-200 text-slate-700">1</span>
+                        <p class="text-sm text-slate-600">Haz clic en el botón <strong>PDF</strong> en el panel flotante de la derecha.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-slate-200 text-slate-700">2</span>
+                        <p class="text-sm text-slate-600">Se abrirá el diálogo de impresión del navegador. En el selector de <em>Destino</em>, elige <strong>"Guardar como PDF"</strong>.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-slate-200 text-slate-700">3</span>
+                        <p class="text-sm text-slate-600">Para ocultar la URL del navegador en el pie de página: ve a <em>Más opciones</em> y desactiva <strong>"Encabezados y pies de página"</strong>. Chrome recuerda esta preferencia.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-slate-200 text-slate-700">4</span>
+                        <p class="text-sm text-slate-600">Haz clic en <em>"Guardar"</em>. El nombre del archivo se genera automáticamente: <code class="bg-slate-100 px-1.5 rounded font-mono text-xs">Procontrol-Cliente-Fecha.pdf</code></p>
+                    </div>
+                </div>
+                <div class="mt-6 space-y-4">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400">Vista del diálogo de impresión</p>
+                    <figure class="flex flex-col gap-2">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101256.png"
+                             alt="Diálogo de impresión de Chrome con preview del PDF"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Diálogo de Chrome — selecciona "Guardar como PDF" en Destino y haz clic en Guardar</figcaption>
+                    </figure>
+                    <figure class="flex flex-col gap-2 max-w-xs">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101301.png"
+                             alt="Opción Encabezado y pie de página"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Desactiva "Encabezado y pie de página" para ocultar la URL del navegador en el PDF</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-4 info-box border-teal-400 bg-teal-50 text-teal-800">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    El PDF incluye: encabezado corporativo, estaciones con capturas, gráficas, evidencia fotográfica, observaciones, firmas y pie de página con QR y logotipo.
+                </div>
+            </section>
+
+            <!-- 10. EXPORTAR / IMPORTAR -->
+            <section id="sec-exportar" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-slate-100 text-slate-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-file-export text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">10. Exportar e Importar Proyecto</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="border border-slate-200 rounded-xl p-4">
+                        <p class="text-sm font-bold text-slate-800 mb-2"><i class="fa-solid fa-file-export text-teal-500 mr-2"></i>Exportar</p>
+                        <p class="text-sm text-slate-500">Guarda todo el proyecto (estaciones, servicios, historial, fotos, observaciones y firmas) en un archivo <code class="bg-slate-100 px-1 rounded font-mono text-xs">.json</code>. Úsalo como respaldo o para compartir el proyecto.</p>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl p-4">
+                        <p class="text-sm font-bold text-slate-800 mb-2"><i class="fa-solid fa-file-import text-teal-500 mr-2"></i>Importar</p>
+                        <p class="text-sm text-slate-500">Carga un archivo <code class="bg-slate-100 px-1 rounded font-mono text-xs">.json</code> exportado anteriormente para retomar el trabajo. Restaura completamente el estado del proyecto.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Botones y resultado</p>
+                    <div class="flex flex-wrap items-start gap-4">
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20101155.png"
+                                 alt="Botón EXPORT"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[100px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Exportar</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20101205.png"
+                                 alt="Botón IMPORT"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[100px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Importar</figcaption>
+                        </figure>
+                        <figure class="flex flex-col items-center gap-2">
+                            <img src="Captura%20de%20pantalla%202026-06-18%20101356.png"
+                                 alt="Archivo JSON exportado"
+                                 class="rounded-xl border border-slate-200 shadow-sm object-contain bg-slate-50 max-w-[200px]">
+                            <figcaption class="text-xs text-slate-400 text-center">Archivo .json generado al exportar</figcaption>
+                        </figure>
+                    </div>
+                </div>
+                <div class="mt-4 info-box border-rose-400 bg-rose-50 text-rose-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    La importación reemplaza el proyecto actual. Exporta primero si no quieres perder datos.
+                </div>
+            </section>
+
+            <!-- 11. HISTORIAL -->
+            <section id="sec-historial" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-slate-100 text-slate-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">11. Historial de Servicios</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-3">El panel de <em>"Servicios Registrados"</em> muestra todos los servicios guardados del proyecto. Desde ahí puedes:</p>
+                <ul class="space-y-2 text-sm text-slate-600">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-eye text-teal-500 mt-0.5 flex-shrink-0"></i> <span><strong>Ver</strong> las capturas de un servicio pasado haciendo clic sobre él. El panel de estaciones cambia a modo lectura mostrando esa visita.</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-pen-to-square text-amber-500 mt-0.5 flex-shrink-0"></i> <span><strong>Editar</strong> un servicio cargándolo como activo para modificar capturas.</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-regular fa-trash-can text-rose-500 mt-0.5 flex-shrink-0"></i> <span><strong>Eliminar</strong> un servicio del historial. Esta acción actualiza las gráficas inmediatamente.</span></li>
+                </ul>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2 max-w-sm">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20101840.png"
+                             alt="Panel de Servicios Registrados"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Panel de historial — cada visita muestra fecha, total de capturas y acceso a editar o eliminar</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <!-- 12. TEST -->
+            <section id="sec-test" class="section-anchor bg-white rounded-2xl shadow-sm border border-violet-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-violet-100 text-violet-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-flask text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">12. Modo TEST</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-3">El botón <strong>TEST</strong> (morado) carga datos de demostración para explorar la plataforma sin afectar proyectos reales.</p>
+                <ul class="space-y-2 text-sm text-slate-600">
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-violet-500 mt-0.5 flex-shrink-0"></i><span>Carga un historial de servicios de ejemplo con múltiples especies y fechas.</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-violet-500 mt-0.5 flex-shrink-0"></i><span>Activa todas las gráficas para que puedas ver cómo lucen con datos reales.</span></li>
+                    <li class="flex items-start gap-2"><i class="fa-solid fa-check text-violet-500 mt-0.5 flex-shrink-0"></i><span>Al desactivarlo, el sistema vuelve al estado anterior sin perder tu trabajo.</span></li>
+                </ul>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2 max-w-[120px]">
+                        <img src="Captura%20de%20pantalla%202026-06-18%20102157.png"
+                             alt="Botón TEST"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Botón TEST en el panel lateral</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-4 info-box border-violet-400 bg-violet-50 text-violet-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    No es posible exportar el proyecto mientras el modo TEST está activo.
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-gradient-to-r from-slate-900 to-teal-950 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+            <p class="text-xs text-teal-300">© 2026 Procontrol México — Manual de Usuario v1.0</p>
+            <a href="index.html" class="text-xs text-teal-400 hover:text-white transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Volver al sistema
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        // Resaltar sección activa en el índice al hacer scroll
+        const sections = document.querySelectorAll('.section-anchor');
+        const tocLinks = document.querySelectorAll('.toc-link');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    tocLinks.forEach(l => l.classList.remove('active'));
+                    const active = document.querySelector('.toc-link[href="#' + entry.target.id + '"]');
+                    if (active) active.classList.add('active');
+                }
+            });
+        }, { threshold: 0.3 });
+
+        sections.forEach(s => observer.observe(s));
+    </script>
+</body>
+</html>

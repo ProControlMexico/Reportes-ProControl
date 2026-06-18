@@ -25,24 +25,37 @@
         @media print {
             @page {
                 size: letter portrait;
-                /* Margen en @page aplica a TODAS las páginas (no solo la primera) */
-                margin: 8mm 10mm;
+                /* top: 2.54cm  →  margen superior estándar en todas las páginas.
+                   bottom: 0    →  sin espacio para URL/pie del navegador.
+                   left/right: 20mm → margen lateral fijo en todas las páginas. */
+                margin: 15mm 25.4mm;
             }
 
-            /* ── Evitar hoja en blanco: eliminar el comportamiento flex que infla body/main ── */
             body {
                 display: block !important;
                 min-height: 0 !important;
-                /* Sin padding aquí — los márgenes los maneja @page */
+                padding: 0 !important;
                 background-color: #ffffff !important;
                 color: #000000 !important;
                 font-size: 10pt;
             }
+            /* Eliminar padding lateral de Tailwind (px-4, px-6, px-8) — @page ya lo maneja */
             main {
                 flex-grow: 0 !important;
                 min-height: 0 !important;
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+            #signatures-section {
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+            /* Eliminar margin-top que Tailwind space-y-* añade entre secciones —
+               causa huecos grandes cuando una sección arranca al tope de una nueva página */
+            #analytics-section > *,
+            .lg\:col-span-8 > *,
+            section.lg\:col-span-8 > * {
+                margin-top: 0 !important;
             }
 
             .no-print,
@@ -107,10 +120,7 @@
                 page-break-inside: avoid;
             }
 
-            /* ── Gráfica de consumo de cebo: canvas completo sin recortes ── */
-            #bait-chart-section {
-                overflow: visible !important;
-            }
+            /* ── Gráfica de consumo de cebo: el overflow lo controla #bait-chart-container ── */
             #bait-chart-section canvas {
                 max-width: 100% !important;
             }
@@ -243,6 +253,118 @@
             -webkit-appearance: none;
             appearance: none;
         }
+
+        /* === EVIDENCIA FOTOGRÁFICA === */
+        .photo-title-print { display: none; }
+        @media print {
+            #photos-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1rem !important;
+            }
+            #photos-empty-state    { display: none !important; }
+            .photo-title-input     { display: none !important; }
+            .photo-title-print {
+                display: block !important;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: #374151;
+                text-align: center;
+                padding: 4px 0 2px;
+                border-top: 1px solid #d1d5db;
+                margin-top: 4px;
+                min-height: 1.2rem;
+            }
+        }
+
+        /* === ESTACIONES Y GRÁFICAS EN IMPRESIÓN === */
+        @media print {
+            /* ── Grids de estaciones: columnas automáticas con tamaño fijo ── */
+            #cordon-1-grid,
+            #cordon-2-grid,
+            #cordon-3-grid,
+            #cordon-4-grid {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)) !important;
+                gap: 3px !important;
+            }
+
+            /* ── Tarjeta de estación: tamaño fijo compacto ── */
+            .station-btn {
+                height: 58px !important;
+                min-height: 58px !important;
+                max-height: 58px !important;
+                padding: 14px 3px 3px 3px !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                transition: none !important;
+            }
+            .station-id-label {
+                font-size: 6.5pt !important;
+                line-height: 1.2 !important;
+            }
+            .station-btn > span:first-of-type {
+                font-size: 10pt !important;
+                margin-bottom: 0 !important;
+            }
+
+            /* ── Sección de estaciones: puede fluir entre páginas (puede ser muy alta) ── */
+            #stations-section-card {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+            }
+            /* Cada cordón no se parte a la mitad ── */
+            #cordon-1-section,
+            #cordon-2-section,
+            #cordon-3-section,
+            #cordon-4-section {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* ── Gráficas: altura controlada + overflow oculto para evitar solapamientos ── */
+            #pie-chart-container {
+                height: 270px !important;
+                overflow: hidden !important;
+                width: 100% !important;
+            }
+            #line-chart-container {
+                height: 210px !important;
+                overflow: hidden !important;
+            }
+            #bait-chart-container {
+                height: 175px !important;
+                overflow: hidden !important;
+            }
+            /* El canvas respeta el contenedor */
+            #pieChart, #lineChart, #baitChart {
+                max-height: 100% !important;
+                max-width:  100% !important;
+            }
+
+            #analytics-section > div {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* ── Tabla de capturas: más espacio y mejor tipografía ── */
+            #print-captures-table th,
+            #print-captures-table td {
+                padding: 5px 8px !important;
+                font-size: 8pt !important;
+                line-height: 1.4 !important;
+            }
+            #print-captures-table th {
+                font-size: 7.5pt !important;
+                letter-spacing: .03em !important;
+            }
+
+            /* ── Firmas: siempre completas, nunca cortadas ── */
+            #signatures-section > div {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
@@ -309,6 +431,12 @@
             <i class="fa-solid fa-flask text-base sm:text-xl"></i>
             <span class="text-[9px] sm:text-[10px] font-black tracking-widest">TEST</span>
         </button>
+        <a href="manual.html" target="_blank"
+           title="Abrir Manual de Usuario"
+           class="opacity-50 hover:opacity-100 active:opacity-100 bg-sky-900 text-white border border-sky-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl mt-1 sm:mt-2 no-underline">
+            <i class="fa-solid fa-circle-question text-base sm:text-xl"></i>
+            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">AYUDA</span>
+        </a>
     </div>
 
     <!-- Encabezado Especial de Impresión -->
@@ -441,7 +569,7 @@
             <section class="lg:col-span-8 space-y-6 print-full-width">
                 
                 <!-- MONITOREO EN VIVO / LAYOUT DE ESTACIONES -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
+                <div id="stations-section-card" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 no-print">
                         <div>
                             <h2 class="text-xl font-bold text-slate-900" id="dash-client-title">Estaciones Registradas</h2>
@@ -589,7 +717,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="relative flex items-center justify-center h-64">
+                        <div id="pie-chart-container" class="relative flex items-center justify-center h-64">
                             <canvas id="pieChart" class="max-h-full max-w-full"></canvas>
                         </div>
                     </div>
@@ -610,7 +738,7 @@
                             </div>
                         </div>
 
-                        <div class="relative h-96 mb-4">
+                        <div id="line-chart-container" class="relative h-96 mb-4">
                             <canvas id="lineChart" class="max-h-full max-w-full"></canvas>
                         </div>
 
@@ -639,9 +767,38 @@
                                 <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Maximizar
                             </button>
                         </div>
-                        <div class="relative h-80">
+                        <div id="bait-chart-container" class="relative h-80">
                             <canvas id="baitChart"></canvas>
                         </div>
+                    </div>
+
+                    <!-- MÓDULO DE EVIDENCIA FOTOGRÁFICA -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
+                        <div class="flex items-center justify-between gap-3 mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-100 text-blue-800 p-2 rounded-lg no-print">
+                                    <i class="fa-solid fa-images text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Evidencia Fotográfica</h3>
+                                    <p class="text-xs text-slate-400 no-print">Agrega fotos del servicio · añade un título descriptivo a cada imagen</p>
+                                </div>
+                            </div>
+                            <label for="photo-file-input" class="no-print cursor-pointer bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Agregar Foto
+                            </label>
+                            <input type="file" id="photo-file-input" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)">
+                        </div>
+
+                        <!-- Estado vacío -->
+                        <div id="photos-empty-state" class="border-2 border-dashed border-slate-200 rounded-xl py-10 text-center no-print">
+                            <i class="fa-solid fa-image text-4xl text-slate-300 mb-3 block"></i>
+                            <p class="text-sm font-semibold text-slate-400">Ninguna foto agregada</p>
+                            <p class="text-xs text-slate-300 mt-1">Haz clic en "Agregar Foto" para seleccionar imágenes del dispositivo</p>
+                        </div>
+
+                        <!-- Grilla de fotos -->
+                        <div id="photos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
                     </div>
 
                     <!-- MÓDULO DE OBSERVACIONES -->
@@ -729,41 +886,9 @@
                 Firmas de Conformidad
             </h3>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
 
-                <!-- ── Firma 1: Nombre del Cliente ── -->
-                <div class="flex flex-col gap-2">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 text-center pb-1.5 border-b border-slate-100">Nombre del Cliente</p>
-                    <div class="relative" style="height:88px">
-                        <img id="sig-img-cliente" src="" alt="" class="hidden absolute inset-0 w-full h-full object-contain p-1 pointer-events-none">
-                        <div id="sig-placeholder-cliente" class="no-print absolute inset-0 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-all select-none" onclick="openSignatureModal('cliente')">
-                            <i class="fa-solid fa-pen-nib text-2xl text-slate-300"></i>
-                            <span class="text-[10px] font-semibold text-slate-300">Firmar aquí</span>
-                        </div>
-                        <button id="sig-edit-btn-cliente" class="no-print hidden absolute bottom-1 right-1 text-[10px] font-semibold text-teal-600 hover:text-teal-800 transition-all" onclick="openSignatureModal('cliente')">
-                            <i class="fa-regular fa-pen-to-square"></i> Editar
-                        </button>
-                        <div class="absolute bottom-0 left-0 right-0 border-b-2 border-slate-300"></div>
-                    </div>
-                    <input type="text" id="sig-name-cliente" placeholder="Nombre completo" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
-                    <select id="sig-pos-cliente" onchange="handlePosChange('cliente')" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white transition-all">
-                        <option value="">— Seleccionar Puesto —</option>
-                        <option value="Operaciones">Operaciones</option>
-                        <option value="Administración">Administración</option>
-                        <option value="Dirección">Dirección</option>
-                        <option value="Coordinador de Aseguramiento de Calidad">Coordinador de Aseguramiento de Calidad</option>
-                        <option value="CSGI">CSGI</option>
-                        <option value="Control de Calidad">Control de Calidad</option>
-                        <option value="custom">Editar Puesto...</option>
-                    </select>
-                    <input type="text" id="sig-custom-pos-cliente" placeholder="Escribe el puesto..." class="hidden w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
-                    <p id="sig-pos-print-cliente" style="display:none" class="text-xs font-semibold text-slate-700 py-0.5 border-b border-slate-200">—</p>
-                    <button onclick="clearSignature('cliente')" class="no-print text-[10px] text-rose-400 hover:text-rose-600 transition-all self-center flex items-center gap-1">
-                        <i class="fa-regular fa-trash-can"></i> Limpiar firma
-                    </button>
-                </div>
-
-                <!-- ── Firma 2: Elaborado Por ── -->
+                <!-- ── Firma 1: Elaborado Por ── -->
                 <div class="flex flex-col gap-2">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 text-center pb-1.5 border-b border-slate-100">Elaborado Por</p>
                     <div class="relative" style="height:88px">
@@ -795,39 +920,7 @@
                     </button>
                 </div>
 
-                <!-- ── Firma 3: Revisado Por ── -->
-                <div class="flex flex-col gap-2">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 text-center pb-1.5 border-b border-slate-100">Revisado Por</p>
-                    <div class="relative" style="height:88px">
-                        <img id="sig-img-revisado" src="" alt="" class="hidden absolute inset-0 w-full h-full object-contain p-1 pointer-events-none">
-                        <div id="sig-placeholder-revisado" class="no-print absolute inset-0 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-all select-none" onclick="openSignatureModal('revisado')">
-                            <i class="fa-solid fa-pen-nib text-2xl text-slate-300"></i>
-                            <span class="text-[10px] font-semibold text-slate-300">Firmar aquí</span>
-                        </div>
-                        <button id="sig-edit-btn-revisado" class="no-print hidden absolute bottom-1 right-1 text-[10px] font-semibold text-teal-600 hover:text-teal-800 transition-all" onclick="openSignatureModal('revisado')">
-                            <i class="fa-regular fa-pen-to-square"></i> Editar
-                        </button>
-                        <div class="absolute bottom-0 left-0 right-0 border-b-2 border-slate-300"></div>
-                    </div>
-                    <input type="text" id="sig-name-revisado" placeholder="Nombre completo" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
-                    <select id="sig-pos-revisado" onchange="handlePosChange('revisado')" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white transition-all">
-                        <option value="">— Seleccionar Puesto —</option>
-                        <option value="Operaciones">Operaciones</option>
-                        <option value="Administración">Administración</option>
-                        <option value="Dirección">Dirección</option>
-                        <option value="Coordinador de Aseguramiento de Calidad">Coordinador de Aseguramiento de Calidad</option>
-                        <option value="CSGI">CSGI</option>
-                        <option value="Control de Calidad">Control de Calidad</option>
-                        <option value="custom">Editar Puesto...</option>
-                    </select>
-                    <input type="text" id="sig-custom-pos-revisado" placeholder="Escribe el puesto..." class="hidden w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
-                    <p id="sig-pos-print-revisado" style="display:none" class="text-xs font-semibold text-slate-700 py-0.5 border-b border-slate-200">—</p>
-                    <button onclick="clearSignature('revisado')" class="no-print text-[10px] text-rose-400 hover:text-rose-600 transition-all self-center flex items-center gap-1">
-                        <i class="fa-regular fa-trash-can"></i> Limpiar firma
-                    </button>
-                </div>
-
-                <!-- ── Firma 4: Autorizado Por ── -->
+                <!-- ── Firma 2: Autorizado Por ── -->
                 <div class="flex flex-col gap-2">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 text-center pb-1.5 border-b border-slate-100">Autorizado Por</p>
                     <div class="relative" style="height:88px">
@@ -1176,12 +1269,14 @@
         // Taxonomías actualizadas bajo especificaciones del usuario
         const ALL_SPECIES = [
             "Mosca Domestica", "Palomilla", "Mosquitos", "Escarabajos", "Abeja", "Otros Insectos",
-            "Roedores", "Insectos", "Aracnido", "Moluscos", "Otros Organismos"
+            "Roedores", "Insectos", "Aracnido", "Moluscos", "Otros Organismos",
+            "Cucaracha Americana", "Cucaracha Germanica"
         ];
 
         const TAXONOMY = {
             UV: ["Mosca Domestica", "Palomilla", "Mosquitos", "Escarabajos", "Abeja", "Otros Insectos"],
-            OTHERS: ["Roedores", "Insectos", "Aracnido", "Moluscos", "Otros Organismos"]
+            OTHERS: ["Roedores", "Insectos", "Aracnido", "Moluscos", "Otros Organismos",
+                     "Cucaracha Americana", "Cucaracha Germanica"]
         };
 
         const SPECIES_META = {
@@ -1195,7 +1290,9 @@
             "Insectos": { color: "#ec4899" },
             "Aracnido": { color: "#14b8a6" },
             "Moluscos": { color: "#6366f1" },
-            "Otros Organismos": { color: "#94a3b8" }
+            "Otros Organismos": { color: "#94a3b8" },
+            "Cucaracha Americana": { color: "#b45309" },
+            "Cucaracha Germanica": { color: "#78350f" }
         };
 
         const STATION_METADATA = {
@@ -1290,6 +1387,8 @@
                 toastIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
             } else if (type === "warning") {
                 toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+            } else if (type === "info") {
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-info text-sky-400"></i>';
             } else {
                 toastIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
             }
@@ -3563,6 +3662,7 @@
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
                 obsContent:      (document.getElementById('obs-editor') ? document.getElementById('obs-editor').innerHTML : ''),
+                photos:          JSON.parse(JSON.stringify(photoData)),
                 header: {
                     date:    hDate ? hDate.value : '',
                     version: hVer  ? hVer.value  : 'VER 1.0'
@@ -3703,6 +3803,10 @@
                         if (obsEd) { obsEd.innerHTML = data.obsContent; checkObsLimit(obsEd); }
                     }
 
+                    // Restaurar fotos
+                    photoData = Array.isArray(data.photos) ? data.photos : [];
+                    renderPhotosGrid();
+
                     renderStationsGrid();
                     renderHistoryList();
                     updatePieServiceSelector();
@@ -3768,10 +3872,12 @@
             var idx = 0;
             state.stations.forEach(function(station) {
                 var caps    = stationCaptures[station.id] || {};
-                var hasCaps = Object.keys(caps).length > 0;
-                var capsStr = hasCaps
-                    ? Object.entries(caps).map(function(e) { return '<strong>' + e[0] + ':<\/strong> ' + e[1]; }).join(" | ")
-                    : '<span class="text-slate-400 italic">Estación Limpia<\/span>';
+                var hasCaps = Object.keys(caps).some(function(k) { return caps[k] > 0; });
+                if (!hasCaps) return; // omitir estaciones sin datos
+                var capsStr = Object.entries(caps)
+                    .filter(function(e) { return e[1] > 0; })
+                    .map(function(e) { return '<strong>' + e[0] + ':<\/strong> ' + e[1]; })
+                    .join(" | ");
                 var row = document.createElement("tr");
                 row.className = (idx % 2 === 0) ? "bg-white" : "bg-slate-50";
                 row.innerHTML =
@@ -3782,10 +3888,19 @@
                 printTbody.appendChild(row);
                 idx++;
             });
-            if (state.stations.length === 0) {
-                printTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400 italic">Sin registros.<\/td><\/tr>';
+            if (idx === 0) {
+                printTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400 italic">No se registraron capturas en este servicio.<\/td><\/tr>';
             }
+            // Sugerir nombre de archivo en el diálogo "Guardar como PDF" del navegador
+            var originalTitle = document.title;
+            var safeName = state.clientName.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_');
+            var dateStr  = (hDateEl && hDateEl.value) ? hDateEl.value.replace(/-/g, '') : getLocalDateStr().replace(/-/g, '');
+            document.title = 'Procontrol-' + safeName + '-' + dateStr;
+
             window.print();
+
+            // Restaurar título original después de que el diálogo cierre
+            setTimeout(function() { document.title = originalTitle; }, 1000);
         };
 
         /************************************************************************
@@ -4020,6 +4135,80 @@
             canvas.addEventListener('touchmove',  draw,      { passive: false });
             canvas.addEventListener('touchend',   stopDraw);
         }
+
+        /************************************************************************
+         * MÓDULO DE EVIDENCIA FOTOGRÁFICA
+         ************************************************************************/
+        var photoData = [];
+
+        window.handlePhotoUpload = function(event) {
+            var files = Array.from(event.target.files);
+            event.target.value = '';
+            if (!files.length) return;
+            var pending = files.length;
+            files.forEach(function(file) {
+                if (!file.type.startsWith('image/')) { pending--; return; }
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    photoData.push({
+                        id:     'ph-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                        dataUrl: e.target.result,
+                        title:  ''
+                    });
+                    pending--;
+                    if (pending <= 0) renderPhotosGrid();
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        function renderPhotosGrid() {
+            var grid  = document.getElementById('photos-grid');
+            var empty = document.getElementById('photos-empty-state');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (photoData.length === 0) {
+                if (empty) empty.style.display = '';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            photoData.forEach(function(photo) {
+                var safeId    = photo.id;
+                var safeTitle = (photo.title || '').replace(/"/g, '&quot;');
+                var card = document.createElement('div');
+                card.className = 'flex flex-col border border-slate-100 rounded-xl overflow-hidden shadow-sm';
+                card.id = 'photo-card-' + safeId;
+                card.innerHTML =
+                    '<div class="relative bg-slate-50">' +
+                        '<img src="' + photo.dataUrl + '" alt="Evidencia" class="w-full object-contain max-h-56">' +
+                        '<button onclick="removePhoto(\'' + safeId + '\')" title="Eliminar foto" ' +
+                                'class="no-print absolute top-2 right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-all">' +
+                            '<i class="fa-solid fa-xmark text-xs"></i>' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="px-3 py-2">' +
+                        '<input type="text" placeholder="Añadir título a la imagen..." value="' + safeTitle + '" ' +
+                               'class="photo-title-input w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-slate-700 font-medium" ' +
+                               'oninput="updatePhotoTitle(\'' + safeId + '\', this.value)">' +
+                        '<p class="photo-title-print" id="photo-title-print-' + safeId + '">' + (photo.title || '') + '</p>' +
+                    '</div>';
+                grid.appendChild(card);
+            });
+        }
+
+        window.removePhoto = function(id) {
+            photoData = photoData.filter(function(p) { return p.id !== id; });
+            renderPhotosGrid();
+        };
+
+        window.updatePhotoTitle = function(id, value) {
+            var photo = photoData.find(function(p) { return p.id === id; });
+            if (!photo) return;
+            photo.title = value;
+            var printEl = document.getElementById('photo-title-print-' + id);
+            if (printEl) printEl.textContent = value;
+        };
 
         /************************************************************************
          * INICIALIZADOR GENERAL
