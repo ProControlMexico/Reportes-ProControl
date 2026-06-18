@@ -2321,7 +2321,7 @@
         function initCheckboxes() {
             speciesCheckboxesContainer.innerHTML = "";
             ALL_SPECIES.forEach(function(sp) {
-                const color = SPECIES_META[sp].color;
+                const color = SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8";
                 const wrapper = document.createElement("label");
                 wrapper.className = "flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer select-none hover:border-slate-300 transition-all text-xs font-semibold shadow-sm";
                 
@@ -2447,7 +2447,7 @@
                         const pct = ((qty / pieGrandTotal) * 100).toFixed(1);
                         pieLabels.push(org + " (" + pct + "%)");
                         pieData.push(qty);
-                        pieColors.push(SPECIES_META[org].color);
+                        pieColors.push(SPECIES_META[org] ? SPECIES_META[org].color : "#94a3b8");
                     }
                 });
             }
@@ -2541,10 +2541,10 @@
                     datasets.push({
                         label: sp,
                         data: dataPoints,
-                        borderColor: SPECIES_META[sp].color,
-                        backgroundColor: SPECIES_META[sp].color + "15",
+                        borderColor: SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8",
+                        backgroundColor: (SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8") + "15",
                         borderWidth: 3,
-                        pointBackgroundColor: SPECIES_META[sp].color,
+                        pointBackgroundColor: SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8",
                         pointHoverRadius: 8,
                         pointRadius: hasSinglePoint ? 6 : 4,
                         tension: 0.2,
@@ -2830,7 +2830,9 @@
                 '.leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;user-select:none;transition:opacity .15s;}' +
                 '.leg-item.off{opacity:.35;}' +
                 '.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}' +
-                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}';
+                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+                'button{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:7px 16px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}' +
+                'button:hover{background:#334155;}';
 
             var html =
                 '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
@@ -2842,6 +2844,7 @@
                 '<header>' +
                 '<div><h1>Consumo de Cebo — Estaciones Cebadera<\/h1>' +
                 '<p class="sub">Cliente: ' + (state.clientName || '—') + ' &nbsp;·&nbsp; Máx registrado: ' + yMax + '% &nbsp;·&nbsp; ' + timeline.length + ' servicio(s)<\/p><\/div>' +
+                '<button onclick="window.close()">Cerrar Analizador<\/button>' +
                 '<\/header>' +
                 '<div class="row">' +
                 '<div class="chart-col"><canvas id="bc"><\/canvas><\/div>' +
@@ -3240,181 +3243,142 @@
                 return;
             }
 
-            let timeline = [];
+            var timeline = [];
             state.history.forEach(function(h) {
                 timeline.push({ date: h.date, totals: Object.assign({}, h.totals) });
             });
-
             if (state.isServiceStarted) {
-                let currentTotals = {};
-                state.stations.forEach(function(station) {
-                    Object.entries(station.captures).forEach(function(entry) {
-                        currentTotals[entry[0]] = (currentTotals[entry[0]] || 0) + entry[1];
+                var curT = {};
+                state.stations.forEach(function(s) {
+                    Object.entries(s.captures).forEach(function(e) { curT[e[0]] = (curT[e[0]] || 0) + e[1]; });
+                });
+                timeline.push({ date: state.currentServiceDate, totals: curT });
+            }
+            timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+
+            if (timeline.length === 0) { showToast("No hay servicios con datos para mostrar.", "warning"); return; }
+
+            var nw = window.open('', '_blank');
+            if (!nw) { showToast("Habilita las ventanas emergentes (popups) para abrir el analizador.", "warning"); return; }
+
+            var css =
+                'body{font-family:"Inter",sans-serif;background:#0f172a;color:#f1f5f9;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column;}' +
+                '.wrap{max-width:1200px;margin:0 auto;width:100%;flex-grow:1;display:flex;flex-direction:column;gap:16px;padding:24px 20px;}' +
+                'header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #1e293b;padding-bottom:14px;flex-wrap:wrap;gap:8px;}' +
+                'h1{font-size:1.25rem;font-weight:800;margin:0;color:#2dd4bf;}' +
+                '.sub{font-size:.72rem;color:#94a3b8;margin:3px 0 0;}' +
+                '.row{display:flex;gap:20px;flex-grow:1;min-height:480px;}' +
+                '.chart-col{background:#020617cc;border:1px solid #1e293b;border-radius:16px;padding:20px;flex:1;position:relative;}' +
+                '.legend-col{background:#020617cc;border:1px solid #1e293b;border-radius:16px;padding:16px;width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}' +
+                '.leg-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:6px;}' +
+                '.leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;user-select:none;transition:opacity .15s;}' +
+                '.leg-item.off{opacity:.3;}' +
+                '.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}' +
+                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+                'button{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:7px 16px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}' +
+                'button:hover{background:#334155;}';
+
+            var html =
+                '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+                '<title>Tendencias · ' + (state.clientName || '') + '<\/title>' +
+                '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+                '<style>' + css + '<\/style>' +
+                '<\/head><body>' +
+                '<div class="wrap">' +
+                '<header>' +
+                '<div><h1>Tendencias Históricas por Especie<\/h1>' +
+                '<p class="sub">Cliente: ' + (state.clientName || '—') + ' &nbsp;·&nbsp; ' + timeline.length + ' servicio(s) registrado(s)<\/p><\/div>' +
+                '<button onclick="window.close()">Cerrar Analizador<\/button>' +
+                '<\/header>' +
+                '<div class="row">' +
+                '<div class="chart-col"><canvas id="tc"><\/canvas><\/div>' +
+                '<div class="legend-col"><div class="leg-title">Especies<\/div><div id="leg"><\/div><\/div>' +
+                '<\/div><\/div>' +
+                '<\/body><\/html>';
+
+            nw.document.write(html);
+            nw.document.close();
+
+            var cs = nw.document.createElement('script');
+            cs.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            nw.document.head.appendChild(cs);
+
+            cs.onload = function() {
+                var doc = nw.document;
+                var chartInst = null;
+                var visible = {};
+                ALL_SPECIES.forEach(function(sp) { visible[sp] = true; });
+
+                var lineLabels = timeline.map(function(t) {
+                    return new Date(t.date + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+                });
+
+                function buildDatasets() {
+                    var ds = [];
+                    ALL_SPECIES.forEach(function(sp) {
+                        if (!visible[sp]) return;
+                        var data = timeline.map(function(t) { return t.totals[sp] || 0; });
+                        if (!data.some(function(v) { return v > 0; })) return;
+                        var color = SPECIES_META[sp] ? SPECIES_META[sp].color : '#94a3b8';
+                        ds.push({
+                            label: sp,
+                            data: data,
+                            borderColor: color,
+                            backgroundColor: color + '18',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: color,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1.5,
+                            pointRadius: timeline.length === 1 ? 6 : 4,
+                            pointHoverRadius: 9,
+                            tension: 0.2,
+                            fill: false,
+                            spanGaps: true
+                        });
                     });
-                });
-                timeline.push({ date: state.currentServiceDate, totals: currentTotals });
-            }
-
-            timeline.sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
-
-            const newWindow = window.open("", "_blank");
-            if (!newWindow) {
-                showToast("Por favor habilita las ventanas emergentes (popups) para abrir el analizador.", "warning");
-                return;
-            }
-
-            const htmlShell = '<!DOCTYPE html>' +
-            '<html lang="es">' +
-            '<head>' +
-            '  <meta charset="UTF-8">' +
-            '  <title>Seguimiento de Tendencias - ' + state.clientName + '<\/title>' +
-            '  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">' +
-            '  <style>body { font-family: "Inter", sans-serif; }<\/style>' +
-            '<\/head>' +
-            '<body class="bg-slate-900 text-slate-100 min-h-screen p-6 sm:p-10 flex flex-col">' +
-            '  <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">' +
-            '    <header class="flex justify-between items-center border-b border-slate-800 pb-4">' +
-            '      <div>' +
-            '        <h1 class="text-2xl font-bold tracking-tight text-white">Visualizador Técnico de Tendencias<\/h1>' +
-            '        <p class="text-sm text-slate-400" id="client-subtitle">Cargando...<\/p>' +
-            '      <\/div>' +
-            '      <button onclick="window.close()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all">Cerrar Analizador<\/button>' +
-            '    <\/header>' +
-            '    <div class="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 flex-grow flex flex-col justify-between shadow-2xl h-[550px]">' +
-            '      <div class="relative w-full h-[400px]">' +
-            '        <canvas id="maxChart"><\/canvas>' +
-            '      <\/div>' +
-            '      <div class="border-t border-slate-800/80 pt-6 mt-6">' +
-            '        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Filtro de Especies (Activar \/ Desactivar Linea)<\/h3>' +
-            '        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-3" id="max-checkboxes"><\/div>' +
-            '      <\/div>' +
-            '    <\/div>' +
-            '  <\/div>' +
-            '<\/body>' +
-            '<\/html>';
-
-            newWindow.document.write(htmlShell);
-            newWindow.document.close();
-
-            const tailwindScript = newWindow.document.createElement('script');
-            tailwindScript.src = "https://cdn.tailwindcss.com";
-            newWindow.document.head.appendChild(tailwindScript);
-
-            const chartScript = newWindow.document.createElement('script');
-            chartScript.src = "https://cdn.jsdelivr.net/npm/chart.js";
-            newWindow.document.head.appendChild(chartScript);
-
-            chartScript.onload = function() {
-                const doc = newWindow.document;
-                doc.getElementById("client-subtitle").textContent = "Análisis detallado • Cliente: " + state.clientName;
-                
-                let activeFilters = {};
-                ALL_SPECIES.forEach(function(sp) {
-                    activeFilters[sp] = true;
-                });
-
-                let maxChartInstance = null;
+                    return ds;
+                }
 
                 function buildChart() {
-                    const labels = timeline.map(function(t) {
-                        const opt = { day: 'numeric', month: 'short' };
-                        return new Date(t.date + 'T00:00:00').toLocaleDateString('es-MX', opt);
-                    });
-
-                    const datasets = [];
-                    ALL_SPECIES.forEach(function(sp) {
-                        if (activeFilters[sp]) {
-                            // Mantener zeros como 0 — todos los puntos conectados
-                            const dataPoints = timeline.map(function(t) {
-                                return t.totals[sp] || 0;
-                            });
-
-                            const hasActiveData = dataPoints.some(function(v) { return v > 0; });
-                            if (!hasActiveData) return;
-
-                            const hasSingle = timeline.length === 1;
-
-                            datasets.push({
-                                label: sp,
-                                data: dataPoints,
-                                borderColor: SPECIES_META[sp].color,
-                                backgroundColor: SPECIES_META[sp].color + "12",
-                                borderWidth: 3,
-                                pointBackgroundColor: SPECIES_META[sp].color,
-                                pointHoverRadius: 10,
-                                pointRadius: hasSingle ? 6 : 4,
-                                tension: 0.2,
-                                spanGaps: true,
-                                fill: false
-                            });
-                        }
-                    });
-
-                    const ctx = doc.getElementById("maxChart").getContext("2d");
-                    if (maxChartInstance) {
-                        maxChartInstance.destroy();
-                    }
-
-                    maxChartInstance = new newWindow.Chart(ctx, {
+                    if (chartInst) chartInst.destroy();
+                    chartInst = new nw.Chart(doc.getElementById('tc').getContext('2d'), {
                         type: 'line',
-                        data: { labels: labels, datasets: datasets },
+                        data: { labels: lineLabels, datasets: buildDatasets() },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
                             scales: {
                                 y: {
                                     beginAtZero: true,
                                     grid: { color: '#1e293b' },
-                                    ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' } }
+                                    ticks: { color: '#94a3b8', font: { size: 11 } }
                                 },
                                 x: {
                                     grid: { display: false },
-                                    ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' } }
+                                    ticks: { color: '#94a3b8', font: { size: 11 } }
                                 }
                             },
-                            plugins: {
-                                legend: { display: false }
-                            }
+                            plugins: { legend: { display: false } }
                         }
                     });
                 }
 
-                function initControls() {
-                    const container = doc.getElementById("max-checkboxes");
-                    container.innerHTML = "";
-
-                    ALL_SPECIES.forEach(function(sp) {
-                        const color = SPECIES_META[sp].color;
-                        const wrap = doc.createElement("label");
-                        wrap.className = "flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-slate-900 cursor-pointer select-none hover:border-slate-700 transition-all text-xs font-semibold";
-                        
-                        const checkbox = doc.createElement("input");
-                        checkbox.type = "checkbox";
-                        checkbox.checked = activeFilters[sp];
-                        checkbox.className = "w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer";
-                        checkbox.onchange = function() {
-                            activeFilters[sp] = checkbox.checked;
-                            buildChart();
-                        };
-
-                        const indicator = doc.createElement("span");
-                        indicator.className = "w-2.5 h-2.5 rounded-full";
-                        indicator.style.backgroundColor = color;
-
-                        const labelText = doc.createElement("span");
-                        labelText.className = "text-slate-300 truncate";
-                        labelText.textContent = sp;
-
-                        wrap.appendChild(checkbox);
-                        wrap.appendChild(indicator);
-                        wrap.appendChild(labelText);
-                        container.appendChild(wrap);
+                var legContainer = doc.getElementById('leg');
+                ALL_SPECIES.forEach(function(sp) {
+                    var color = SPECIES_META[sp] ? SPECIES_META[sp].color : '#94a3b8';
+                    var item = doc.createElement('div');
+                    item.className = 'leg-item';
+                    item.innerHTML = '<div class="leg-dot" style="background:' + color + '"><\/div>' +
+                        '<span class="leg-lbl">' + sp + '<\/span>';
+                    item.addEventListener('click', function() {
+                        visible[sp] = !visible[sp];
+                        item.classList.toggle('off', !visible[sp]);
+                        buildChart();
                     });
-                }
+                    legContainer.appendChild(item);
+                });
 
-                initControls();
                 buildChart();
             };
         };
@@ -3513,9 +3477,12 @@
 
                 testStations.forEach(function(station) {
                     var captures = {};
-                    // Cada especie tiene 35% de probabilidad de aparecer
                     ALL_SPECIES.forEach(function(sp) {
-                        if (Math.random() < 0.35) {
+                        // Cucarachas siempre aparecen en estaciones no-UV; resto 35% aleatorio
+                        var esCucaracha = sp === "Cucaracha Americana" || sp === "Cucaracha Germanica";
+                        var esUV = station.type === "UV";
+                        var aparece = esCucaracha ? (!esUV && Math.random() < 0.75) : Math.random() < 0.35;
+                        if (aparece) {
                             var qty = Math.floor(Math.random() * 18) + 1;
                             captures[sp] = qty;
                             totals[sp] += qty;
