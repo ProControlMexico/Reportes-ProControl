@@ -369,7 +369,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
 
-    <header class="bg-gradient-to-r from-slate-900 to-teal-950 text-white shadow-md no-print">
+    <header class="sticky top-0 z-50 bg-gradient-to-r from-slate-900 to-teal-950 text-white shadow-md no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-row justify-between items-center gap-3">
 
             <!-- Logo + Título apilados verticalmente -->
@@ -385,18 +385,68 @@
                 </div>
             </div>
 
-            <!-- Info del documento (derecha) -->
-            <div class="flex flex-col items-end gap-1 sm:gap-2 text-right flex-shrink-0">
+            <!-- Grupo derecho: info del documento + menú de acciones -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
 
-                <span class="text-xs sm:text-sm font-bold text-white leading-none truncate max-w-[140px] sm:max-w-none" id="header-client-name">Sin cliente</span>
+                <!-- Info del documento -->
+                <div class="flex flex-col items-end gap-1 sm:gap-2 text-right">
 
-                <input type="date" id="header-date"
-                       class="bg-transparent border-b border-teal-700 hover:border-teal-400 focus:border-teal-300 text-teal-200 font-medium focus:outline-none cursor-pointer text-right transition-colors w-28 sm:w-auto"
-                       style="font-size:11px;">
+                    <span class="text-xs sm:text-sm font-bold text-white leading-none truncate max-w-[140px] sm:max-w-none" id="header-client-name">Sin cliente</span>
 
-                <input type="text" id="header-version" value="VER 1.0"
-                       class="bg-teal-900/40 border border-teal-700 hover:border-teal-500 focus:border-teal-300 rounded px-2 py-0.5 font-mono font-bold text-teal-200 focus:outline-none w-16 sm:w-20 text-center transition-colors"
-                       style="font-size:11px;">
+                    <input type="date" id="header-date"
+                           class="bg-transparent border-b border-teal-700 hover:border-teal-400 focus:border-teal-300 text-teal-200 font-medium focus:outline-none cursor-pointer text-right transition-colors w-28 sm:w-auto"
+                           style="font-size:11px;">
+
+                    <input type="text" id="header-version" value="VER 1.0"
+                           class="bg-teal-900/40 border border-teal-700 hover:border-teal-500 focus:border-teal-300 rounded px-2 py-0.5 font-mono font-bold text-teal-200 focus:outline-none w-16 sm:w-20 text-center transition-colors"
+                           style="font-size:11px;">
+
+                </div>
+
+                <!-- Botón de menú (hamburguesa) -->
+                <div class="relative">
+                    <button id="menu-toggle-btn" onclick="toggleActionsMenu()"
+                            title="Menú de acciones"
+                            aria-haspopup="true" aria-expanded="false"
+                            class="bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-all shadow-md">
+                        <i class="fa-solid fa-bars text-base sm:text-lg"></i>
+                    </button>
+
+                    <!-- Menú desplegable de acciones -->
+                    <div id="actions-menu"
+                         class="hidden absolute top-full right-0 mt-2 min-w-[170px] flex flex-col gap-1 bg-slate-900 border border-slate-700 rounded-xl p-1.5 shadow-2xl z-50">
+                        <button onclick="exportProject(); closeActionsMenu();"
+                                title="Exportar proyecto como archivo JSON"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-file-export text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">EXPORT</span>
+                        </button>
+                        <button onclick="importProject(); closeActionsMenu();"
+                                title="Importar proyecto desde archivo JSON"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-file-import text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">IMPORT</span>
+                        </button>
+                        <button onclick="printReport(); closeActionsMenu();"
+                                title="Imprimir / Guardar PDF"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-print text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">PDF</span>
+                        </button>
+                        <button id="toggle-test-btn" onclick="toggleTestMode(); closeActionsMenu();"
+                                title="Activar / Desactivar datos de prueba"
+                                class="bg-violet-900 hover:bg-violet-800 text-white border border-violet-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-flask text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">TEST</span>
+                        </button>
+                        <a href="manual.html" target="_blank"
+                           title="Abrir Manual de Usuario"
+                           class="bg-sky-900 hover:bg-sky-800 text-white border border-sky-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all no-underline">
+                            <i class="fa-solid fa-circle-question text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">AYUDA</span>
+                        </a>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -404,40 +454,6 @@
 
     <!-- Input oculto para importar proyecto -->
     <input type="file" id="import-file-input" accept=".json" class="hidden">
-
-    <!-- BOTONES FLOTANTES DE ACCIÓN -->
-    <div class="fixed top-16 sm:top-20 right-2 sm:right-4 z-40 flex flex-col gap-1.5 sm:gap-2 no-print">
-        <button onclick="exportProject()"
-                title="Exportar proyecto como archivo JSON"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-file-export text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">EXPORT</span>
-        </button>
-        <button onclick="importProject()"
-                title="Importar proyecto desde archivo JSON"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-file-import text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">IMPORT</span>
-        </button>
-        <button onclick="printReport()"
-                title="Imprimir / Guardar PDF"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-print text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">PDF</span>
-        </button>
-        <button id="toggle-test-btn" onclick="toggleTestMode()"
-                title="Activar / Desactivar datos de prueba"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-violet-900 text-white border border-violet-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl mt-1 sm:mt-2">
-            <i class="fa-solid fa-flask text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">TEST</span>
-        </button>
-        <a href="manual.html" target="_blank"
-           title="Abrir Manual de Usuario"
-           class="opacity-50 hover:opacity-100 active:opacity-100 bg-sky-900 text-white border border-sky-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl mt-1 sm:mt-2 no-underline">
-            <i class="fa-solid fa-circle-question text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">AYUDA</span>
-        </a>
-    </div>
 
     <!-- Encabezado Especial de Impresión -->
     <div class="print-header-visible">
@@ -1207,6 +1223,30 @@
                 return Object.keys(obj).map(function(k) { return [k, obj[k]]; });
             };
         }
+
+        /************************************************************************
+         * MENÚ DE ACCIONES (HAMBURGUESA) DEL ENCABEZADO
+         ************************************************************************/
+        function toggleActionsMenu() {
+            const menu = document.getElementById("actions-menu");
+            const btn = document.getElementById("menu-toggle-btn");
+            menu.classList.toggle("hidden");
+            btn.setAttribute("aria-expanded", menu.classList.contains("hidden") ? "false" : "true");
+        }
+
+        function closeActionsMenu() {
+            document.getElementById("actions-menu").classList.add("hidden");
+            document.getElementById("menu-toggle-btn").setAttribute("aria-expanded", "false");
+        }
+
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("actions-menu");
+            const btn = document.getElementById("menu-toggle-btn");
+            if (!menu || !btn) return;
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                closeActionsMenu();
+            }
+        });
 
         /* Devuelve 'YYYY-MM-DD' en hora local — evita el bug UTC de toISOString */
         function getLocalDateStr(d) {
