@@ -3995,6 +3995,21 @@
                 btn.classList.remove("bg-emerald-700", "border-emerald-500");
                 btn.classList.add("bg-violet-900", "border-violet-600");
 
+                // Resetear checklist NMX-F-605, contexto y diagnóstico IA a su estado inicial
+                if (typeof PREGUNTAS_TODAS !== "undefined") {
+                    PREGUNTAS_TODAS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = "cumple";
+                    });
+                    var servicioMipReset = document.getElementById("tieneServicioMIP");
+                    if (servicioMipReset) servicioMipReset.value = "si";
+                    if (typeof evaluarNOM === "function") evaluarNOM();
+                }
+                var contextoReset = document.getElementById("contextoIA");
+                if (contextoReset) contextoReset.value = "";
+                var dictamenReset = document.getElementById("rptDictamenTexto");
+                if (dictamenReset) dictamenReset.innerHTML = "Completa el checklist y pulsa \"Generar Análisis IA\" para redactar el diagnóstico técnico del servicio.";
+
                 renderStationsGrid();
                 renderHistoryList();
                 updatePieServiceSelector();
@@ -4108,12 +4123,42 @@
             btn.classList.remove("bg-violet-900", "border-violet-600");
             btn.classList.add("bg-emerald-700", "border-emerald-500");
 
+            // Poblar el checklist NMX-F-605 con una mezcla de ejemplo (Cumple / No Cumple)
+            // para poder ver funcionando los badges, el banner de estatus y el panel de
+            // Pendientes por Cumplir sin tener que responder las 29 preguntas a mano
+            if (typeof PREGUNTAS_TODAS !== "undefined") {
+                PREGUNTAS_TODAS.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = "cumple";
+                });
+                var demoNoCumple = ["q_pla_1", "q_qui_2", "q_her_3", "q_alm_2"];
+                demoNoCumple.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = "no_cumple";
+                });
+                var servicioMipDemo = document.getElementById("tieneServicioMIP");
+                if (servicioMipDemo) servicioMipDemo.value = "si";
+                if (typeof evaluarNOM === "function") evaluarNOM();
+            }
+
+            // Contexto de ejemplo para el diagnóstico IA
+            var contextoDemo = document.getElementById("contextoIA");
+            if (contextoDemo) contextoDemo.value = "Ejemplo de contexto (DEMO): la sucursal se encuentra junto a un terreno baldío y hubo cambio reciente de proveedor de limpieza.";
+
+            // Texto de ejemplo en el bloque de Diagnóstico IA — se sobreescribe al presionar
+            // "Generar Análisis IA" con una clave de Gemini configurada
+            var dictamenDemo = document.getElementById("rptDictamenTexto");
+            if (dictamenDemo) {
+                dictamenDemo.innerHTML =
+                    '<p class="mb-2 leading-relaxed text-xs text-slate-800 italic">Texto de ejemplo (modo TEST) — pulsa "Generar Análisis IA" con tu clave de Gemini configurada (Opciones ▸ Clave IA) para reemplazar este párrafo por el diagnóstico técnico real, redactado a partir de las respuestas del checklist NMX-F-605 de arriba.</p>';
+            }
+
             renderStationsGrid();
             renderHistoryList();
             updatePieServiceSelector();
             initCheckboxes();
             updateCharts();
-            showToast("Datos de prueba cargados: 20 estaciones · 6 servicios.", "success");
+            showToast("Datos de prueba cargados: 20 estaciones · 6 servicios · checklist NMX-F-605.", "success");
 
             // La gráfica de cebo se actualiza dentro de updateCharts()
         }
