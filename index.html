@@ -97,6 +97,58 @@
                 margin-bottom: 1.5rem !important;
                 page-break-inside: avoid !important;
             }
+            .print-client-data {
+                display: block !important;
+                border: 1px solid #d8e0ea !important;
+                border-top: 3px solid #0f766e !important;
+                border-radius: 9px !important;
+                padding: 12px 14px 10px !important;
+                margin: 0 0 14px !important;
+                background: #ffffff !important;
+                page-break-inside: avoid !important;
+            }
+            .print-client-data-title {
+                display: block !important;
+                font-size: 7.5pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.08em !important;
+                text-transform: uppercase !important;
+                color: #0f766e !important;
+                margin: 0 0 9px !important;
+            }
+            .print-client-data table {
+                width: 100% !important;
+                border-collapse: separate !important;
+                border-spacing: 0 6px !important;
+                table-layout: fixed !important;
+            }
+            .print-client-data td {
+                padding: 0 !important;
+                vertical-align: top !important;
+                line-height: 1.25 !important;
+            }
+            .print-client-data td:nth-child(odd) {
+                width: 92px !important;
+                color: #64748b !important;
+                font-size: 6.8pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.03em !important;
+                text-transform: uppercase !important;
+            }
+            .print-client-data td:nth-child(even) {
+                color: #111827 !important;
+                font-size: 7.8pt !important;
+                font-weight: 700 !important;
+                overflow-wrap: anywhere !important;
+                padding-right: 14px !important;
+            }
+            .print-client-data tr:last-child td {
+                border-top: 1px solid #e5e7eb !important;
+                padding-top: 7px !important;
+            }
+            .print-client-data hr {
+                display: none !important;
+            }
             .print-header-visible {
                 display: flex !important;
                 align-items: center;
@@ -710,13 +762,20 @@
                     </div>
 
                     <!-- Datos básicos estáticos visibles para Impresión -->
-                    <div class="hidden print:block mb-4">
+                    <div class="hidden print:block print-client-data">
+                        <span class="print-client-data-title">Datos del cliente y servicio</span>
                         <table class="w-full text-xs text-left">
+                            <colgroup>
+                                <col style="width: 96px;">
+                                <col>
+                                <col style="width: 112px;">
+                                <col style="width: 148px;">
+                            </colgroup>
                             <tbody>
                                 <tr>
-                                    <td class="font-bold py-1 text-slate-500">CLIENTE INTEGRAL:</td>
+                                    <td class="font-bold py-1 text-slate-500">CLIENTE:</td>
                                     <td class="py-1 font-semibold text-slate-800" id="print-info-client">-</td>
-                                    <td class="font-bold py-1 text-slate-500">FECHA DE SERVICIO:</td>
+                                    <td class="font-bold py-1 text-slate-500">FECHA:</td>
                                     <td class="py-1 font-semibold text-slate-800" id="print-info-date">-</td>
                                 </tr>
                                 <tr>
@@ -745,8 +804,8 @@
                         <span>Vista de servicio histórico — las estaciones muestran capturas de esa visita. Badges en azul = solo lectura.</span>
                     </div>
 
-                    <!-- GRILLA DE ESTACIONES CLASIFICADA POR CORDONES -->
-                    <div class="space-y-6" id="stations-grid-container">
+                    <!-- GRILLA DE ESTACIONES CLASIFICADA POR CORDONES (solo pantalla — el PDF ya trae el Análisis Global de Hallazgos) -->
+                    <div class="space-y-6 no-print" id="stations-grid-container">
                         <!-- MENSAJE DE ESPERA DE CONFIGURACIÓN -->
                         <div id="grid-placeholder" class="text-center py-10 px-4">
                             <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
