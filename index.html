@@ -168,14 +168,6 @@
         .print-footer-visible {
             display: none;
         }
-        #obs-editor:empty:before {
-            content: attr(placeholder);
-            color: #94a3b8;
-            pointer-events: none;
-            display: block;
-        }
-        #obs-editor:focus { outline: none; }
-
         /* =====================================================
            OPTIMIZACIONES MÓVIL Y MULTI-NAVEGADOR
         ====================================================== */
@@ -352,16 +344,22 @@
                 page-break-inside: avoid !important;
             }
 
-            /* ── Tabla de capturas: más espacio y mejor tipografía ── */
+            /* ── Análisis Global de Hallazgos: tabla ancha (fecha + N especies), texto compacto ── */
+            #print-captures-table {
+                table-layout: fixed !important;
+                width: 100% !important;
+            }
             #print-captures-table th,
             #print-captures-table td {
-                padding: 5px 8px !important;
-                font-size: 8pt !important;
-                line-height: 1.4 !important;
+                padding: 3px 4px !important;
+                font-size: 6.8pt !important;
+                line-height: 1.25 !important;
+                overflow-wrap: break-word !important;
             }
             #print-captures-table th {
-                font-size: 7.5pt !important;
-                letter-spacing: .03em !important;
+                font-size: 6.3pt !important;
+                letter-spacing: 0 !important;
+                vertical-align: bottom;
             }
 
             /* ── Firmas: siempre completas, nunca cortadas ── */
@@ -495,6 +493,12 @@
                             <i class="fa-solid fa-key text-base w-4 text-center"></i>
                             <span class="text-[10px] font-black tracking-widest">CLAVE IA</span>
                         </button>
+                        <button onclick="abrirConfirmLimpiarTodo(); closeActionsMenu();"
+                                title="Borrar todo lo que no se haya exportado"
+                                class="bg-rose-950 hover:bg-rose-900 text-white border border-rose-700 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-broom text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">LIMPIAR</span>
+                        </button>
                     </div>
                 </div>
 
@@ -507,23 +511,18 @@
 
     <!-- Encabezado Especial de Impresión -->
     <div class="print-header-visible">
-        <!-- Logo + título apilados verticalmente (igual que el header web) -->
+        <!-- Solo el logo (se quitó el subtítulo "Plataforma de control / Tendencias y seguimiento") -->
         <div style="display:flex; flex-direction:column; align-items:flex-start; gap:5px;">
             <img src="https://github.com/gavainc/Procontrol-Mexico/blob/main/Logo%20Procontrol%20Vectores.png?raw=true"
                  alt="Procontrol México"
                  style="height:128px; width:auto; object-fit:contain;"
                  onerror="this.src='https://placehold.co/150x60/0f766e/ffffff?text=Procontrol';">
-            <div style="line-height:1.35;">
-                <div style="font-size:10pt; font-weight:800; color:#0f172a;">Plataforma de control</div>
-                <div style="font-size:10pt; font-weight:800; color:#0f766e;">Tendencias y seguimiento</div>
-                <div style="font-size:7.5pt; color:#4b5563; font-weight:600; margin-top:2px;">Depto de IT · Control de plagas</div>
-            </div>
         </div>
         <!-- Datos del documento (derecha) -->
         <div style="text-align:right;">
             <div style="font-size:11pt; font-weight:800; color:#0f172a; margin-bottom:3px;" id="print-client-name">—</div>
             <div style="font-size:8.5pt; color:#4b5563; margin-bottom:2px;" id="print-service-date">Fecha: —</div>
-            <div style="font-size:8pt; color:#0f766e; font-weight:700; font-family:monospace;" id="print-version-badge">VER 1.0</div>
+            <div style="font-size:8pt; color:#0f766e; font-weight:700; font-family:monospace;" id="print-version-badge">INFORME DE HALLAZGOS</div>
         </div>
     </div>
 
@@ -549,7 +548,7 @@
                     </div>
 
                     <!-- Nombre del Cliente -->
-                    <div class="mb-5">
+                    <div class="mb-3">
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Nombre del Cliente</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -560,8 +559,15 @@
                         </div>
                     </div>
 
+                    <!-- Botón para capturar dirección / C.P. / ciudad / estado -->
+                    <button type="button" id="client-data-btn" onclick="openClientDataModal()"
+                            class="w-full flex items-center justify-center gap-2 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl py-2 mb-5 transition-all">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="client-data-btn-label">Agregar Dirección del Cliente</span>
+                    </button>
+
                     <!-- Sucursal / Técnico / Quien Recibe (escritura libre) -->
-                    <div class="grid grid-cols-1 gap-3 mb-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Sucursal</label>
                             <div class="relative">
@@ -723,6 +729,10 @@
                                     <td class="font-bold py-1 text-slate-500">RECIBE (CLIENTE):</td>
                                     <td class="py-1 font-semibold text-slate-800" colspan="3" id="print-info-recibe">-</td>
                                 </tr>
+                                <tr>
+                                    <td class="font-bold py-1 text-slate-500">DIRECCIÓN:</td>
+                                    <td class="py-1 font-semibold text-slate-800" colspan="3" id="print-info-direccion">-</td>
+                                </tr>
                             </tbody>
                         </table>
                         <hr class="border-slate-300 mt-3">
@@ -789,20 +799,13 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN DETALLE DE CAPTURA EN INFORME (Visible al imprimir) -->
+                <!-- SECCIÓN ANÁLISIS GLOBAL DE HALLAZGOS (Visible al imprimir) -->
                 <div class="hidden print:block bg-white rounded-lg p-5 border border-slate-200 print-card">
                     <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 pb-1 border-b border-slate-300">
-                        <i class="fa-solid fa-file-invoice mr-1.5"></i> Detalle de Capturas del Servicio Técnico
+                        <i class="fa-solid fa-chart-simple mr-1.5"></i> Análisis Global de Hallazgos
                     </h3>
                     <table class="w-full text-xs text-left border-collapse" id="print-captures-table">
-                        <thead>
-                            <tr class="bg-slate-100 border-b border-slate-300">
-                                <th class="py-2 px-2 font-bold text-slate-700">Estación ID</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Ubicación / Cordón</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Tipo</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Organismos Identificados (Cantidades)</th>
-                            </tr>
-                        </thead>
+                        <thead id="print-captures-thead"></thead>
                         <tbody id="print-captures-tbody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
@@ -1185,7 +1188,11 @@
                             <textarea id="contextoIA" rows="2" placeholder="Ej. obra en proceso, cambio de proveedor de limpieza, temporada alta, colindancia con terreno baldío, etc." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none resize-y"></textarea>
                             <p class="text-[10px] text-slate-400 mt-1">Se envía a la IA junto con el checklist — no lo reemplaza, solo aporta contexto de la visita.</p>
                         </div>
-                        <div id="rptDictamenTexto" class="text-xs text-slate-700 leading-relaxed space-y-2">
+                        <p class="no-print text-[10px] text-slate-400 mb-1 flex items-center gap-1">
+                            <i class="fa-regular fa-pen-to-square"></i> El texto de abajo es editable — haz clic para ajustarlo a mano después de generarlo.
+                        </p>
+                        <div id="rptDictamenTexto" contenteditable="true"
+                             class="text-xs text-slate-700 leading-relaxed space-y-2 rounded-xl transition-all border border-transparent hover:border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-500 focus:outline-none px-2 py-1.5 -mx-2">
                             Completa el checklist y pulsa "Generar Análisis IA" para redactar el diagnóstico técnico del servicio.
                         </div>
                     </div>
@@ -1293,69 +1300,6 @@
 
                         <!-- Grilla de fotos -->
                         <div id="photos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
-                    </div>
-
-                    <!-- MÓDULO DE OBSERVACIONES -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="bg-amber-100 text-amber-800 p-2 rounded-lg no-print">
-                                <i class="fa-solid fa-note-sticky text-lg"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Observaciones</h3>
-                                <p class="text-xs text-slate-400 no-print">Notas técnicas del servicio · límite 5 000 caracteres</p>
-                            </div>
-                        </div>
-
-                        <!-- Barra de herramientas (solo pantalla) -->
-                        <div class="no-print flex flex-wrap items-center gap-1.5 mb-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
-                            <select onchange="formatObs('fontName', this.value)"
-                                    class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                                <option value="Inter, sans-serif">Sans-serif</option>
-                                <option value="Georgia, serif">Serif</option>
-                                <option value="'Courier New', monospace">Monoespaciado</option>
-                                <option value="Arial, sans-serif">Arial</option>
-                            </select>
-                            <select onchange="formatObs('fontSize', this.value)"
-                                    class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                                <option value="1">Muy pequeño</option>
-                                <option value="2">Pequeño</option>
-                                <option value="3" selected>Normal</option>
-                                <option value="4">Grande</option>
-                                <option value="5">Muy grande</option>
-                            </select>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('bold')"      title="Negrita"   class="w-7 h-7 text-xs font-black border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">B</button>
-                            <button onclick="formatObs('italic')"    title="Cursiva"   class="w-7 h-7 text-xs italic     border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">I</button>
-                            <button onclick="formatObs('underline')" title="Subrayado" class="w-7 h-7 text-xs underline  border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">U</button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('justifyLeft')"   title="Izquierda" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-left text-[10px]"></i></button>
-                            <button onclick="formatObs('justifyCenter')" title="Centro"    class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-center text-[10px]"></i></button>
-                            <button onclick="formatObs('justifyRight')"  title="Derecha"   class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-right text-[10px]"></i></button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('insertUnorderedList')" title="Lista"         class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-list-ul text-[10px]"></i></button>
-                            <button onclick="formatObs('insertOrderedList')"   title="Lista numerada" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-list-ol text-[10px]"></i></button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('removeFormat')" title="Limpiar formato"
-                                    class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all text-slate-500">
-                                <i class="fa-solid fa-eraser text-[10px]"></i>
-                            </button>
-                        </div>
-
-                        <!-- Área editable -->
-                        <div id="obs-editor"
-                             contenteditable="true"
-                             placeholder="Escribe aquí las observaciones técnicas del servicio..."
-                             class="min-h-[140px] max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl p-4 text-sm text-slate-700 transition-all focus:ring-2 focus:ring-teal-500 focus:border-teal-400"
-                             style="font-family:'Inter',sans-serif; line-height:1.6;"
-                             oninput="checkObsLimit(this)"></div>
-
-                        <div class="flex justify-between items-center mt-2 no-print">
-                            <span class="text-[10px] text-slate-400" id="obs-char-count">0 / 5 000 caracteres</span>
-                            <button onclick="clearObsContent()" class="text-[10px] text-rose-400 hover:text-rose-600 transition-all flex items-center gap-1">
-                                <i class="fa-regular fa-trash-can"></i> Limpiar
-                            </button>
-                        </div>
                     </div>
 
                 </div>
@@ -1651,6 +1595,81 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMACIÓN: LIMPIAR TODO LO NO GUARDADO -->
+    <div id="confirm-limpiar-todo-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">¿Borrar todo lo que no se haya guardado?</h3>
+                <p class="text-sm text-slate-500 mb-6">Esto limpia cliente, estaciones, capturas, historial, checklist NMX-F-605, diagnóstico IA, firmas, fotos y observaciones — todo lo que no hayas exportado como JSON se perderá. Esta acción no se puede deshacer.</p>
+                <div class="flex justify-center gap-3">
+                    <button id="confirm-limpiar-cancel-btn" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+                        Cancelar
+                    </button>
+                    <button id="confirm-limpiar-ok-btn" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-5 rounded-xl text-sm transition-all shadow-md">
+                        Sí, borrar todo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DATOS DEL CLIENTE (DIRECCIÓN, C.P., CIUDAD, ESTADO) -->
+    <div id="client-data-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-teal-400 text-xl"><i class="fa-solid fa-location-dot"></i></span>
+                    <div>
+                        <h3 class="text-lg font-bold">Datos del Cliente</h3>
+                        <p class="text-xs text-slate-400">Dirección, código postal, ciudad y estado</p>
+                    </div>
+                </div>
+                <button onclick="closeClientDataModal()" class="text-slate-400 hover:text-white transition-all text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Dirección</label>
+                    <input type="text" id="direccion-input" placeholder="Calle, número, colonia..."
+                           class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Código Postal</label>
+                        <div class="relative">
+                            <input type="text" id="cp-modal-input" maxlength="5" placeholder="Ej. 97000" oninput="buscarCPModal()"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <span id="cp-modal-spinner" class="hidden absolute right-3 top-2.5 text-teal-500 animate-spin text-xs">🌀</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Ciudad / Municipio</label>
+                        <input type="text" id="ciudad-input" placeholder="Ej. Mérida"
+                               class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Estado</label>
+                    <input type="text" id="estado-input" placeholder="Ej. Yucatán"
+                           class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+                <p id="cp-modal-status" class="text-[10px] text-slate-400 italic">Ingresa el C.P. para autocompletar Estado y Ciudad — puedes editarlos después a mano.</p>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="closeClientDataModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                    Cancelar
+                </button>
+                <button onclick="guardarClientDataModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-5 rounded-lg text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Guardar Datos
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE CONFIGURACIÓN DE CLAVE API (GEMINI — DIAGNÓSTICO IA) -->
     <div id="modalApiKey" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
         <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
@@ -1773,6 +1792,10 @@
             sucursal: "",
             tecnico: "",
             quienRecibe: "",
+            direccion: "",
+            cp: "",
+            ciudad: "",
+            estado: "",
             isConfigFinished: false,
             isServiceStarted: false,
             currentServiceDate: "",
@@ -3963,6 +3986,10 @@
                 state.sucursal = "";
                 state.tecnico = "";
                 state.quienRecibe = "";
+                state.direccion = "";
+                state.cp = "";
+                state.ciudad = "";
+                state.estado = "";
                 state.isConfigFinished = false;
                 state.isServiceStarted = false;
                 state.currentServiceDate = "";
@@ -3974,6 +4001,7 @@
                 if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
                 if (tecnicoInput) { tecnicoInput.value = ""; tecnicoInput.disabled = false; }
                 if (quienRecibeInput) { quienRecibeInput.value = ""; quienRecibeInput.disabled = false; }
+                actualizarBotonDatosCliente();
                 clientNameInput.disabled = false;
                 cordonSelect.disabled = false;
                 stationTypeSelect.disabled = false;
@@ -4094,6 +4122,10 @@
             state.sucursal = "Sucursal Centro (DEMO)";
             state.tecnico = "Técnico Demo ProControl";
             state.quienRecibe = "Gerente de Planta (DEMO)";
+            state.direccion = "Calle 60 #450 x 33 y 35 (DEMO)";
+            state.cp = "97000";
+            state.ciudad = "Mérida";
+            state.estado = "Yucatán";
             state.isConfigFinished = true;
             state.isServiceStarted = false;
             state.editingHistoryIndex = null;
@@ -4105,6 +4137,7 @@
             if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
             if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
             if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
+            actualizarBotonDatosCliente();
             clientNameInput.disabled = true;
             cordonSelect.disabled = true;
             stationTypeSelect.disabled = true;
@@ -4164,6 +4197,125 @@
         }
 
         /************************************************************************
+         * LIMPIAR TODO (BORRAR TODO LO NO GUARDADO)
+         ************************************************************************/
+        window.abrirConfirmLimpiarTodo = function() {
+            var modal = document.getElementById('confirm-limpiar-todo-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+
+        function cerrarConfirmLimpiarTodo() {
+            var modal = document.getElementById('confirm-limpiar-todo-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        var confirmLimpiarCancelBtn = document.getElementById('confirm-limpiar-cancel-btn');
+        var confirmLimpiarOkBtn = document.getElementById('confirm-limpiar-ok-btn');
+        if (confirmLimpiarCancelBtn) confirmLimpiarCancelBtn.addEventListener('click', cerrarConfirmLimpiarTodo);
+
+        if (confirmLimpiarOkBtn) {
+            confirmLimpiarOkBtn.addEventListener('click', function() {
+                // — Estado del proyecto —
+                testModeActive = false;
+                state.clientName = "";
+                state.sucursal = "";
+                state.tecnico = "";
+                state.quienRecibe = "";
+                state.direccion = "";
+                state.cp = "";
+                state.ciudad = "";
+                state.estado = "";
+                state.isConfigFinished = false;
+                state.isServiceStarted = false;
+                state.currentServiceDate = "";
+                state.editingHistoryIndex = null;
+                state.stations = [];
+                state.history = [];
+
+                // — Formulario de configuración —
+                clientNameInput.value = "";
+                clientNameInput.disabled = false;
+                if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
+                if (tecnicoInput) { tecnicoInput.value = ""; tecnicoInput.disabled = false; }
+                if (quienRecibeInput) { quienRecibeInput.value = ""; quienRecibeInput.disabled = false; }
+                actualizarBotonDatosCliente();
+                cordonSelect.disabled = false;
+                stationTypeSelect.disabled = false;
+                stationQtyInput.disabled = false;
+                addStationsBtn.disabled = false;
+                finalizeSetupBtn.disabled = false;
+                finalizeSetupBtn.classList.remove("hidden");
+                document.getElementById("edit-config-btn").classList.add("hidden");
+
+                dashClientTitle.textContent = "Estaciones Registradas";
+                document.getElementById("header-client-name").textContent = "Sin cliente configurado";
+                serviceCreationSection.classList.add("opacity-50", "pointer-events-none");
+
+                serviceDateInput.disabled = false;
+                serviceDateInput.value = getLocalDateStr();
+                startServiceBtn.classList.remove("hidden");
+                document.getElementById("active-service-controls").classList.add("hidden");
+
+                var testBtn = document.getElementById("toggle-test-btn");
+                if (testBtn) {
+                    testBtn.classList.remove("bg-emerald-700", "border-emerald-500");
+                    testBtn.classList.add("bg-violet-900", "border-violet-600");
+                }
+
+                // — Encabezado (fecha / versión) —
+                var hd = document.getElementById("header-date");
+                var hv = document.getElementById("header-version");
+                if (hd) hd.value = getLocalDateStr();
+                if (hv) hv.value = "VER 1.0";
+
+                // — Checklist NMX-F-605, contexto y diagnóstico IA —
+                if (typeof PREGUNTAS_TODAS !== "undefined") {
+                    PREGUNTAS_TODAS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = "cumple";
+                    });
+                    var servicioMipLimpiar = document.getElementById("tieneServicioMIP");
+                    if (servicioMipLimpiar) servicioMipLimpiar.value = "si";
+                    if (typeof evaluarNOM === "function") evaluarNOM();
+                }
+                var contextoLimpiar = document.getElementById("contextoIA");
+                if (contextoLimpiar) contextoLimpiar.value = "";
+                var dictamenLimpiar = document.getElementById("rptDictamenTexto");
+                if (dictamenLimpiar) dictamenLimpiar.innerHTML = "Completa el checklist y pulsa \"Generar Análisis IA\" para redactar el diagnóstico técnico del servicio.";
+
+                // — Firmas —
+                SIG_KEYS.forEach(function(key) {
+                    clearSignature(key);
+                    var nameEl = document.getElementById('sig-name-' + key);
+                    var posEl = document.getElementById('sig-pos-' + key);
+                    var customEl = document.getElementById('sig-custom-pos-' + key);
+                    var printEl = document.getElementById('sig-pos-print-' + key);
+                    if (nameEl) nameEl.value = '';
+                    if (posEl) { posEl.value = ''; posEl.classList.remove('hidden'); }
+                    if (customEl) { customEl.value = ''; customEl.classList.add('hidden'); }
+                    if (printEl) printEl.textContent = '—';
+                });
+
+                // — Fotos —
+                photoData = [];
+                renderPhotosGrid();
+
+                // — Refrescar paneles y gráficas —
+                renderStationsGrid();
+                renderHistoryList();
+                updatePieServiceSelector();
+                updateCharts();
+
+                cerrarConfirmLimpiarTodo();
+                showToast("Se borró todo lo que no estaba guardado. Sistema en blanco.", "warning");
+            });
+        }
+
+        /************************************************************************
          * RESTAURAR ESTADO DESDE ARCHIVO HTML GUARDADO
          ************************************************************************/
         function initializeFromState() {
@@ -4182,6 +4334,7 @@
                 if (sucursalInput) { sucursalInput.value = state.sucursal || ""; sucursalInput.disabled = true; }
                 if (tecnicoInput) { tecnicoInput.value = state.tecnico || ""; tecnicoInput.disabled = true; }
                 if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe || ""; quienRecibeInput.disabled = true; }
+                actualizarBotonDatosCliente();
                 clientNameInput.disabled = true;
                 cordonSelect.disabled = true;
                 stationTypeSelect.disabled = true;
@@ -4258,6 +4411,10 @@
                 sucursal:        sucursalInput ? sucursalInput.value.trim() : (state.sucursal || ''),
                 tecnico:         tecnicoInput ? tecnicoInput.value.trim() : (state.tecnico || ''),
                 quienRecibe:     quienRecibeInput ? quienRecibeInput.value.trim() : (state.quienRecibe || ''),
+                direccion:       state.direccion || '',
+                cp:              state.cp || '',
+                ciudad:          state.ciudad || '',
+                estado:          state.estado || '',
                 isConfigFinished: state.isConfigFinished,
                 isServiceStarted: state.isServiceStarted,
                 currentServiceDate: state.currentServiceDate,
@@ -4265,7 +4422,6 @@
                 history:         JSON.parse(JSON.stringify(state.history)),
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
-                obsContent:      (document.getElementById('obs-editor') ? document.getElementById('obs-editor').innerHTML : ''),
                 photos:          JSON.parse(JSON.stringify(photoData)),
                 nmxChecklist:    nmxChecklist,
                 tieneServicioMIP: tieneServicioMIPEl ? tieneServicioMIPEl.value : 'si',
@@ -4317,6 +4473,10 @@
                     state.sucursal             = data.sucursal || '';
                     state.tecnico              = data.tecnico || '';
                     state.quienRecibe          = data.quienRecibe || '';
+                    state.direccion            = data.direccion || '';
+                    state.cp                   = data.cp || '';
+                    state.ciudad               = data.ciudad || '';
+                    state.estado               = data.estado || '';
                     state.isConfigFinished     = data.isConfigFinished !== false;
                     state.isServiceStarted     = data.isServiceStarted || false;
                     state.currentServiceDate   = data.currentServiceDate || '';
@@ -4346,6 +4506,7 @@
                     if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
                     if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
                     if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
+                    actualizarBotonDatosCliente();
                     clientNameInput.disabled = true;
                     cordonSelect.disabled    = true;
                     stationTypeSelect.disabled = true;
@@ -4409,12 +4570,6 @@
                             }
                             syncPosDisplay(k);
                         });
-                    }
-
-                    // Restaurar observaciones
-                    if (data.obsContent !== undefined) {
-                        var obsEd = document.getElementById('obs-editor');
-                        if (obsEd) { obsEd.innerHTML = data.obsContent; checkObsLimit(obsEd); }
                     }
 
                     // Restaurar fotos
@@ -4484,13 +4639,12 @@
             }
 
             // Actualizar encabezado de impresión
-            var hVer     = document.getElementById("header-version");
             var hDateEl  = document.getElementById("header-date");
             var docDate  = hDateEl ? hDateEl.value : '';
             document.getElementById("print-client-name").textContent    = state.clientName;
             document.getElementById("print-service-date").textContent   = docDate ? formatDisplayDate(docDate) : '—';
             var verBadge = document.getElementById("print-version-badge");
-            if (verBadge) verBadge.textContent = hVer ? hVer.value : 'VER 1.0';
+            if (verBadge) verBadge.textContent = 'INFORME DE HALLAZGOS';
 
             // Actualizar tabla de detalle de capturas
             document.getElementById("print-info-client").textContent = state.clientName.toUpperCase();
@@ -4498,30 +4652,66 @@
             document.getElementById("print-info-sucursal").textContent = (sucursalInput && sucursalInput.value.trim()) ? sucursalInput.value.trim() : '-';
             document.getElementById("print-info-tecnico").textContent  = (tecnicoInput && tecnicoInput.value.trim()) ? tecnicoInput.value.trim() : '-';
             document.getElementById("print-info-recibe").textContent   = (quienRecibeInput && quienRecibeInput.value.trim()) ? quienRecibeInput.value.trim() : '-';
+            var direccionPartes = [];
+            if (state.direccion) direccionPartes.push(state.direccion);
+            if (state.cp) direccionPartes.push('C.P. ' + state.cp);
+            if (state.ciudad) direccionPartes.push(state.ciudad);
+            if (state.estado) direccionPartes.push(state.estado);
+            document.getElementById("print-info-direccion").textContent = direccionPartes.length ? direccionPartes.join(', ') : '-';
 
+            // Análisis Global de Hallazgos: una fila por visita (historial), columnas = especies
+            // con actividad registrada — reemplaza el detalle estación-por-estación
+            var printThead = document.getElementById("print-captures-thead");
             var printTbody = document.getElementById("print-captures-tbody");
+            printThead.innerHTML = "";
             printTbody.innerHTML = "";
-            var idx = 0;
-            state.stations.forEach(function(station) {
-                var caps    = stationCaptures[station.id] || {};
-                var hasCaps = Object.keys(caps).some(function(k) { return caps[k] > 0; });
-                if (!hasCaps) return; // omitir estaciones sin datos
-                var capsStr = Object.entries(caps)
-                    .filter(function(e) { return e[1] > 0; })
-                    .map(function(e) { return '<strong>' + e[0] + ':<\/strong> ' + e[1]; })
-                    .join(" | ");
-                var row = document.createElement("tr");
-                row.className = (idx % 2 === 0) ? "bg-white" : "bg-slate-50";
-                row.innerHTML =
-                    '<td class="py-2 px-2 font-mono font-bold text-slate-800 border border-slate-200">' + station.id + '<\/td>' +
-                    '<td class="py-2 px-2 text-slate-600 border border-slate-200">' + station.cordon + '<\/td>' +
-                    '<td class="py-2 px-2 font-semibold text-slate-600 border border-slate-200">' + station.type + '<\/td>' +
-                    '<td class="py-2 px-2 text-xs border border-slate-200">' + capsStr + '<\/td>';
-                printTbody.appendChild(row);
-                idx++;
+
+            var globalHistory = state.history.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
             });
-            if (idx === 0) {
-                printTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400 italic">No se registraron capturas en este servicio.<\/td><\/tr>';
+            var activeCols = ALL_SPECIES.filter(function(sp) {
+                return globalHistory.some(function(h) { return (h.totals[sp] || 0) > 0; });
+            });
+
+            if (globalHistory.length === 0 || activeCols.length === 0) {
+                printThead.innerHTML = '<tr class="bg-slate-100 border-b border-slate-300"><th class="py-2 px-2 font-bold text-slate-700">Fecha<\/th></tr>';
+                printTbody.innerHTML = '<tr><td class="text-center py-4 text-slate-400 italic">Sin visitas registradas en el historial.<\/td><\/tr>';
+            } else {
+                // Columna de Fecha con ancho fijo mayor (evita que el texto se monte con
+                // la primera columna de especie cuando table-layout es "fixed")
+                var headHtml = '<th class="py-2 px-1.5 font-bold text-slate-700" style="width:52px;">Fecha</th>';
+                activeCols.forEach(function(sp) {
+                    headHtml += '<th class="py-2 px-1 font-bold text-slate-700 text-center">' + sp + '<\/th>';
+                });
+                var headRow = document.createElement("tr");
+                headRow.className = "bg-slate-100 border-b border-slate-300";
+                headRow.innerHTML = headHtml;
+                printThead.appendChild(headRow);
+
+                var colTotals = {};
+                activeCols.forEach(function(sp) { colTotals[sp] = 0; });
+
+                globalHistory.forEach(function(h, i) {
+                    var rowHtml = '<td class="py-1.5 px-1.5 font-mono font-bold text-slate-800 border border-slate-200">' + formatDisplayDate(h.date) + '<\/td>';
+                    activeCols.forEach(function(sp) {
+                        var qty = h.totals[sp] || 0;
+                        colTotals[sp] += qty;
+                        rowHtml += '<td class="py-1.5 px-1.5 text-center border border-slate-200">' + qty + '<\/td>';
+                    });
+                    var row = document.createElement("tr");
+                    row.className = (i % 2 === 0) ? "bg-white" : "bg-slate-50";
+                    row.innerHTML = rowHtml;
+                    printTbody.appendChild(row);
+                });
+
+                var totalHtml = '<td class="py-1.5 px-1.5 border border-slate-200 text-slate-800">TOTAL<\/td>';
+                activeCols.forEach(function(sp) {
+                    totalHtml += '<td class="py-1.5 px-1.5 text-center border border-slate-200 text-slate-800">' + colTotals[sp] + '<\/td>';
+                });
+                var totalRow = document.createElement("tr");
+                totalRow.className = "bg-slate-100 font-bold";
+                totalRow.innerHTML = totalHtml;
+                printTbody.appendChild(totalRow);
             }
             // Sugerir nombre de archivo en el diálogo "Guardar como PDF" del navegador
             var originalTitle = document.title;
@@ -4533,62 +4723,6 @@
 
             // Restaurar título original después de que el diálogo cierre
             setTimeout(function() { document.title = originalTitle; }, 1000);
-        };
-
-        /************************************************************************
-         * MÓDULO DE OBSERVACIONES
-         ************************************************************************/
-
-        /* Aplica un estilo CSS inline al texto seleccionado (reemplazo de execCommand
-           para fontName / fontSize, que están deprecados en Chrome 127+)            */
-        function applyStyleToSelection(prop, value) {
-            var sel = window.getSelection ? window.getSelection() : null;
-            if (!sel || sel.rangeCount === 0) return;
-            var range = sel.getRangeAt(0);
-            if (range.collapsed) return;
-            var span = document.createElement('span');
-            span.style[prop] = value;
-            var fragment = range.extractContents();
-            span.appendChild(fragment);
-            range.insertNode(span);
-            sel.removeAllRanges();
-            var newRange = document.createRange();
-            newRange.selectNodeContents(span);
-            sel.addRange(newRange);
-        }
-
-        var FONT_SIZE_MAP = { '1': '8pt', '2': '10pt', '3': '12pt', '4': '14pt', '5': '18pt', '6': '24pt', '7': '36pt' };
-
-        window.formatObs = function(cmd, val) {
-            var ed = document.getElementById('obs-editor');
-            ed.focus();
-            if (cmd === 'fontName') {
-                applyStyleToSelection('fontFamily', val || '');
-            } else if (cmd === 'fontSize') {
-                applyStyleToSelection('fontSize', FONT_SIZE_MAP[val] || '12pt');
-            } else {
-                /* bold, italic, underline, justify*, insertUnorderedList,
-                   insertOrderedList y removeFormat son válidos en contenteditable */
-                document.execCommand(cmd, false, val || null);
-            }
-        };
-
-        function checkObsLimit(el) {
-            var len = (el.innerText || el.textContent || '').length;
-            var counter = document.getElementById('obs-char-count');
-            if (!counter) return;
-            if (len > 5000) {
-                counter.textContent = len + ' / 5 000 caracteres (límite excedido)';
-                counter.style.color = '#ef4444';
-            } else {
-                counter.textContent = len + ' / 5 000 caracteres';
-                counter.style.color = '';
-            }
-        }
-
-        window.clearObsContent = function() {
-            var ed = document.getElementById('obs-editor');
-            if (ed) { ed.innerHTML = ''; checkObsLimit(ed); }
         };
 
         /************************************************************************
@@ -5109,6 +5243,100 @@
             if (val) localStorage.setItem("GEMINI_API_KEY", val);
             toggleApiKeyModal();
             showToast("Clave API de Gemini guardada.", "success");
+        };
+
+        /************************************************************************
+         * MODAL DE DATOS DEL CLIENTE (DIRECCIÓN, C.P., CIUDAD, ESTADO)
+         ************************************************************************/
+        var timerBusquedaCPModal = null;
+
+        function actualizarBotonDatosCliente() {
+            var btnLabel = document.getElementById('client-data-btn-label');
+            if (!btnLabel) return;
+            var partes = [];
+            if (state.direccion) partes.push(state.direccion);
+            if (state.ciudad) partes.push(state.ciudad);
+            if (state.estado) partes.push(state.estado);
+            btnLabel.textContent = partes.length ? partes.join(', ') : 'Agregar Dirección del Cliente';
+        }
+
+        window.openClientDataModal = function() {
+            var modal = document.getElementById('client-data-modal');
+            if (!modal) return;
+            var dirEl = document.getElementById('direccion-input');
+            var cpEl = document.getElementById('cp-modal-input');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            if (dirEl) dirEl.value = state.direccion || '';
+            if (cpEl) cpEl.value = state.cp || '';
+            if (ciudadEl) ciudadEl.value = state.ciudad || '';
+            if (estadoEl) estadoEl.value = state.estado || '';
+            var statusEl = document.getElementById('cp-modal-status');
+            if (statusEl) statusEl.textContent = 'Ingresa el C.P. para autocompletar Estado y Ciudad — puedes editarlos después a mano.';
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+
+        window.closeClientDataModal = function() {
+            var modal = document.getElementById('client-data-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        window.buscarCPModal = function() {
+            var cpEl = document.getElementById('cp-modal-input');
+            var spinner = document.getElementById('cp-modal-spinner');
+            var statusEl = document.getElementById('cp-modal-status');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            if (!cpEl) return;
+            var cp = cpEl.value.trim();
+
+            if (cp.length !== 5 || !/^\d{5}$/.test(cp)) {
+                if (statusEl) statusEl.textContent = 'Ingresa 5 dígitos de C.P. para autocompletar.';
+                return;
+            }
+
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusEl) statusEl.textContent = 'Consultando C.P....';
+
+            clearTimeout(timerBusquedaCPModal);
+            timerBusquedaCPModal = setTimeout(function() {
+                fetch('https://api.zippopotam.us/MX/' + cp)
+                    .then(function(res) {
+                        if (!res.ok) throw new Error('C.P. no encontrado');
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.places && data.places.length > 0) {
+                            var place = data.places[0];
+                            if (estadoEl) estadoEl.value = place['state'] || '';
+                            if (ciudadEl) ciudadEl.value = place['place name'] || '';
+                            if (statusEl) statusEl.textContent = '✓ C.P. localizado — revisa y ajusta si hace falta.';
+                        }
+                    })
+                    .catch(function() {
+                        if (statusEl) statusEl.textContent = 'C.P. no encontrado. Ingresa Ciudad y Estado manualmente.';
+                    })
+                    .finally(function() {
+                        if (spinner) spinner.classList.add('hidden');
+                    });
+            }, 400);
+        };
+
+        window.guardarClientDataModal = function() {
+            var dirEl = document.getElementById('direccion-input');
+            var cpEl = document.getElementById('cp-modal-input');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            state.direccion = dirEl ? dirEl.value.trim() : '';
+            state.cp = cpEl ? cpEl.value.trim() : '';
+            state.ciudad = ciudadEl ? ciudadEl.value.trim() : '';
+            state.estado = estadoEl ? estadoEl.value.trim() : '';
+            actualizarBotonDatosCliente();
+            closeClientDataModal();
+            showToast('Dirección del cliente guardada.', 'success');
         };
 
         /************************************************************************
