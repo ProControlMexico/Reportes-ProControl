@@ -152,6 +152,11 @@
                 min-height: 1.3rem;
             }
         }
+        /* Evita que una tarjeta de resumen NMX-F-605 se corte entre dos páginas al imprimir */
+        .avoid-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
         /* Estilos personalizados */
         .station-btn {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -365,11 +370,50 @@
                 page-break-inside: avoid !important;
             }
         }
+
+        /* === SECCIÓN NMX-F-605 (CUMPLE/NO CUMPLE + DIAGNÓSTICO IA) EN IMPRESIÓN === */
+        @media print {
+            /* La sección es alta y de longitud variable (checklist + texto de IA):
+               permitir que fluya entre páginas en vez de forzar todo en una sola hoja
+               (si no, .print-card la obliga a caber completa y deja huecos en blanco enormes) */
+            #nmx-section {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+                padding-top: 0.5rem !important;
+            }
+            /* Los encabezados que redacta la IA (negritas de sección) nunca quedan
+               solos al pie de una página, separados de su párrafo */
+            #rptDictamenTexto p.font-extrabold {
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+                break-inside: avoid !important;
+            }
+            /* El título "Diagnóstico Técnico..." tampoco queda huérfano al pie de página */
+            #nmx-section h4.print\:block {
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+            }
+            /* Cada categoría del panel "Pendientes por Cumplir" no se corta a la mitad */
+            #panelPendientes > div {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            /* Evita que quede huérfana una sola línea de texto al cortar página */
+            #rptDictamenTexto p,
+            #rptDictamenTexto li {
+                orphans: 3;
+                widows: 3;
+            }
+            /* Espaciado más compacto en impresión para las tarjetas de resumen */
+            #tileCriticos, #tileNoCriticos {
+                padding: 8px !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
 
-    <header class="bg-gradient-to-r from-slate-900 to-teal-950 text-white shadow-md no-print">
+    <header class="sticky top-0 z-50 bg-gradient-to-r from-slate-900 to-teal-950 text-white shadow-md no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-row justify-between items-center gap-3">
 
             <!-- Logo + Título apilados verticalmente -->
@@ -385,18 +429,74 @@
                 </div>
             </div>
 
-            <!-- Info del documento (derecha) -->
-            <div class="flex flex-col items-end gap-1 sm:gap-2 text-right flex-shrink-0">
+            <!-- Grupo derecho: info del documento + menú de acciones -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
 
-                <span class="text-xs sm:text-sm font-bold text-white leading-none truncate max-w-[140px] sm:max-w-none" id="header-client-name">Sin cliente</span>
+                <!-- Info del documento -->
+                <div class="flex flex-col items-end gap-1 sm:gap-2 text-right">
 
-                <input type="date" id="header-date"
-                       class="bg-transparent border-b border-teal-700 hover:border-teal-400 focus:border-teal-300 text-teal-200 font-medium focus:outline-none cursor-pointer text-right transition-colors w-28 sm:w-auto"
-                       style="font-size:11px;">
+                    <span class="text-xs sm:text-sm font-bold text-white leading-none truncate max-w-[140px] sm:max-w-none" id="header-client-name">Sin cliente</span>
 
-                <input type="text" id="header-version" value="VER 1.0"
-                       class="bg-teal-900/40 border border-teal-700 hover:border-teal-500 focus:border-teal-300 rounded px-2 py-0.5 font-mono font-bold text-teal-200 focus:outline-none w-16 sm:w-20 text-center transition-colors"
-                       style="font-size:11px;">
+                    <input type="date" id="header-date"
+                           class="bg-transparent border-b border-teal-700 hover:border-teal-400 focus:border-teal-300 text-teal-200 font-medium focus:outline-none cursor-pointer text-right transition-colors w-28 sm:w-auto"
+                           style="font-size:11px;">
+
+                    <input type="text" id="header-version" value="VER 1.0"
+                           class="bg-teal-900/40 border border-teal-700 hover:border-teal-500 focus:border-teal-300 rounded px-2 py-0.5 font-mono font-bold text-teal-200 focus:outline-none w-16 sm:w-20 text-center transition-colors"
+                           style="font-size:11px;">
+
+                </div>
+
+                <!-- Botón de menú (hamburguesa) -->
+                <div class="relative">
+                    <button id="menu-toggle-btn" onclick="toggleActionsMenu()"
+                            title="Menú de acciones"
+                            aria-haspopup="true" aria-expanded="false"
+                            class="bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-all shadow-md">
+                        <i class="fa-solid fa-bars text-base sm:text-lg"></i>
+                    </button>
+
+                    <!-- Menú desplegable de acciones -->
+                    <div id="actions-menu"
+                         class="hidden absolute top-full right-0 mt-2 min-w-[170px] flex flex-col gap-1 bg-slate-900 border border-slate-700 rounded-xl p-1.5 shadow-2xl z-50">
+                        <button onclick="exportProject(); closeActionsMenu();"
+                                title="Exportar proyecto como archivo JSON"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-file-export text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">EXPORT</span>
+                        </button>
+                        <button onclick="importProject(); closeActionsMenu();"
+                                title="Importar proyecto desde archivo JSON"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-file-import text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">IMPORT</span>
+                        </button>
+                        <button onclick="printReport(); closeActionsMenu();"
+                                title="Imprimir / Guardar PDF"
+                                class="bg-slate-900 hover:bg-slate-700 text-white border border-slate-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-print text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">PDF</span>
+                        </button>
+                        <button id="toggle-test-btn" onclick="toggleTestMode(); closeActionsMenu();"
+                                title="Activar / Desactivar datos de prueba"
+                                class="bg-violet-900 hover:bg-violet-800 text-white border border-violet-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-flask text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">TEST</span>
+                        </button>
+                        <a href="manual.html" target="_blank"
+                           title="Abrir Manual de Usuario"
+                           class="bg-sky-900 hover:bg-sky-800 text-white border border-sky-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all no-underline">
+                            <i class="fa-solid fa-circle-question text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">AYUDA</span>
+                        </a>
+                        <button onclick="toggleApiKeyModal(); closeActionsMenu();"
+                                title="Configurar clave API de Gemini para el Diagnóstico IA"
+                                class="bg-amber-900 hover:bg-amber-800 text-white border border-amber-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-key text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">CLAVE IA</span>
+                        </button>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -404,40 +504,6 @@
 
     <!-- Input oculto para importar proyecto -->
     <input type="file" id="import-file-input" accept=".json" class="hidden">
-
-    <!-- BOTONES FLOTANTES DE ACCIÓN -->
-    <div class="fixed top-16 sm:top-20 right-2 sm:right-4 z-40 flex flex-col gap-1.5 sm:gap-2 no-print">
-        <button onclick="exportProject()"
-                title="Exportar proyecto como archivo JSON"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-file-export text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">EXPORT</span>
-        </button>
-        <button onclick="importProject()"
-                title="Importar proyecto desde archivo JSON"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-file-import text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">IMPORT</span>
-        </button>
-        <button onclick="printReport()"
-                title="Imprimir / Guardar PDF"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-slate-900 text-white border border-slate-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl">
-            <i class="fa-solid fa-print text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">PDF</span>
-        </button>
-        <button id="toggle-test-btn" onclick="toggleTestMode()"
-                title="Activar / Desactivar datos de prueba"
-                class="opacity-50 hover:opacity-100 active:opacity-100 bg-violet-900 text-white border border-violet-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl mt-1 sm:mt-2">
-            <i class="fa-solid fa-flask text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">TEST</span>
-        </button>
-        <a href="manual.html" target="_blank"
-           title="Abrir Manual de Usuario"
-           class="opacity-50 hover:opacity-100 active:opacity-100 bg-sky-900 text-white border border-sky-600 rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 flex flex-col items-center gap-0.5 sm:gap-1 transition-all shadow-xl mt-1 sm:mt-2 no-underline">
-            <i class="fa-solid fa-circle-question text-base sm:text-xl"></i>
-            <span class="text-[9px] sm:text-[10px] font-black tracking-widest">AYUDA</span>
-        </a>
-    </div>
 
     <!-- Encabezado Especial de Impresión -->
     <div class="print-header-visible">
@@ -489,8 +555,42 @@
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                 <i class="fa-regular fa-building"></i>
                             </span>
-                            <input type="text" id="client-name-input" placeholder="Ej. Planta Alimentos Sigma" 
+                            <input type="text" id="client-name-input" placeholder="Ej. Planta Alimentos Sigma"
                                    class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Sucursal / Técnico / Quien Recibe (escritura libre) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Sucursal</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </span>
+                                <input type="text" id="sucursal-input" placeholder="Ej. Sucursal Centro"
+                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Técnico ProControl</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                    <i class="fa-solid fa-user-gear"></i>
+                                </span>
+                                <input type="text" id="tecnico-input" placeholder="Ej. Juan Pérez"
+                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Quien Recibe (Cliente)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </span>
+                                <input type="text" id="quien-recibe-input" placeholder="Ej. Gerente de Planta"
+                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                            </div>
                         </div>
                     </div>
 
@@ -613,6 +713,16 @@
                                     <td class="font-bold py-1 text-slate-500">FECHA DE SERVICIO:</td>
                                     <td class="py-1 font-semibold text-slate-800" id="print-info-date">-</td>
                                 </tr>
+                                <tr>
+                                    <td class="font-bold py-1 text-slate-500">SUCURSAL:</td>
+                                    <td class="py-1 font-semibold text-slate-800" id="print-info-sucursal">-</td>
+                                    <td class="font-bold py-1 text-slate-500">TÉCNICO PROCONTROL:</td>
+                                    <td class="py-1 font-semibold text-slate-800" id="print-info-tecnico">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold py-1 text-slate-500">RECIBE (CLIENTE):</td>
+                                    <td class="py-1 font-semibold text-slate-800" colspan="3" id="print-info-recibe">-</td>
+                                </tr>
                             </tbody>
                         </table>
                         <hr class="border-slate-300 mt-3">
@@ -695,6 +805,390 @@
                         </thead>
                         <tbody id="print-captures-tbody" class="divide-y divide-slate-200"></tbody>
                     </table>
+                </div>
+
+                <!-- SECCIÓN NMX-F-605: INSPECCIÓN CUMPLE / NO CUMPLE + DIAGNÓSTICO TÉCNICO IA -->
+                <div id="nmx-section" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
+                    <div class="flex items-center gap-3 mb-4 no-print">
+                        <div class="bg-teal-100 text-teal-800 p-2 rounded-lg">
+                            <i class="fa-solid fa-clipboard-check text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Inspección NMX-F-605 — Cumple / No Cumple</h3>
+                            <p class="text-xs text-slate-400">Checklist técnico de riesgo de plagas y exclusión física. Los Puntos Críticos exigen 100% de cumplimiento.</p>
+                        </div>
+                    </div>
+                    <h3 class="hidden print:block text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 pb-2 border-b border-slate-300">
+                        Inspección NMX-F-605 — Diagnóstico de Cumplimiento
+                    </h3>
+
+                    <!-- ¿Servicio MIP formal contratado? -->
+                    <div class="no-print bg-slate-50 border border-slate-200/60 rounded-xl p-3.5 mb-4 flex items-center justify-between flex-wrap gap-2">
+                        <label class="text-xs font-semibold text-slate-600">¿El establecimiento cuenta con un Servicio MIP formal contratado?</label>
+                        <select id="tieneServicioMIP" onchange="toggleServicioMIP()" class="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="si">SÍ tiene servicio actualmente</option>
+                            <option value="no">NO tiene servicio MIP contratado</option>
+                        </select>
+                    </div>
+
+                    <!-- Resumen de cumplimiento (siempre visible, incluido en la impresión) -->
+                    <div class="avoid-break grid grid-cols-2 gap-3 mb-3">
+                        <div id="tileCriticos" class="p-3 rounded-xl border-2 border-teal-500 bg-teal-50 text-center">
+                            <span class="text-[9px] font-bold uppercase text-slate-500 block tracking-wide">Puntos Críticos <span class="opacity-70 font-semibold normal-case">(req. 100%)</span></span>
+                            <span id="badge-criticos-summary" class="text-lg font-black text-teal-700">0 / 0 Cumplidos</span>
+                        </div>
+                        <div id="tileNoCriticos" class="p-3 rounded-xl border-2 border-teal-500 bg-teal-50 text-center">
+                            <span class="text-[9px] font-bold uppercase text-slate-500 block tracking-wide">Puntos Generales <span class="opacity-70 font-semibold normal-case">(req. 90%)</span></span>
+                            <span id="badge-nocriticos-summary" class="text-lg font-black text-teal-700">100%</span>
+                        </div>
+                    </div>
+                    <div class="avoid-break p-3 rounded-xl border-2 border-slate-900 bg-slate-900 text-center mb-4">
+                        <span class="text-[9px] font-bold uppercase text-slate-400 block tracking-wider">Estatus de Vulnerabilidad Sanitaria del Inmueble</span>
+                        <span id="nmx-estatus-texto" class="text-sm font-black text-emerald-400">🟢 VULNERABILIDAD BAJA (SIN DATOS AÚN)</span>
+                    </div>
+
+                    <!-- Pendientes por cumplir (siempre visible, incluido en la impresión) -->
+                    <div id="panelPendientes" class="mb-4"></div>
+
+                    <!-- Checklist interactivo (solo pantalla — se captura durante la visita) -->
+                    <div class="no-print space-y-3">
+
+                        <details class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50" open>
+                            <summary class="cursor-pointer select-none bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                                <span>1. Carpeta MIP y Trazabilidad Documental</span>
+                                <span class="text-[9px] bg-white text-rose-600 px-2 py-0.5 rounded-full border border-rose-200">🔴 Crítico</span>
+                            </summary>
+                            <div class="p-4 space-y-3">
+                                <div>
+                                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                        <label class="text-xs font-bold text-slate-700">1.1 Carpeta MIP Actualizada</label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Carpeta técnica MIP completa y vigente en sitio: licencia sanitaria del proveedor, contrato/póliza de servicio, fichas técnicas y HDS de los productos, registros COFEPRIS/CICOPLAFEST, croquis numerado de dispositivos y bitácora de servicios recientes.</p>
+                                    <select id="q_doc_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Carpeta MIP completa, vigente y disponible en sitio</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Carpeta incompleta, desactualizada o no disponible en sitio</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                            <summary class="cursor-pointer select-none bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                                <span>2. Inspección Directa de Actividad de Fauna Nociva</span>
+                                <span class="text-[9px] bg-white text-rose-600 px-2 py-0.5 rounded-full border border-rose-200">🔴 Crítico</span>
+                            </summary>
+                            <div class="p-4 space-y-3">
+                                <div>
+                                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                        <label class="text-xs font-bold text-slate-700">2.1 Ausencia Total de Evidencia o Plagas Activas</label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Cero presencia de insectos (vivos o muertos), roedores, excretas, manchas o aves en áreas de preparación, almacén o barra.</p>
+                                    <select id="q_pla_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Instalaciones limpias de toda plaga o evidencia</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Avistamiento de especímenes, excretas o rastros activos</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                        <label class="text-xs font-bold text-slate-700">2.2 Restos Biológicos de Plagas (Exuvias, Ootecas, Larvas o Pupas)</label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Ausencia de mudas de insectos, ootecas de cucaracha, capullos, larvas o pupas en grietas, rincones o zonas de resguardo.</p>
+                                    <select id="q_bio_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Superficies y estructuras libres de restos biológicos de plagas</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Presencia de exuvias, ootecas, capullos, larvas o pupas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                        <label class="text-xs font-bold text-slate-700">2.3 Marcas o Daños por Mordeduras de Roedores</label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Estructuras, mobiliario, cableado o empaques sin marcas de roído características de actividad de roedores.</p>
+                                    <select id="q_bio_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Sin marcas o daños por mordeduras de roedores</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Estructuras, mobiliario o empaques con marcas de roído</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                        <label class="text-xs font-bold text-slate-700">2.4 Olores Característicos de Infestación Activa</label>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Ausencia de olores almizclados u orgánicos asociados a aglomeración de roedores o insectos.</p>
+                                    <select id="q_bio_3" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Inmueble libre de olores característicos de infestación</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Olor almizclado u orgánico asociado a plagas activas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                            <summary class="cursor-pointer select-none bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                                3. Inocuidad — Almacenes, Cocina y Buenas Prácticas
+                            </summary>
+                            <div class="p-4 space-y-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.1 Regla de Estiba (15 cm del piso / Tarimas)</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Alimentos e insumos elevados del piso sobre anaqueles o tarimas inoxidables/plásticas.</p>
+                                    <select id="q_alm_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Todo en anaqueles/tarimas a &gt; 15 cm del suelo</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Cajas o sacos colocados directamente sobre el piso</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.2 Control y Eliminación de Cartón Corrugado</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Prohibición de mantener cajas de empaque original del proveedor en cocina o almacén.</p>
+                                    <select id="q_alm_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Insumos trasvasados a contenedores plásticos/inoxidables</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Acumulación de cajas de cartón corrugado de proveedores</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.3 Resguardo de Graneles en Contenedores Herméticos</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Harinas, granos y azúcares guardados en contenedores plásticos grado alimenticio con tapa.</p>
+                                    <select id="q_alm_3" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Contenedores grado alimenticio cerrados y etiquetados</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Sacos abiertos expuestos o sin tapa</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.4 Acumulación de Grasa Orgánica en Equipos y Motores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Limpieza de grasa debajo de freidoras, estufas y motores de refrigeración.</p>
+                                    <select id="q_equ_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Equipos limpios por debajo, detrás y en motores</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Capa densa o costras de grasa orgánica acumulada</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.5 Mantenimiento y Desazolve de Trampas de Grasa</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Trampas de grasa sin saturación de sólidos/capas de grasa, con sellado de tapa y sin malos olores.</p>
+                                    <select id="q_equ_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Trampa de grasa con mantenimiento, desazolvada y funcional</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Trampa de grasa saturada, con nata de grasa acumulada o fuga/olor</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.6 Coladeras, Rejillas y Sello Hidráulico en Drenajes</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Rejillas limpias sin lodos orgánicos acumulados y coladeras con sello hidráulico activo para evitar moscas del drenaje.</p>
+                                    <select id="q_equ_3" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Coladeras y rejillas limpias con sello hidráulico funcional</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Coladeras azolvadas con lodos orgánicos, sin rejilla o sin sello hidráulico</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.7 Integridad y Sellado de Tapas de Trampas de Grasa</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Tapas de trampas de grasa sin daños, con sellado hermético que evite fugas de olor o acceso de fauna.</p>
+                                    <select id="q_equ_4" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Tapas herméticas, sin daños ni fugas</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Tapas dañadas, sin sello hermético o con fuga</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.8 Limpieza Debajo de Mobiliario y Estantería</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Áreas bajo mobiliario, estantería y anaqueles libres de suciedad, polvo o residuos acumulados.</p>
+                                    <select id="q_alm_4" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Áreas bajo mobiliario y estantería limpias</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Suciedad, polvo o residuos acumulados bajo mobiliario/estantería</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.9 Contenedores de Basura en Buen Estado y con Tapa Hermética</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Contenedores de basura limpios, sin daños y equipados con tapa hermética.</p>
+                                    <select id="q_res_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Contenedores limpios, en buen estado y con tapa hermética</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Contenedores dañados, sucios o sin tapa hermética</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3.10 Ausencia de Desperdicios Orgánicos Expuestos Fuera de Contenedores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Sin bolsas, restos de comida u otros desperdicios orgánicos fuera de los contenedores.</p>
+                                    <select id="q_res_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Sin desperdicios orgánicos expuestos fuera de contenedores</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Desperdicios orgánicos expuestos fuera de contenedores</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                            <summary class="cursor-pointer select-none bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                                4. Infraestructura, Exclusión y Hermeticidad
+                            </summary>
+                            <div class="p-4 space-y-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.1 Guardapolvos y Holguras en Puertas Exteriores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Holgura inferior en puertas de acceso/servicio menor a 6 mm.</p>
+                                    <select id="q_her_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Puertas ajustadas con guardapolvos &lt; 6 mm</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Luz inferior &gt; 6 mm o puertas abiertas a intemperie</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.2 Mallas Mosquiteras en Ventanas y Ventilación</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Protección contra voladores en ventanas de cocina, barra o almacén.</p>
+                                    <select id="q_her_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Mallas mosquiteras intactas en aperturas exteriores</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Ventanas sin mallas o con roturas expuestas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.3 Sellado de Fisuras, Azulejos y Pasamuros</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Ausencia de grietas o perforaciones de tuberías sin sellar que sirvan de refugio.</p>
+                                    <select id="q_her_3" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Azulejos e infraestructura sin fisuras refugio</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Oquedades, pasamuros abiertos o azulejos rotos</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.4 Sistemas de Cierre Automático en Puertas</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Brazos hidráulicos o resortes de cierre operando correctamente en puertas de acceso/servicio.</p>
+                                    <select id="q_her_4" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Sistemas de cierre automático operando correctamente</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Cierre automático dañado, ausente o puertas que quedan abiertas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.5 Uniones Estructurales y Mampostería</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Paredes, muros y uniones estructurales libres de huecos, aberturas o grietas que sirvan de acceso.</p>
+                                    <select id="q_her_5" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Muros y uniones estructurales sin huecos ni aberturas</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Huecos, aberturas o grietas en muros o mampostería</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.6 Perímetro Exterior Libre de Maleza Alta</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Vegetación perimetral controlada; sin maleza alta que sirva de refugio a fauna nociva.</p>
+                                    <select id="q_her_6" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Perímetro con vegetación controlada</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Maleza alta en el perímetro exterior</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">4.7 Perímetro Exterior Libre de Escombros o Materiales en Desuso</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Perímetro exterior libre de escombros, mobiliario en desuso o materiales acumulados que sirvan de refugio.</p>
+                                    <select id="q_her_7" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Perímetro libre de escombros o materiales acumulados</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Escombros o materiales en desuso acumulados en el perímetro</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+                            <summary class="cursor-pointer select-none bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                                <span>5. Resguardo de Químicos y Normativa de Dispositivos</span>
+                                <span class="text-[9px] bg-white text-rose-600 px-2 py-0.5 rounded-full border border-rose-200">🔴 3 Críticos</span>
+                            </summary>
+                            <div class="p-4 space-y-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.1 Almacenamiento Exclusivo de Químicos y Plaguicidas</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Gabinete o área aislada bajo llave, separada de alimentos y utensilios.</p>
+                                    <select id="q_qui_1" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Gabinete exclusivo bajo llave y rotulado</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Químicos almacenados en cocina o junto a alimentos/utensilios</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.2 Restricción de Cebos Tóxicos en Áreas Interiores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Prohibido el uso de venenos/cebos tóxicos dentro de cocina, almacén o barra (solo mecánicas/engomados).</p>
+                                    <select id="q_qui_2" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Cero cebos tóxicos en interiores; solo trampeo de goma/mecánico</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Presencia de cebos raticidas químicos dentro de cocina o almacén</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.3 Prohibición de Lámparas Electrocutoras ("Zappers")</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">NMX-F-605 prohíbe insectocutores de choque eléctrico en áreas de alimentos (solo trampas UV de lámina pegajosa).</p>
+                                    <select id="q_qui_3" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Lámparas UV con lámina pegajosa instaladas correctamente</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Uso de lámparas electrocutoras de choque ("zapper") sobre alimentos</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.4 Operatividad y Limpieza de Trampas Mecánicas e Interiores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Revisión de operatividad, sustitución y limpieza de trampas de pegamento, captura viva o impacto en interiores.</p>
+                                    <select id="q_qui_4" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Trampas interiores limpias, operativas y con mantenimiento al día</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Trampas llenas, con polvo acumulado, dañadas o inoperativas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.5 Ubicación Adecuada de Lámparas Atrapa-Insectos UV</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Verificación de que NO estén instaladas directamente sobre mesas de preparación o estufas.</p>
+                                    <select id="q_qui_5" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Lámparas instaladas en puntos de intersección sin riesgo de caída sobre alimentos</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Lámpara UV colocada directamente encima de mesas de trabajo o estufas</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.6 Mantenimiento, Encendido y Tubos UV</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Equipos encendidos 24/7, con láminas adhesivas limpias y reemplazo de tubos dentro del espectro UV.</p>
+                                    <select id="q_qui_6" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Equipos encendidos 24/7, láminas adhesivas limpias y tubos UV vigentes</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Equipos apagados, lámina pegajosa saturada o tubos fundidos/vencidos</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5.7 Estaciones Cebaderas Perimetrales Exteriores</label>
+                                    <p class="text-[11px] text-slate-400 mb-1.5">Instaladas exclusivamente en el perímetro exterior, cerradas con llave y fijadas.</p>
+                                    <select id="q_qui_7" onchange="evaluarNOM()" class="q-binary w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                        <option value="cumple">🟢 CUMPLE: Estaciones cebaderas fijadas, cerradas con llave y etiquetadas en exterior</option>
+                                        <option value="no_cumple">🔴 NO CUMPLE: Estaciones sueltas, abiertas sin llave, desprendidas o sin etiqueta</option>
+                                        <option value="na">⚪ NO APLICA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
+                    </div>
+
+                    <!-- DIAGNÓSTICO TÉCNICO IA (mismo motor y prompt que en reporte auditoria.html) -->
+                    <div class="border-t border-slate-100 pt-4 mt-4">
+                        <div class="no-print flex items-center justify-between gap-2 flex-wrap mb-3">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Diagnóstico Técnico IA (Gemini)</h4>
+                            <button onclick="generarDictamenIA()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generar Análisis IA
+                            </button>
+                        </div>
+                        <h4 class="hidden print:block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 pb-1 border-b border-slate-300">
+                            Diagnóstico Técnico y Análisis de Riesgo (IA)
+                        </h4>
+                        <div class="no-print mb-3">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Contexto Adicional para el Diagnóstico IA (opcional)</label>
+                            <textarea id="contextoIA" rows="2" placeholder="Ej. obra en proceso, cambio de proveedor de limpieza, temporada alta, colindancia con terreno baldío, etc." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none resize-y"></textarea>
+                            <p class="text-[10px] text-slate-400 mt-1">Se envía a la IA junto con el checklist — no lo reemplaza, solo aporta contexto de la visita.</p>
+                        </div>
+                        <div id="rptDictamenTexto" class="text-xs text-slate-700 leading-relaxed space-y-2">
+                            Completa el checklist y pulsa "Generar Análisis IA" para redactar el diagnóstico técnico del servicio.
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ANALÍTICA: SECCIONES INDEPENDIENTES VERTICALES -->
@@ -1157,6 +1651,37 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIGURACIÓN DE CLAVE API (GEMINI — DIAGNÓSTICO IA) -->
+    <div id="modalApiKey" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-amber-400 text-xl"><i class="fa-solid fa-key"></i></span>
+                    <div>
+                        <h3 class="font-bold text-base">Configurar Clave API de Google Gemini</h3>
+                        <p class="text-xs text-slate-400">Necesaria para generar el Diagnóstico Técnico IA</p>
+                    </div>
+                </div>
+                <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-white transition-all text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5">
+                <p class="text-xs text-slate-500 mb-3">Ingresa tu clave API de Google AI Studio para habilitar la generación del análisis técnico de riesgos con IA.</p>
+                <input type="text" id="inputApiKeyModal" placeholder="Pega aquí tu clave API de Gemini..."
+                       class="w-full text-xs border border-slate-200 rounded-lg px-3 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
+            </div>
+            <div class="bg-slate-50 px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="toggleApiKeyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                    Cancelar
+                </button>
+                <button onclick="guardarApiKeyModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-5 rounded-lg text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Guardar Clave
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE FIRMA DIGITAL -->
     <div id="signature-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm no-print">
         <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100">
@@ -1208,6 +1733,30 @@
             };
         }
 
+        /************************************************************************
+         * MENÚ DE ACCIONES (HAMBURGUESA) DEL ENCABEZADO
+         ************************************************************************/
+        function toggleActionsMenu() {
+            const menu = document.getElementById("actions-menu");
+            const btn = document.getElementById("menu-toggle-btn");
+            menu.classList.toggle("hidden");
+            btn.setAttribute("aria-expanded", menu.classList.contains("hidden") ? "false" : "true");
+        }
+
+        function closeActionsMenu() {
+            document.getElementById("actions-menu").classList.add("hidden");
+            document.getElementById("menu-toggle-btn").setAttribute("aria-expanded", "false");
+        }
+
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("actions-menu");
+            const btn = document.getElementById("menu-toggle-btn");
+            if (!menu || !btn) return;
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                closeActionsMenu();
+            }
+        });
+
         /* Devuelve 'YYYY-MM-DD' en hora local — evita el bug UTC de toISOString */
         function getLocalDateStr(d) {
             d = d || new Date();
@@ -1221,6 +1770,9 @@
          ************************************************************************/
         let state = window.__SAVED_STATE__ || {
             clientName: "",
+            sucursal: "",
+            tecnico: "",
+            quienRecibe: "",
             isConfigFinished: false,
             isServiceStarted: false,
             currentServiceDate: "",
@@ -1317,6 +1869,9 @@
          * ELEMENTOS DEL DOM
          ************************************************************************/
         const clientNameInput = document.getElementById("client-name-input");
+        const sucursalInput = document.getElementById("sucursal-input");
+        const tecnicoInput = document.getElementById("tecnico-input");
+        const quienRecibeInput = document.getElementById("quien-recibe-input");
         const cordonSelect = document.getElementById("cordon-select");
         const stationTypeSelect = document.getElementById("station-type-select");
         const stationQtyInput = document.getElementById("station-qty-input");
@@ -1927,9 +2482,15 @@
                 }
 
                 state.clientName = clientName;
+                state.sucursal = sucursalInput ? sucursalInput.value.trim() : "";
+                state.tecnico = tecnicoInput ? tecnicoInput.value.trim() : "";
+                state.quienRecibe = quienRecibeInput ? quienRecibeInput.value.trim() : "";
                 state.isConfigFinished = true;
 
                 clientNameInput.disabled = true;
+                if (sucursalInput) sucursalInput.disabled = true;
+                if (tecnicoInput) tecnicoInput.disabled = true;
+                if (quienRecibeInput) quienRecibeInput.disabled = true;
                 cordonSelect.disabled = true;
                 stationTypeSelect.disabled = true;
                 stationQtyInput.disabled = true;
@@ -1975,6 +2536,9 @@
         document.getElementById("confirm-edit-config-ok").addEventListener("click", function() {
             // Reactivar todos los campos de configuración
             clientNameInput.disabled = false;
+            if (sucursalInput) sucursalInput.disabled = false;
+            if (tecnicoInput) tecnicoInput.disabled = false;
+            if (quienRecibeInput) quienRecibeInput.disabled = false;
             cordonSelect.disabled = false;
             stationTypeSelect.disabled = false;
             stationQtyInput.disabled = false;
@@ -2321,7 +2885,7 @@
         function initCheckboxes() {
             speciesCheckboxesContainer.innerHTML = "";
             ALL_SPECIES.forEach(function(sp) {
-                const color = SPECIES_META[sp].color;
+                const color = SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8";
                 const wrapper = document.createElement("label");
                 wrapper.className = "flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer select-none hover:border-slate-300 transition-all text-xs font-semibold shadow-sm";
                 
@@ -2447,7 +3011,7 @@
                         const pct = ((qty / pieGrandTotal) * 100).toFixed(1);
                         pieLabels.push(org + " (" + pct + "%)");
                         pieData.push(qty);
-                        pieColors.push(SPECIES_META[org].color);
+                        pieColors.push(SPECIES_META[org] ? SPECIES_META[org].color : "#94a3b8");
                     }
                 });
             }
@@ -2541,10 +3105,10 @@
                     datasets.push({
                         label: sp,
                         data: dataPoints,
-                        borderColor: SPECIES_META[sp].color,
-                        backgroundColor: SPECIES_META[sp].color + "15",
+                        borderColor: SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8",
+                        backgroundColor: (SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8") + "15",
                         borderWidth: 3,
-                        pointBackgroundColor: SPECIES_META[sp].color,
+                        pointBackgroundColor: SPECIES_META[sp] ? SPECIES_META[sp].color : "#94a3b8",
                         pointHoverRadius: 8,
                         pointRadius: hasSinglePoint ? 6 : 4,
                         tension: 0.2,
@@ -2830,7 +3394,9 @@
                 '.leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;user-select:none;transition:opacity .15s;}' +
                 '.leg-item.off{opacity:.35;}' +
                 '.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}' +
-                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}';
+                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+                'button{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:7px 16px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}' +
+                'button:hover{background:#334155;}';
 
             var html =
                 '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
@@ -2842,6 +3408,7 @@
                 '<header>' +
                 '<div><h1>Consumo de Cebo — Estaciones Cebadera<\/h1>' +
                 '<p class="sub">Cliente: ' + (state.clientName || '—') + ' &nbsp;·&nbsp; Máx registrado: ' + yMax + '% &nbsp;·&nbsp; ' + timeline.length + ' servicio(s)<\/p><\/div>' +
+                '<button onclick="window.close()">Cerrar Analizador<\/button>' +
                 '<\/header>' +
                 '<div class="row">' +
                 '<div class="chart-col"><canvas id="bc"><\/canvas><\/div>' +
@@ -3240,181 +3807,142 @@
                 return;
             }
 
-            let timeline = [];
+            var timeline = [];
             state.history.forEach(function(h) {
                 timeline.push({ date: h.date, totals: Object.assign({}, h.totals) });
             });
-
             if (state.isServiceStarted) {
-                let currentTotals = {};
-                state.stations.forEach(function(station) {
-                    Object.entries(station.captures).forEach(function(entry) {
-                        currentTotals[entry[0]] = (currentTotals[entry[0]] || 0) + entry[1];
+                var curT = {};
+                state.stations.forEach(function(s) {
+                    Object.entries(s.captures).forEach(function(e) { curT[e[0]] = (curT[e[0]] || 0) + e[1]; });
+                });
+                timeline.push({ date: state.currentServiceDate, totals: curT });
+            }
+            timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+
+            if (timeline.length === 0) { showToast("No hay servicios con datos para mostrar.", "warning"); return; }
+
+            var nw = window.open('', '_blank');
+            if (!nw) { showToast("Habilita las ventanas emergentes (popups) para abrir el analizador.", "warning"); return; }
+
+            var css =
+                'body{font-family:"Inter",sans-serif;background:#0f172a;color:#f1f5f9;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column;}' +
+                '.wrap{max-width:1200px;margin:0 auto;width:100%;flex-grow:1;display:flex;flex-direction:column;gap:16px;padding:24px 20px;}' +
+                'header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #1e293b;padding-bottom:14px;flex-wrap:wrap;gap:8px;}' +
+                'h1{font-size:1.25rem;font-weight:800;margin:0;color:#2dd4bf;}' +
+                '.sub{font-size:.72rem;color:#94a3b8;margin:3px 0 0;}' +
+                '.row{display:flex;gap:20px;flex-grow:1;min-height:480px;}' +
+                '.chart-col{background:#020617cc;border:1px solid #1e293b;border-radius:16px;padding:20px;flex:1;position:relative;}' +
+                '.legend-col{background:#020617cc;border:1px solid #1e293b;border-radius:16px;padding:16px;width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}' +
+                '.leg-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:6px;}' +
+                '.leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;user-select:none;transition:opacity .15s;}' +
+                '.leg-item.off{opacity:.3;}' +
+                '.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}' +
+                '.leg-lbl{font-size:.7rem;font-weight:600;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+                'button{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:7px 16px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}' +
+                'button:hover{background:#334155;}';
+
+            var html =
+                '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+                '<title>Tendencias · ' + (state.clientName || '') + '<\/title>' +
+                '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+                '<style>' + css + '<\/style>' +
+                '<\/head><body>' +
+                '<div class="wrap">' +
+                '<header>' +
+                '<div><h1>Tendencias Históricas por Especie<\/h1>' +
+                '<p class="sub">Cliente: ' + (state.clientName || '—') + ' &nbsp;·&nbsp; ' + timeline.length + ' servicio(s) registrado(s)<\/p><\/div>' +
+                '<button onclick="window.close()">Cerrar Analizador<\/button>' +
+                '<\/header>' +
+                '<div class="row">' +
+                '<div class="chart-col"><canvas id="tc"><\/canvas><\/div>' +
+                '<div class="legend-col"><div class="leg-title">Especies<\/div><div id="leg"><\/div><\/div>' +
+                '<\/div><\/div>' +
+                '<\/body><\/html>';
+
+            nw.document.write(html);
+            nw.document.close();
+
+            var cs = nw.document.createElement('script');
+            cs.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            nw.document.head.appendChild(cs);
+
+            cs.onload = function() {
+                var doc = nw.document;
+                var chartInst = null;
+                var visible = {};
+                ALL_SPECIES.forEach(function(sp) { visible[sp] = true; });
+
+                var lineLabels = timeline.map(function(t) {
+                    return new Date(t.date + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+                });
+
+                function buildDatasets() {
+                    var ds = [];
+                    ALL_SPECIES.forEach(function(sp) {
+                        if (!visible[sp]) return;
+                        var data = timeline.map(function(t) { return t.totals[sp] || 0; });
+                        if (!data.some(function(v) { return v > 0; })) return;
+                        var color = SPECIES_META[sp] ? SPECIES_META[sp].color : '#94a3b8';
+                        ds.push({
+                            label: sp,
+                            data: data,
+                            borderColor: color,
+                            backgroundColor: color + '18',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: color,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1.5,
+                            pointRadius: timeline.length === 1 ? 6 : 4,
+                            pointHoverRadius: 9,
+                            tension: 0.2,
+                            fill: false,
+                            spanGaps: true
+                        });
                     });
-                });
-                timeline.push({ date: state.currentServiceDate, totals: currentTotals });
-            }
-
-            timeline.sort(function(a, b) {
-                return new Date(a.date) - new Date(b.date);
-            });
-
-            const newWindow = window.open("", "_blank");
-            if (!newWindow) {
-                showToast("Por favor habilita las ventanas emergentes (popups) para abrir el analizador.", "warning");
-                return;
-            }
-
-            const htmlShell = '<!DOCTYPE html>' +
-            '<html lang="es">' +
-            '<head>' +
-            '  <meta charset="UTF-8">' +
-            '  <title>Seguimiento de Tendencias - ' + state.clientName + '<\/title>' +
-            '  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">' +
-            '  <style>body { font-family: "Inter", sans-serif; }<\/style>' +
-            '<\/head>' +
-            '<body class="bg-slate-900 text-slate-100 min-h-screen p-6 sm:p-10 flex flex-col">' +
-            '  <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">' +
-            '    <header class="flex justify-between items-center border-b border-slate-800 pb-4">' +
-            '      <div>' +
-            '        <h1 class="text-2xl font-bold tracking-tight text-white">Visualizador Técnico de Tendencias<\/h1>' +
-            '        <p class="text-sm text-slate-400" id="client-subtitle">Cargando...<\/p>' +
-            '      <\/div>' +
-            '      <button onclick="window.close()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all">Cerrar Analizador<\/button>' +
-            '    <\/header>' +
-            '    <div class="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 flex-grow flex flex-col justify-between shadow-2xl h-[550px]">' +
-            '      <div class="relative w-full h-[400px]">' +
-            '        <canvas id="maxChart"><\/canvas>' +
-            '      <\/div>' +
-            '      <div class="border-t border-slate-800/80 pt-6 mt-6">' +
-            '        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Filtro de Especies (Activar \/ Desactivar Linea)<\/h3>' +
-            '        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-3" id="max-checkboxes"><\/div>' +
-            '      <\/div>' +
-            '    <\/div>' +
-            '  <\/div>' +
-            '<\/body>' +
-            '<\/html>';
-
-            newWindow.document.write(htmlShell);
-            newWindow.document.close();
-
-            const tailwindScript = newWindow.document.createElement('script');
-            tailwindScript.src = "https://cdn.tailwindcss.com";
-            newWindow.document.head.appendChild(tailwindScript);
-
-            const chartScript = newWindow.document.createElement('script');
-            chartScript.src = "https://cdn.jsdelivr.net/npm/chart.js";
-            newWindow.document.head.appendChild(chartScript);
-
-            chartScript.onload = function() {
-                const doc = newWindow.document;
-                doc.getElementById("client-subtitle").textContent = "Análisis detallado • Cliente: " + state.clientName;
-                
-                let activeFilters = {};
-                ALL_SPECIES.forEach(function(sp) {
-                    activeFilters[sp] = true;
-                });
-
-                let maxChartInstance = null;
+                    return ds;
+                }
 
                 function buildChart() {
-                    const labels = timeline.map(function(t) {
-                        const opt = { day: 'numeric', month: 'short' };
-                        return new Date(t.date + 'T00:00:00').toLocaleDateString('es-MX', opt);
-                    });
-
-                    const datasets = [];
-                    ALL_SPECIES.forEach(function(sp) {
-                        if (activeFilters[sp]) {
-                            // Mantener zeros como 0 — todos los puntos conectados
-                            const dataPoints = timeline.map(function(t) {
-                                return t.totals[sp] || 0;
-                            });
-
-                            const hasActiveData = dataPoints.some(function(v) { return v > 0; });
-                            if (!hasActiveData) return;
-
-                            const hasSingle = timeline.length === 1;
-
-                            datasets.push({
-                                label: sp,
-                                data: dataPoints,
-                                borderColor: SPECIES_META[sp].color,
-                                backgroundColor: SPECIES_META[sp].color + "12",
-                                borderWidth: 3,
-                                pointBackgroundColor: SPECIES_META[sp].color,
-                                pointHoverRadius: 10,
-                                pointRadius: hasSingle ? 6 : 4,
-                                tension: 0.2,
-                                spanGaps: true,
-                                fill: false
-                            });
-                        }
-                    });
-
-                    const ctx = doc.getElementById("maxChart").getContext("2d");
-                    if (maxChartInstance) {
-                        maxChartInstance.destroy();
-                    }
-
-                    maxChartInstance = new newWindow.Chart(ctx, {
+                    if (chartInst) chartInst.destroy();
+                    chartInst = new nw.Chart(doc.getElementById('tc').getContext('2d'), {
                         type: 'line',
-                        data: { labels: labels, datasets: datasets },
+                        data: { labels: lineLabels, datasets: buildDatasets() },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
                             scales: {
                                 y: {
                                     beginAtZero: true,
                                     grid: { color: '#1e293b' },
-                                    ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' } }
+                                    ticks: { color: '#94a3b8', font: { size: 11 } }
                                 },
                                 x: {
                                     grid: { display: false },
-                                    ticks: { color: '#94a3b8', font: { size: 11, family: 'Inter' } }
+                                    ticks: { color: '#94a3b8', font: { size: 11 } }
                                 }
                             },
-                            plugins: {
-                                legend: { display: false }
-                            }
+                            plugins: { legend: { display: false } }
                         }
                     });
                 }
 
-                function initControls() {
-                    const container = doc.getElementById("max-checkboxes");
-                    container.innerHTML = "";
-
-                    ALL_SPECIES.forEach(function(sp) {
-                        const color = SPECIES_META[sp].color;
-                        const wrap = doc.createElement("label");
-                        wrap.className = "flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-slate-900 cursor-pointer select-none hover:border-slate-700 transition-all text-xs font-semibold";
-                        
-                        const checkbox = doc.createElement("input");
-                        checkbox.type = "checkbox";
-                        checkbox.checked = activeFilters[sp];
-                        checkbox.className = "w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer";
-                        checkbox.onchange = function() {
-                            activeFilters[sp] = checkbox.checked;
-                            buildChart();
-                        };
-
-                        const indicator = doc.createElement("span");
-                        indicator.className = "w-2.5 h-2.5 rounded-full";
-                        indicator.style.backgroundColor = color;
-
-                        const labelText = doc.createElement("span");
-                        labelText.className = "text-slate-300 truncate";
-                        labelText.textContent = sp;
-
-                        wrap.appendChild(checkbox);
-                        wrap.appendChild(indicator);
-                        wrap.appendChild(labelText);
-                        container.appendChild(wrap);
+                var legContainer = doc.getElementById('leg');
+                ALL_SPECIES.forEach(function(sp) {
+                    var color = SPECIES_META[sp] ? SPECIES_META[sp].color : '#94a3b8';
+                    var item = doc.createElement('div');
+                    item.className = 'leg-item';
+                    item.innerHTML = '<div class="leg-dot" style="background:' + color + '"><\/div>' +
+                        '<span class="leg-lbl">' + sp + '<\/span>';
+                    item.addEventListener('click', function() {
+                        visible[sp] = !visible[sp];
+                        item.classList.toggle('off', !visible[sp]);
+                        buildChart();
                     });
-                }
+                    legContainer.appendChild(item);
+                });
 
-                initControls();
                 buildChart();
             };
         };
@@ -3432,6 +3960,9 @@
                 testModeActive = false;
 
                 state.clientName = "";
+                state.sucursal = "";
+                state.tecnico = "";
+                state.quienRecibe = "";
                 state.isConfigFinished = false;
                 state.isServiceStarted = false;
                 state.currentServiceDate = "";
@@ -3440,6 +3971,9 @@
                 state.history = [];
 
                 clientNameInput.value = "";
+                if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
+                if (tecnicoInput) { tecnicoInput.value = ""; tecnicoInput.disabled = false; }
+                if (quienRecibeInput) { quienRecibeInput.value = ""; quienRecibeInput.disabled = false; }
                 clientNameInput.disabled = false;
                 cordonSelect.disabled = false;
                 stationTypeSelect.disabled = false;
@@ -3513,9 +4047,12 @@
 
                 testStations.forEach(function(station) {
                     var captures = {};
-                    // Cada especie tiene 35% de probabilidad de aparecer
                     ALL_SPECIES.forEach(function(sp) {
-                        if (Math.random() < 0.35) {
+                        // Cucarachas siempre aparecen en estaciones no-UV; resto 35% aleatorio
+                        var esCucaracha = sp === "Cucaracha Americana" || sp === "Cucaracha Germanica";
+                        var esUV = station.type === "UV";
+                        var aparece = esCucaracha ? (!esUV && Math.random() < 0.75) : Math.random() < 0.35;
+                        if (aparece) {
                             var qty = Math.floor(Math.random() * 18) + 1;
                             captures[sp] = qty;
                             totals[sp] += qty;
@@ -3539,6 +4076,9 @@
 
             // Aplicar al estado
             state.clientName = "DEMO — Planta Industrial";
+            state.sucursal = "Sucursal Centro (DEMO)";
+            state.tecnico = "Técnico Demo ProControl";
+            state.quienRecibe = "Gerente de Planta (DEMO)";
             state.isConfigFinished = true;
             state.isServiceStarted = false;
             state.editingHistoryIndex = null;
@@ -3547,6 +4087,9 @@
 
             // Actualizar UI (igual que finalizeSetupBtn)
             clientNameInput.value = state.clientName;
+            if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
+            if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
+            if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
             clientNameInput.disabled = true;
             cordonSelect.disabled = true;
             stationTypeSelect.disabled = true;
@@ -3591,6 +4134,9 @@
 
             if (state.clientName) {
                 clientNameInput.value = state.clientName;
+                if (sucursalInput) { sucursalInput.value = state.sucursal || ""; sucursalInput.disabled = true; }
+                if (tecnicoInput) { tecnicoInput.value = state.tecnico || ""; tecnicoInput.disabled = true; }
+                if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe || ""; quienRecibeInput.disabled = true; }
                 clientNameInput.disabled = true;
                 cordonSelect.disabled = true;
                 stationTypeSelect.disabled = true;
@@ -3650,10 +4196,23 @@
                 sigInfo[k] = { name: nameEl ? nameEl.value : '', pos: posVal };
             });
 
+            // Recopilar respuestas del checklist NMX-F-605 (Cumple / No Cumple)
+            var nmxChecklist = {};
+            PREGUNTAS_TODAS.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) nmxChecklist[id] = el.value;
+            });
+            var tieneServicioMIPEl = document.getElementById('tieneServicioMIP');
+            var contextoIAEl = document.getElementById('contextoIA');
+            var dictamenEl = document.getElementById('rptDictamenTexto');
+
             const snapshot = {
                 version:         '2.0',
                 exportDate:      new Date().toISOString(),
                 clientName:      state.clientName,
+                sucursal:        sucursalInput ? sucursalInput.value.trim() : (state.sucursal || ''),
+                tecnico:         tecnicoInput ? tecnicoInput.value.trim() : (state.tecnico || ''),
+                quienRecibe:     quienRecibeInput ? quienRecibeInput.value.trim() : (state.quienRecibe || ''),
                 isConfigFinished: state.isConfigFinished,
                 isServiceStarted: state.isServiceStarted,
                 currentServiceDate: state.currentServiceDate,
@@ -3663,6 +4222,10 @@
                 signatureInfo:   sigInfo,
                 obsContent:      (document.getElementById('obs-editor') ? document.getElementById('obs-editor').innerHTML : ''),
                 photos:          JSON.parse(JSON.stringify(photoData)),
+                nmxChecklist:    nmxChecklist,
+                tieneServicioMIP: tieneServicioMIPEl ? tieneServicioMIPEl.value : 'si',
+                contextoIA:      contextoIAEl ? contextoIAEl.value : '',
+                dictamenIA:      dictamenEl ? dictamenEl.innerHTML : '',
                 header: {
                     date:    hDate ? hDate.value : '',
                     version: hVer  ? hVer.value  : 'VER 1.0'
@@ -3706,6 +4269,9 @@
 
                     // Restaurar estado
                     state.clientName           = data.clientName;
+                    state.sucursal             = data.sucursal || '';
+                    state.tecnico              = data.tecnico || '';
+                    state.quienRecibe          = data.quienRecibe || '';
                     state.isConfigFinished     = data.isConfigFinished !== false;
                     state.isServiceStarted     = data.isServiceStarted || false;
                     state.currentServiceDate   = data.currentServiceDate || '';
@@ -3732,6 +4298,9 @@
 
                     // Actualizar UI de configuración
                     clientNameInput.value    = state.clientName;
+                    if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
+                    if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
+                    if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
                     clientNameInput.disabled = true;
                     cordonSelect.disabled    = true;
                     stationTypeSelect.disabled = true;
@@ -3807,6 +4376,21 @@
                     photoData = Array.isArray(data.photos) ? data.photos : [];
                     renderPhotosGrid();
 
+                    // Restaurar checklist NMX-F-605 (Cumple / No Cumple)
+                    if (data.nmxChecklist) {
+                        PREGUNTAS_TODAS.forEach(function(id) {
+                            var el = document.getElementById(id);
+                            if (el && data.nmxChecklist[id]) el.value = data.nmxChecklist[id];
+                        });
+                    }
+                    var tieneServicioMIPEl2 = document.getElementById('tieneServicioMIP');
+                    if (tieneServicioMIPEl2 && data.tieneServicioMIP) tieneServicioMIPEl2.value = data.tieneServicioMIP;
+                    var contextoIAEl2 = document.getElementById('contextoIA');
+                    if (contextoIAEl2 && data.contextoIA !== undefined) contextoIAEl2.value = data.contextoIA;
+                    var dictamenEl2 = document.getElementById('rptDictamenTexto');
+                    if (dictamenEl2 && data.dictamenIA) dictamenEl2.innerHTML = data.dictamenIA;
+                    evaluarNOM();
+
                     renderStationsGrid();
                     renderHistoryList();
                     updatePieServiceSelector();
@@ -3866,6 +4450,9 @@
             // Actualizar tabla de detalle de capturas
             document.getElementById("print-info-client").textContent = state.clientName.toUpperCase();
             document.getElementById("print-info-date").textContent   = printDate || 'PENDIENTE';
+            document.getElementById("print-info-sucursal").textContent = (sucursalInput && sucursalInput.value.trim()) ? sucursalInput.value.trim() : '-';
+            document.getElementById("print-info-tecnico").textContent  = (tecnicoInput && tecnicoInput.value.trim()) ? tecnicoInput.value.trim() : '-';
+            document.getElementById("print-info-recibe").textContent   = (quienRecibeInput && quienRecibeInput.value.trim()) ? quienRecibeInput.value.trim() : '-';
 
             var printTbody = document.getElementById("print-captures-tbody");
             printTbody.innerHTML = "";
@@ -3962,14 +4549,12 @@
         /************************************************************************
          * MÓDULO DE FIRMAS DIGITALES
          ************************************************************************/
-        var SIG_KEYS = ['cliente', 'elaborado', 'revisado', 'autorizado'];
+        var SIG_KEYS = ['elaborado', 'autorizado'];
         var SIG_LABELS = {
-            cliente:    'Nombre del Cliente',
             elaborado:  'Elaborado Por',
-            revisado:   'Revisado Por',
             autorizado: 'Autorizado Por'
         };
-        var sigData = { cliente: null, elaborado: null, revisado: null, autorizado: null };
+        var sigData = { elaborado: null, autorizado: null };
         var activeSigKey = null;
         var sigDrawing = false;
 
@@ -4211,6 +4796,395 @@
         };
 
         /************************************************************************
+         * INSPECCIÓN NMX-F-605 — CHECKLIST CUMPLE / NO CUMPLE
+         ************************************************************************/
+        var PREGUNTAS_CRITICAS = ['q_doc_1', 'q_qui_1', 'q_qui_2', 'q_qui_3', 'q_pla_1', 'q_bio_1', 'q_bio_2', 'q_bio_3'];
+
+        var PREGUNTAS_TODAS = [
+            'q_doc_1',
+            'q_pla_1', 'q_bio_1', 'q_bio_2', 'q_bio_3',
+            'q_alm_1', 'q_alm_2', 'q_alm_3', 'q_alm_4',
+            'q_equ_1', 'q_equ_2', 'q_equ_3', 'q_equ_4',
+            'q_res_1', 'q_res_2',
+            'q_her_1', 'q_her_2', 'q_her_3', 'q_her_4', 'q_her_5', 'q_her_6', 'q_her_7',
+            'q_qui_1', 'q_qui_2', 'q_qui_3', 'q_qui_4', 'q_qui_5', 'q_qui_6', 'q_qui_7'
+        ];
+
+        var PREGUNTAS_META = {
+            'q_doc_1': { titulo: 'Carpeta MIP Actualizada', motivo: 'Carpeta técnica incompleta, desactualizada o no disponible en sitio.' },
+            'q_pla_1': { titulo: 'Ausencia Total de Evidencia o Plagas Activas', motivo: 'Avistamiento de especímenes, excretas o rastros activos.' },
+            'q_bio_1': { titulo: 'Restos Biológicos de Plagas (Exuvias, Ootecas, Larvas o Pupas)', motivo: 'Presencia de exuvias, ootecas, capullos, larvas o pupas.' },
+            'q_bio_2': { titulo: 'Marcas o Daños por Mordeduras de Roedores', motivo: 'Estructuras, mobiliario o empaques con marcas de roído.' },
+            'q_bio_3': { titulo: 'Olores Característicos de Infestación Activa', motivo: 'Olor almizclado u orgánico asociado a plagas activas.' },
+            'q_her_1': { titulo: 'Guardapolvos y Holguras en Puertas Exteriores', motivo: 'Luz inferior > 6 mm o puertas abiertas a intemperie.' },
+            'q_her_2': { titulo: 'Mallas Mosquiteras en Ventanas y Ventilación', motivo: 'Ventanas sin mallas o con roturas expuestas.' },
+            'q_her_3': { titulo: 'Sellado de Fisuras, Azulejos y Pasamuros', motivo: 'Oquedades, pasamuros abiertos o azulejos rotos.' },
+            'q_her_4': { titulo: 'Sistemas de Cierre Automático en Puertas', motivo: 'Cierre automático dañado, ausente o puertas que quedan abiertas.' },
+            'q_her_5': { titulo: 'Uniones Estructurales y Mampostería', motivo: 'Huecos, aberturas o grietas en muros o mampostería.' },
+            'q_her_6': { titulo: 'Perímetro Exterior Libre de Maleza Alta', motivo: 'Maleza alta en el perímetro exterior.' },
+            'q_her_7': { titulo: 'Perímetro Exterior Libre de Escombros o Materiales en Desuso', motivo: 'Escombros o materiales en desuso acumulados en el perímetro.' },
+            'q_alm_1': { titulo: 'Regla de Estiba (15 cm del piso / Tarimas)', motivo: 'Cajas o sacos colocados directamente sobre el piso.' },
+            'q_alm_2': { titulo: 'Control y Eliminación de Cartón Corrugado', motivo: 'Acumulación de cajas de cartón corrugado de proveedores.' },
+            'q_alm_3': { titulo: 'Resguardo de Graneles en Contenedores Herméticos', motivo: 'Sacos abiertos expuestos o sin tapa.' },
+            'q_alm_4': { titulo: 'Limpieza Debajo de Mobiliario y Estantería', motivo: 'Suciedad, polvo o residuos acumulados bajo mobiliario/estantería.' },
+            'q_equ_1': { titulo: 'Acumulación de Grasa Orgánica en Equipos y Motores', motivo: 'Capa densa o costras de grasa orgánica acumulada.' },
+            'q_equ_2': { titulo: 'Mantenimiento y Desazolve de Trampas de Grasa', motivo: 'Trampa de grasa saturada, con nata acumulada o fuga/olor.' },
+            'q_equ_3': { titulo: 'Coladeras, Rejillas y Sello Hidráulico en Drenajes', motivo: 'Coladeras azolvadas, sin rejilla o sin sello hidráulico.' },
+            'q_equ_4': { titulo: 'Integridad y Sellado de Tapas de Trampas de Grasa', motivo: 'Tapas dañadas, sin sello hermético o con fuga.' },
+            'q_res_1': { titulo: 'Contenedores de Basura en Buen Estado y con Tapa Hermética', motivo: 'Contenedores dañados, sucios o sin tapa hermética.' },
+            'q_res_2': { titulo: 'Ausencia de Desperdicios Orgánicos Expuestos Fuera de Contenedores', motivo: 'Desperdicios orgánicos expuestos fuera de contenedores.' },
+            'q_qui_1': { titulo: 'Almacenamiento Exclusivo de Químicos y Plaguicidas', motivo: 'Químicos almacenados en cocina o junto a alimentos/utensilios.' },
+            'q_qui_2': { titulo: 'Restricción de Cebos Tóxicos en Áreas Interiores', motivo: 'Presencia de cebos raticidas químicos dentro de cocina o almacén.' },
+            'q_qui_3': { titulo: 'Prohibición de Lámparas Electrocutoras ("Zappers")', motivo: 'Uso de lámparas electrocutoras de choque ("zapper") sobre alimentos.' },
+            'q_qui_4': { titulo: 'Operatividad y Limpieza de Trampas Mecánicas e Interiores', motivo: 'Trampas llenas, con polvo acumulado, dañadas o inoperativas.' },
+            'q_qui_5': { titulo: 'Ubicación Adecuada de Lámparas Atrapa-Insectos UV', motivo: 'Lámpara UV colocada directamente encima de mesas de trabajo o estufas.' },
+            'q_qui_6': { titulo: 'Mantenimiento, Encendido y Tubos UV', motivo: 'Equipos apagados, lámina pegajosa saturada o tubos fundidos/vencidos.' },
+            'q_qui_7': { titulo: 'Estaciones Cebaderas Perimetrales Exteriores', motivo: 'Estaciones sueltas, abiertas sin llave, desprendidas o sin etiqueta.' }
+        };
+
+        function evaluarNOM() {
+            var criticosTotal = 0, criticosCumplidos = 0, noCriticosTotal = 0, noCriticosCumplidos = 0;
+
+            PREGUNTAS_TODAS.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                var val = el.value;
+
+                if (val === 'cumple') {
+                    el.className = "q-binary w-full border border-teal-400 bg-teal-50 text-teal-700 font-bold rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none";
+                } else if (val === 'no_cumple') {
+                    el.className = "q-binary w-full border border-rose-400 bg-rose-50 text-rose-700 font-bold rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none";
+                } else {
+                    el.className = "q-binary w-full border border-slate-200 bg-white text-slate-500 font-semibold rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none";
+                }
+
+                if (val !== 'na') {
+                    if (PREGUNTAS_CRITICAS.indexOf(id) !== -1) {
+                        criticosTotal++;
+                        if (val === 'cumple') criticosCumplidos++;
+                    } else {
+                        noCriticosTotal++;
+                        if (val === 'cumple') noCriticosCumplidos++;
+                    }
+                }
+            });
+
+            var pctNoCriticos = noCriticosTotal > 0 ? Math.round((noCriticosCumplidos / noCriticosTotal) * 100) : 100;
+
+            var badgeCrit = document.getElementById('badge-criticos-summary');
+            if (badgeCrit) {
+                badgeCrit.textContent = criticosCumplidos + ' / ' + criticosTotal + ' Cumplidos';
+                badgeCrit.className = criticosCumplidos === criticosTotal ? "text-lg font-black text-teal-700" : "text-lg font-black text-rose-600";
+            }
+
+            var badgeNoCrit = document.getElementById('badge-nocriticos-summary');
+            if (badgeNoCrit) {
+                badgeNoCrit.textContent = pctNoCriticos + '%';
+                badgeNoCrit.className = pctNoCriticos >= 90 ? "text-lg font-black text-teal-700" : "text-lg font-black text-amber-600";
+            }
+
+            var tileCrit = document.getElementById('tileCriticos');
+            if (tileCrit) {
+                tileCrit.className = "avoid-break p-3 rounded-xl border-2 text-center " + (criticosCumplidos === criticosTotal ? "border-teal-500 bg-teal-50" : "border-rose-500 bg-rose-50");
+            }
+            var tileNoCrit = document.getElementById('tileNoCriticos');
+            if (tileNoCrit) {
+                tileNoCrit.className = "avoid-break p-3 rounded-xl border-2 text-center " + (pctNoCriticos >= 90 ? "border-teal-500 bg-teal-50" : (pctNoCriticos >= 70 ? "border-amber-500 bg-amber-50" : "border-rose-500 bg-rose-50"));
+            }
+
+            var estBanner = document.getElementById('nmx-estatus-texto');
+            if (estBanner) {
+                if (criticosTotal > 0 && criticosCumplidos < criticosTotal) {
+                    estBanner.textContent = "🔴 RIESGO SANITARIO CRÍTICO: INCUMPLIMIENTO EN PUNTOS DE CERO TOLERANCIA";
+                    estBanner.className = "text-sm font-black text-rose-400";
+                } else if (pctNoCriticos < 90) {
+                    estBanner.textContent = "🟡 VULNERABILIDAD MODERADA (REQUIERE REFORZAMIENTO DE EXCLUSIÓN / HIGIENE)";
+                    estBanner.className = "text-sm font-black text-amber-400";
+                } else {
+                    estBanner.textContent = "🟢 VULNERABILIDAD BAJA (CONDICIONES ÓPTIMAS DE EXCLUSIÓN SANITARIA)";
+                    estBanner.className = "text-sm font-black text-emerald-400";
+                }
+            }
+
+            renderPendientesPorCumplir();
+        }
+        window.evaluarNOM = evaluarNOM;
+
+        window.toggleServicioMIP = function() {
+            var sel = document.getElementById('tieneServicioMIP');
+            var docEl = document.getElementById('q_doc_1');
+            if (sel && docEl) {
+                docEl.value = (sel.value === 'no') ? 'no_cumple' : 'cumple';
+            }
+            evaluarNOM();
+        };
+
+        function renderPendientesPorCumplir() {
+            var cont = document.getElementById('panelPendientes');
+            if (!cont) return;
+
+            var pendientes = PREGUNTAS_TODAS.filter(function(id) {
+                var el = document.getElementById(id);
+                return el && el.value === 'no_cumple';
+            });
+
+            if (pendientes.length === 0) {
+                cont.innerHTML = '<div class="avoid-break p-3 rounded-xl border-2 border-teal-500 bg-teal-50 text-center">' +
+                    '<span class="text-xs font-black text-teal-800">✓ Sin hallazgos — cumplimiento óptimo en los ' + PREGUNTAS_TODAS.length + ' puntos evaluados</span></div>';
+                return;
+            }
+
+            var tarjetas = pendientes.map(function(id) {
+                var meta = PREGUNTAS_META[id] || { titulo: id, motivo: '' };
+                var esCritico = PREGUNTAS_CRITICAS.indexOf(id) !== -1;
+                var colorBorde = esCritico ? 'border-rose-400' : 'border-amber-400';
+                var colorChip = esCritico ? 'bg-rose-600' : 'bg-amber-500';
+                var chipTexto = esCritico ? 'CRÍTICO' : 'GENERAL';
+                return '<div class="avoid-break p-2.5 rounded-lg border-l-4 ' + colorBorde + ' bg-white border border-slate-200 flex items-start gap-2 mb-1.5">' +
+                    '<span class="flex-shrink-0 mt-0.5 text-sm">' + (esCritico ? '🛑' : '⚠️') + '</span>' +
+                    '<div class="min-w-0 flex-1">' +
+                    '<div class="flex items-center gap-1.5 flex-wrap">' +
+                    '<span class="text-[11px] font-black text-slate-800">' + meta.titulo + '</span>' +
+                    '<span class="text-[8px] font-black text-white px-1.5 py-0.5 rounded-full ' + colorChip + '">' + chipTexto + '</span>' +
+                    '</div>' +
+                    '<span class="text-[10px] text-slate-500">' + meta.motivo + '</span>' +
+                    '</div></div>';
+            }).join('');
+
+            cont.innerHTML = '<span class="text-[9px] font-black uppercase tracking-wider text-rose-600 block mb-1.5">Pendientes por Cumplir (' + pendientes.length + ')</span>' + tarjetas;
+        }
+
+        /* Parser de Markdown → HTML (negritas, viñetas y numeración) para el texto que devuelve la IA */
+        function parseMarkdownToHTML(text) {
+            if (!text) return '';
+            var lines = text.split('\n');
+            var resultHTML = '';
+            var listType = null;
+
+            function cerrarLista() {
+                if (listType) {
+                    resultHTML += listType === 'ol' ? '</ol>' : '</ul>';
+                    listType = null;
+                }
+            }
+
+            lines.forEach(function(line) {
+                var trimmed = line.trim();
+                var headerMatch = trimmed.match(/^#{1,6}\s+(.*)$/);
+                if (headerMatch) {
+                    cerrarLista();
+                    var headerText = headerMatch[1].replace(/\*\*(.*?)\*\*/g, '$1');
+                    if (headerText.length > 0) {
+                        resultHTML += '<p class="mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">' + headerText + '</p>';
+                    }
+                    return;
+                }
+
+                var formattedLine = trimmed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-slate-900">$1</strong>');
+                formattedLine = formattedLine.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+                var esNumerada = /^\d+\.\s/.test(trimmed);
+                var esBullet = trimmed.indexOf('- ') === 0 || trimmed.indexOf('* ') === 0;
+
+                if (esNumerada || esBullet) {
+                    var tipoActual = esNumerada ? 'ol' : 'ul';
+                    if (listType !== tipoActual) {
+                        cerrarLista();
+                        listType = tipoActual;
+                        resultHTML += tipoActual === 'ol'
+                            ? '<ol class="list-decimal pl-5 space-y-1 text-slate-800 text-xs font-medium my-2">'
+                            : '<ul class="list-disc pl-5 space-y-1 text-slate-800 text-xs font-medium my-2">';
+                    }
+                    var itemText = formattedLine.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
+                    resultHTML += '<li>' + itemText + '</li>';
+                } else {
+                    cerrarLista();
+                    if (trimmed.length > 0) {
+                        resultHTML += '<p class="mb-2 leading-relaxed text-xs text-slate-800">' + formattedLine + '</p>';
+                    }
+                }
+            });
+
+            cerrarLista();
+            return resultHTML;
+        }
+
+        /* Resume el historial de servicio propio (state.history) como contexto neutral para el prompt de IA */
+        function construirResumenHistorialParaIA() {
+            if (!state.history || state.history.length === 0) return '';
+
+            var historialOrdenado = state.history.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            var totalesAcumulados = {};
+            ALL_SPECIES.forEach(function(sp) { totalesAcumulados[sp] = 0; });
+
+            var lineas = historialOrdenado.map(function(h) {
+                var partes = ALL_SPECIES.filter(function(sp) { return (h.totals[sp] || 0) > 0; })
+                    .map(function(sp) { return sp + ': ' + h.totals[sp]; });
+                ALL_SPECIES.forEach(function(sp) { totalesAcumulados[sp] += (h.totals[sp] || 0); });
+                return '- ' + formatDisplayDate(h.date) + ': ' + (partes.length ? partes.join(', ') : 'sin capturas registradas');
+            });
+
+            var resumenTotales = ALL_SPECIES.filter(function(sp) { return totalesAcumulados[sp] > 0; })
+                .map(function(sp) { return sp + ': ' + totalesAcumulados[sp] + ' capturas acumuladas'; })
+                .join('; ');
+
+            var primerFecha = formatDisplayDate(historialOrdenado[0].date);
+            var ultimaFecha = formatDisplayDate(historialOrdenado[historialOrdenado.length - 1].date);
+
+            return '\n\nDATOS DE ACTIVIDAD DE PLAGAS DEL HISTORIAL DE SERVICIO PREVIO (' + historialOrdenado.length + ' visitas, del ' + primerFecha + ' al ' + ultimaFecha + '):\n' +
+                lineas.join('\n') + '\nTOTALES ACUMULADOS: ' + (resumenTotales || 'sin capturas registradas') + '.';
+        }
+
+        /************************************************************************
+         * CLAVE API DE GEMINI (DIAGNÓSTICO IA)
+         ************************************************************************/
+        var DEFAULT_API_KEY = "AQ.Ab8RN6LnL8-jjntRb1g9Bc3q2sxBWgUv5QwGIpWRd7Ia08MJzQ";
+
+        function getApiKey() {
+            var saved = localStorage.getItem("GEMINI_API_KEY");
+            if (saved && saved.trim().length > 10) return saved.trim();
+            return DEFAULT_API_KEY;
+        }
+
+        window.toggleApiKeyModal = function() {
+            var modal = document.getElementById('modalApiKey');
+            if (!modal) return;
+            modal.classList.toggle('hidden');
+            document.body.classList.toggle('overflow-hidden');
+            var input = document.getElementById('inputApiKeyModal');
+            if (input) input.value = getApiKey();
+        };
+
+        window.guardarApiKeyModal = function() {
+            var input = document.getElementById('inputApiKeyModal');
+            var val = input ? input.value.trim() : '';
+            if (val) localStorage.setItem("GEMINI_API_KEY", val);
+            toggleApiKeyModal();
+            showToast("Clave API de Gemini guardada.", "success");
+        };
+
+        /************************************************************************
+         * DIAGNÓSTICO TÉCNICO IA — GENERA EL REPORTE DE CONTROL (MISMO MOTOR
+         * Y PROMPT QUE "reporte auditoria.html")
+         ************************************************************************/
+        window.generarDictamenIA = function() {
+            var apiKey = getApiKey();
+            var cliente = state.clientName || (clientNameInput ? clientNameInput.value : '') || 'Establecimiento';
+            var contextoEl = document.getElementById('contextoIA');
+            var contextoIA = contextoEl ? contextoEl.value.trim() : '';
+            var targetDiv = document.getElementById('rptDictamenTexto');
+            if (!targetDiv) return;
+
+            if (!apiKey) {
+                targetDiv.textContent = "Falta configurar la clave API de Gemini. Ve a Opciones ▸ Clave IA e ingresa tu clave.";
+                return;
+            }
+
+            targetDiv.textContent = "Analizando diagnóstico técnico de riesgo de plagas con Gemini IA...";
+
+            var criticosTotal = 0, criticosCumplidos = 0, noCriticosTotal = 0, noCriticosCumplidos = 0;
+            var desviaciones = [];
+
+            PREGUNTAS_TODAS.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                var val = el.value;
+                var meta = PREGUNTAS_META[id] || { titulo: id, motivo: '' };
+
+                if (val === 'no_cumple') {
+                    desviaciones.push({ titulo: meta.titulo, motivo: meta.motivo, critico: PREGUNTAS_CRITICAS.indexOf(id) !== -1 });
+                }
+                if (val !== 'na') {
+                    if (PREGUNTAS_CRITICAS.indexOf(id) !== -1) {
+                        criticosTotal++;
+                        if (val === 'cumple') criticosCumplidos++;
+                    } else {
+                        noCriticosTotal++;
+                        if (val === 'cumple') noCriticosCumplidos++;
+                    }
+                }
+            });
+
+            var pctNoCriticos = noCriticosTotal > 0 ? Math.round((noCriticosCumplidos / noCriticosTotal) * 100) : 100;
+            var pctCriticos = criticosTotal > 0 ? Math.round((criticosCumplidos / criticosTotal) * 100) : 100;
+            var resumenHistorial = construirResumenHistorialParaIA();
+
+            var REGLAS_COMUNES = "REGLAS OBLIGATORIAS DE ROL, ALCANCE Y TERMINOLOGÍA:\n" +
+                "1. IDENTIDAD: Escribes en nombre de ProControl México, empresa certificada bajo NORMEX NMX-F-610 especializada en Manejo Integrado de Plagas (MIP). Menciona esta certificación de ProControl (NMX-F-610-NORMEX) al menos una vez en el documento, como credencial de la empresa que realiza el diagnóstico — NUNCA como si el establecimiento del cliente \"cumpliera\" o estuviera certificado bajo NMX-F-610 (esa es la certificación de ProControl como proveedor, no del cliente).\n" +
+                "2. ROL: ProControl NO es un auditor ni una entidad certificadora del cliente. Es el proveedor técnico de servicio MIP que realizó este levantamiento y presenta un diagnóstico, no un dictamen de auditoría oficial.\n" +
+                "3. ALCANCE: El diagnóstico evalúa EXCLUSIVAMENTE los puntos de la norma NMX-F-605 que se relacionan directa o indirectamente con el control de plagas del establecimiento (documentación MIP, hermeticidad y exclusión física, almacenamiento, equipos y drenajes, resguardo de químicos y dispositivos, y evidencia de fauna nociva). PROHIBIDO afirmar que el cliente \"cumple con la NMX-F-610\" o que \"cumple integralmente la NMX-F-605\".\n" +
+                "4. TERMINOLOGÍA PROHIBIDA: NUNCA uses la palabra \"fumigar\" ni sus variantes (\"fumigación\", \"fumigado\", etc.) — es un término técnicamente incorrecto en MIP. Usa en su lugar \"aplicación técnica dirigida\", \"tratamiento localizado MIP\", \"control químico focalizado\" o \"intervención técnica MIP\", según el contexto. Usa también nombres comunes e inteligibles de fauna nociva (\"roedores\", \"cucarachas\", \"moscas\", \"insectos rastreros\"); PROHIBIDO usar órdenes taxonómicos en latín (\"Blattodea\", \"Rodentia\", \"Diptera\").\n" +
+                "5. TONO B2B, SIN RELLENO: Lenguaje directo, técnico y profesional para gerencia/dirección. PROHIBIDO usar adjetivos presuntuosos o de relleno (\"excelente\", \"extraordinario\", \"de clase mundial\", \"excepcional\", \"increíble\", \"óptimo\" usado como adorno). Cada oración debe aportar un dato o una acción, no relleno retórico. Sé conciso — prioriza hechos sobre descripciones.\n" +
+                "6. FUNDAMENTACIÓN ESTRICTA EN EL FORMULARIO: Toda la información debe basarse EXCLUSIVAMENTE en los puntos evaluados abajo. NO inventes, asumas ni generalices hallazgos, riesgos o desviaciones que no estén listados.\n" +
+                "7. JUSTIFICACIÓN DE RIESGO: Para cada desviación, explica brevemente en términos técnicos por qué representa un riesgo de control de plagas (ej. genera refugio, facilita ingreso de fauna nociva, oculta evidencia de actividad, rompe la barrera de exclusión). PROHIBIDO inventar números de artículo, cláusula o inciso específico de la NMX-F-605 — refiérete a \"los criterios de control de plagas de la NMX-F-605\" de forma general, nunca a numeración que no tengas con certeza.\n" +
+                "8. FORMATO OBLIGATORIO MARKDOWN: Usa **negritas** para conceptos clave y viñetas (- ) para puntos principales.\n" +
+                "9. SIN ENCABEZADO DE CORREO NI REDUNDANCIA: NUNCA inicies con formato de correo/memo (\"Para:\", \"De:\", \"Asunto:\"). NUNCA repitas el nombre del cliente, el nombre de ProControl como remitente, ni un título tipo \"Diagnóstico Técnico en Manejo Integrado de Plagas\" — todo eso ya aparece en el encabezado de la sección del reporte que antecede este texto. Empieza directamente con el contenido de la primera sección (Qué Vimos).\n" +
+                "10. PROHIBIDO USAR \"#\", \"##\" O \"###\": Los títulos de cada sección se escriben ÚNICAMENTE como numeración clásica en texto plano seguida de negritas, ej. \"1. **Qué Vimos**\", \"2. **Qué Hacemos**\" y \"3. **Qué Sugerimos**\" — nunca con símbolos de almohadilla (markdown heading).\n" +
+                "11. LENGUAJE NO ASERTIVO SOBRE HALLAZGOS FÍSICOS: El \"motivo\" que recibes por cada desviación describe el CRITERIO de incumplimiento marcado en el levantamiento (ej. \"oquedades, pasamuros abiertos o azulejos rotos\"), NO una descripción exacta y verificada de lo observado en sitio — el levantamiento es binario (cumple/no cumple) y no captura el detalle específico del hallazgo. PROHIBIDO afirmar el hallazgo como un hecho puntual verificado (ej. NUNCA escribas \"se detectaron azulejos rotos\"). En su lugar, redacta en términos del criterio no conforme detectado, ej.: \"se registró un punto no conforme en hermeticidad, asociado a posibles oquedades, pasamuros abiertos o afectación en recubrimientos\". La EXISTENCIA del incumplimiento sí es un hecho verificado; la causa o naturaleza física exacta NO lo es — la redacción debe reflejar esa diferencia.\n" +
+                "12. DESVIACIONES DOCUMENTALES: Si la desviación es de tipo documental (licencia, contrato, fichas técnicas, registros, bitácoras, croquis, etc.), indica que el documento NO SE ACREDITÓ o NO SE PRESENTÓ EN LA CARPETA TÉCNICA durante el levantamiento. PROHIBIDO afirmar que el proveedor o el cliente \"carece de\" o \"no cuenta con\" el documento en términos absolutos — solo se verificó su ausencia en el expediente mostrado al momento de la visita, no su inexistencia real.\n" +
+                "13. TERMINOLOGÍA DE BARRERAS DE CONTROL: NUNCA uses la palabra \"Anillo\" para referirte a las capas de dispositivos MIP (UV, trampas mecánicas, estaciones exteriores). El término correcto de ProControl México es \"Cordón Sanitario\" (ej. \"Cordón Sanitario 1\", \"Cordón Sanitario 2\", \"Cordón Sanitario 3\").\n" +
+                "14. TONO DE AUDITORÍA INTERNA PARA CLIENTE (NO REGULATORIA): Este diagnóstico es una auditoría interna que ProControl México entrega a SUS PROPIOS CLIENTES para informarles el estado de su programa MIP — NO es una inspección de una autoridad sanitaria con facultad de sanción, y PROHIBIDO usar un tono que sugiera riesgo de clausura, multa o suspensión de operaciones. El objetivo es que la gerencia entienda con toda claridad la MAGNITUD del riesgo de plagas identificado (sé específico y directo sobre la severidad, ver regla 5), pero en un tono constructivo, profesional y nunca acusatorio ni de reprimenda hacia el cliente ni hacia terceros.\n" +
+                "15. DIVISIÓN QUÉ HACEMOS / QUÉ SUGERIMOS: Para cada desviación, clasifícala según de quién depende resolverla. Van en \"Qué Hacemos\" (acción que ProControl ejecuta o refuerza dentro de su servicio MIP) las desviaciones relacionadas con: la carpeta técnica MIP documental, los dispositivos y estaciones de control (trampas mecánicas, lámparas UV, cebaderas perimetrales) y toda evidencia o bioindicador directo de fauna nociva (insectos/roedores, restos biológicos, mordeduras, olores de infestación). Van en \"Qué Sugerimos\" (recomendación para que el establecimiento la resuelva por su parte) las desviaciones relacionadas con: hermeticidad física de puertas/ventanas/fisuras/mampostería, cierres automáticos, maleza o escombros del perímetro exterior, orden y limpieza de almacenes y mobiliario, manejo de cartón corrugado y estiba, acumulación de grasa en equipos, mantenimiento de trampas de grasa o drenajes, y manejo de residuos/contenedores de basura. Si una desviación no encaja claramente en ninguna categoría, colócala en \"Qué Sugerimos\".\n" +
+                "16. CONTEXTO ADICIONAL DEL TÉCNICO: Si recibes un bloque \"CONTEXTO ADICIONAL DEL TÉCNICO\", trátalo como información verificada en sitio que COMPLEMENTA — nunca contradice, sustituye ni tiene mayor peso que — los hallazgos del formulario (reglas 6 y 11). Úsalo para enriquecer la redacción con las circunstancias que describe (ej. obra en proceso, cambio de proveedor, temporada, colindancias, eventos particulares de la visita), integrándolo en la sección que corresponda según su naturaleza — nunca lo repitas de forma literal ni lo trates como una sección aparte. Si ese bloque no aporta nada relevante al diagnóstico de plagas, ignóralo sin mencionarlo. Si no recibes ese bloque, no menciones su ausencia.";
+
+            var bloqueContextoIA = contextoIA ? "\n\nCONTEXTO ADICIONAL DEL TÉCNICO (información verificada en sitio, ver regla 16):\n" + contextoIA : '';
+
+            var prompt;
+            if (desviaciones.length === 0) {
+                prompt = REGLAS_COMUNES +
+                    "\n\nRedacta el Diagnóstico Técnico MIP para la gerencia del establecimiento (" + cliente + ").\n\n" +
+                    "Resultado del levantamiento: sin desviaciones (" + criticosCumplidos + "/" + criticosTotal + " Puntos Críticos y " + pctNoCriticos + "% Puntos Generales MIP cumplidos). No inventes riesgos inexistentes: reconoce el estado de exclusión observado tal cual.\n" +
+                    resumenHistorial + bloqueContextoIA +
+                    "\n\nESTRUCTURA (3 secciones):\n" +
+                    "1. **Qué Vimos** — resumen conciso de las condiciones de exclusión y control MIP encontradas en el levantamiento (estado limpio, sin desviaciones).\n" +
+                    "2. **Qué Hacemos** — continuidad del monitoreo y mantenimiento preventivo que ProControl realiza sobre dispositivos, estaciones y cordones sanitarios de control para sostener este estado (no son \"correcciones\" porque no hay desviaciones).\n" +
+                    "3. **Qué Sugerimos** — buenas prácticas que el establecimiento puede mantener o reforzar por su parte (higiene, orden, hermeticidad) para sostener el resultado, en tono de recomendación.";
+            } else {
+                var listaDesv = desviaciones.map(function(d) {
+                    return "- [" + (d.critico ? "CRÍTICO" : "GENERAL") + "] " + d.titulo + ": " + d.motivo;
+                }).join("\n");
+                prompt = REGLAS_COMUNES +
+                    "\n\nRedacta el Diagnóstico Técnico MIP para la gerencia del establecimiento (" + cliente + ").\n\n" +
+                    "Métricas del levantamiento:\n" +
+                    "- Puntos Críticos MIP (cero tolerancia): " + criticosCumplidos + " de " + criticosTotal + " cumplidos (" + pctCriticos + "%).\n" +
+                    "- Puntos Generales MIP (mínimo normativo 90%): " + pctNoCriticos + "% cumplidos.\n\n" +
+                    "Desviaciones detectadas (ÚNICA fuente de hallazgos — no agregues otras):\n" + listaDesv +
+                    "\n\nNOTA DE UMBRAL: si " + pctNoCriticos + "% es menor a 90%, indícalo explícitamente como nivel no satisfactorio que requiere atención prioritaria — nunca lo califiques de \"aceptable\" o \"favorable\" por debajo de ese umbral.\n" +
+                    resumenHistorial + bloqueContextoIA +
+                    "\n\nESTRUCTURA (3 secciones):\n" +
+                    "1. **Qué Vimos** — resumen conciso de las desviaciones detectadas y por qué representan riesgo de control de plagas (ver regla 7), dejando clara la magnitud del riesgo sin alarmismo (ver regla 14).\n" +
+                    "2. **Qué Hacemos** — para cada desviación que corresponde al servicio MIP de ProControl (ver regla 15), la acción concreta que ProControl ejecuta o refuerza para resolverla.\n" +
+                    "3. **Qué Sugerimos** — para cada desviación que depende del establecimiento (ver regla 15), la recomendación puntual para la gerencia, en tono constructivo y no acusatorio.";
+            }
+
+            fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
+                var text = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+                    data.candidates[0].content.parts && data.candidates[0].content.parts[0]) ? data.candidates[0].content.parts[0].text : null;
+
+                if (text) {
+                    targetDiv.innerHTML = parseMarkdownToHTML(text);
+                } else if (data && data.error && data.error.message) {
+                    targetDiv.textContent = "Error de la API de Gemini: " + data.error.message;
+                } else if (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) {
+                    targetDiv.textContent = "Gemini no devolvió texto (motivo: " + data.candidates[0].finishReason + "). Intenta de nuevo.";
+                } else {
+                    targetDiv.textContent = "Respuesta recibida pero sin texto. Verifique la configuración de la clave API.";
+                }
+            }).catch(function() {
+                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión o clave API.";
+            });
+        };
+
+        /************************************************************************
          * INICIALIZADOR GENERAL
          ************************************************************************/
         window.onload = function() {
@@ -4222,6 +5196,7 @@
             initializeFromState();
             updateCharts();
             initSigCanvas();
+            evaluarNOM();
         };
     </script>
 </body>
