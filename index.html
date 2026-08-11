@@ -4604,7 +4604,7 @@
         /************************************************************************
          * EXPORTAR PROYECTO COMO JSON
          ************************************************************************/
-        window.exportProject = function() {
+        window.exportProject = async function() {
             if (testModeActive) {
                 showToast('Desactiva el modo TEST antes de exportar.', 'error');
                 return;
@@ -4668,17 +4668,45 @@
             };
 
             const safeName = state.clientName.replace(/[^a-zA-Z0-9]/g, '_');
-            const filename = 'Procontrol-' + safeName + '.json';
-            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' });
+            const defaultFilename = 'Procontrol-' + safeName + '.json';
+            const jsonStr = JSON.stringify(snapshot, null, 2);
+            const resumen = snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.';
+
+            // Preferir el diálogo nativo "Guardar como" (Chrome/Edge de escritorio): permite
+            // elegir nombre y carpeta en el momento. Si el navegador no lo soporta (Firefox,
+            // Safari, webviews), se pide el nombre con un prompt y se descarga como antes.
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultFilename,
+                        types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonStr);
+                    await writable.close();
+                    showToast('Exportado: ' + handle.name + ' — ' + resumen, 'success');
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // el usuario canceló el diálogo
+                    // si falla por otro motivo, sigue con el método de respaldo abajo
+                }
+            }
+
+            var nombreElegido = prompt('Nombre del archivo a guardar:', defaultFilename.replace(/\.json$/i, ''));
+            if (nombreElegido === null) return; // canceló
+            nombreElegido = nombreElegido.trim() || defaultFilename.replace(/\.json$/i, '');
+            if (!/\.json$/i.test(nombreElegido)) nombreElegido += '.json';
+
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = filename;
+            a.href = url; a.download = nombreElegido;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            showToast('Exportado: ' + filename + ' — ' + snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.', 'success');
+            showToast('Exportado: ' + nombreElegido + ' — ' + resumen, 'success');
         };
 
         /************************************************************************
