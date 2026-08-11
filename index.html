@@ -184,17 +184,7 @@
                 color: #0f172a !important;
             }
             .print-doc-kicker {
-                display: inline-block !important;
-                border: 1px solid #99f6e4 !important;
-                background: #ecfdf5 !important;
-                color: #0f766e !important;
-                border-radius: 999px !important;
-                padding: 3px 8px !important;
-                font-size: 6.8pt !important;
-                font-weight: 850 !important;
-                letter-spacing: 0.06em !important;
-                text-transform: uppercase !important;
-                margin-bottom: 6px !important;
+                display: none !important;
             }
             .print-doc-client {
                 font-size: 15pt !important;
@@ -227,14 +217,16 @@
                 font-size: 8pt !important;
                 color: #475569 !important;
                 font-weight: 650 !important;
-                margin-bottom: 4px !important;
+                margin-top: 3px !important;
+                margin-bottom: 0 !important;
             }
             #print-version-badge {
                 color: #0f766e !important;
-                font-size: 7pt !important;
+                font-size: 7.5pt !important;
                 font-weight: 850 !important;
                 letter-spacing: 0.05em !important;
                 text-transform: uppercase !important;
+                margin-top: 5px !important;
             }
             .print-footer-visible {
                 display: flex !important;
@@ -729,10 +721,9 @@
         </div>
         <!-- Datos del documento (derecha) -->
         <div class="print-doc-meta" style="text-align:right;">
-            <div class="print-doc-kicker">Reporte tecnico de servicio</div>
             <div style="font-size:11pt; font-weight:800; color:#0f172a; margin-bottom:3px;" id="print-client-name">—</div>
-            <div style="font-size:8.5pt; color:#4b5563; margin-bottom:2px;" id="print-service-date">Fecha: —</div>
             <div style="font-size:8pt; color:#0f766e; font-weight:700; font-family:monospace;" id="print-version-badge">INFORME DE HALLAZGOS</div>
+            <div style="font-size:8.5pt; color:#4b5563; margin-bottom:2px;" id="print-service-date">Fecha: —</div>
         </div>
     </div>
 
