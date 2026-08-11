@@ -413,10 +413,15 @@
                 page-break-inside: avoid !important;
             }
             #photos-grid {
-                display: grid !important;
-                grid-template-columns: repeat(var(--photos-cols, 2), 1fr) !important;
-                gap: 1rem !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
             }
+            #photos-grid[data-cols="1"] > div { width: 100% !important; }
+            #photos-grid[data-cols="2"] > div { width: calc((100% - 10px) / 2) !important; }
+            #photos-grid[data-cols="3"] > div { width: calc((100% - 20px) / 3) !important; }
+            #photos-grid[data-cols="4"] > div { width: calc((100% - 30px) / 4) !important; }
             #photos-empty-state    { display: none !important; }
             .photo-title-input     { display: none !important; }
             .photo-title-print {
@@ -497,9 +502,13 @@
                 max-width:  100% !important;
             }
 
-            #analytics-section > div {
+            #analytics-section > div:not(#photos-section-card) {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+            }
+            #analytics-section > #photos-section-card {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
             }
 
             /* ── Análisis Global de Hallazgos: tabla ancha (fecha + N especies), texto compacto ── */
@@ -545,12 +554,13 @@
                 padding: 6px !important;
                 background: #f8fafc !important;
                 box-shadow: none !important;
+                box-sizing: border-box !important;
             }
             #photos-grid img {
                 border-radius: 5px !important;
                 border: 1px solid #dbe5ea !important;
                 background: #ffffff !important;
-                max-height: 230px !important;
+                max-height: 190px !important;
                 object-fit: contain !important;
             }
 
@@ -5152,7 +5162,10 @@
         function applyPhotosPerRow() {
             var grid = document.getElementById('photos-grid');
             var sel  = document.getElementById('photos-per-row');
-            if (grid) grid.style.setProperty('--photos-cols', photosPerRow);
+            if (grid) {
+                grid.style.setProperty('--photos-cols', photosPerRow);
+                grid.setAttribute('data-cols', String(photosPerRow));
+            }
             if (sel)  sel.value = String(photosPerRow);
         }
 
