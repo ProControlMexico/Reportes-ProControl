@@ -697,12 +697,6 @@
                             <i class="fa-solid fa-circle-question text-base w-4 text-center"></i>
                             <span class="text-[10px] font-black tracking-widest">AYUDA</span>
                         </a>
-                        <button onclick="toggleApiKeyModal(); closeActionsMenu();"
-                                title="Configurar clave API de Gemini para el Diagnóstico IA"
-                                class="bg-amber-900 hover:bg-amber-800 text-white border border-amber-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
-                            <i class="fa-solid fa-key text-base w-4 text-center"></i>
-                            <span class="text-[10px] font-black tracking-widest">CLAVE IA</span>
-                        </button>
                         <button onclick="abrirConfirmLimpiarTodo(); closeActionsMenu();"
                                 title="Borrar todo lo que no se haya exportado"
                                 class="bg-rose-950 hover:bg-rose-900 text-white border border-rose-700 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
@@ -1053,12 +1047,9 @@
                         Auditoría NMX-F-605 — Diagnóstico de Cumplimiento
                     </h3>
 
-                    <!-- ¿Servicio MIP formal contratado? -->
-                    <div class="no-print bg-slate-50 border border-slate-200/60 rounded-xl p-3.5 mb-4 flex items-center justify-between flex-wrap gap-2">
-                        <label class="text-xs font-semibold text-slate-600">¿El establecimiento cuenta con un Servicio MIP formal contratado?</label>
-                        <select id="tieneServicioMIP" onchange="toggleServicioMIP()" class="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="si">SÍ tiene servicio actualmente</option>
-                            <option value="no">NO tiene servicio MIP contratado</option>
+                    <div class="hidden">
+                        <select id="tieneServicioMIP" class="hidden" aria-hidden="true">
+                            <option value="si"></option>
                         </select>
                     </div>
 
