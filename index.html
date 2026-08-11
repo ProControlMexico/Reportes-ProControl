@@ -4727,11 +4727,10 @@
                     });
                     state.history = data.history;
 
-                    // Restaurar header
+                    // Restaurar header: solo la versión — la fecha nunca se restaura desde el
+                    // archivo, siempre es la fecha en que se está generando el reporte (hoy).
                     if (data.header) {
-                        var hd = document.getElementById('header-date');
                         var hv = document.getElementById('header-version');
-                        if (hd && data.header.date)    hd.value = data.header.date;
                         if (hv && data.header.version) hv.value = data.header.version;
                     }
 
@@ -4868,16 +4867,23 @@
                     stationCaptures[s.id] = Object.assign({}, s.captures);
                 });
             } else if (state.history.length > 0) {
-                var lastSvc = state.history[state.history.length - 1];
+                // Tomar el servicio de fecha MÁS RECIENTE, no el último por posición en el
+                // arreglo (el orden de inserción no garantiza orden cronológico).
+                var lastSvc = state.history.reduce(function(latest, h) {
+                    return (!latest || new Date(h.date) > new Date(latest.date)) ? h : latest;
+                }, null);
                 printDate = lastSvc.date;
                 stationCaptures = Object.assign({}, lastSvc.stationCaptures || {});
             }
 
-            // Actualizar encabezado de impresión
+            // Actualizar encabezado de impresión: la fecha de arriba SIEMPRE es la fecha en
+            // que se está generando el reporte (hoy), no una fecha guardada/editable — la
+            // fecha del servicio va aparte, en "Datos del Cliente y Servicio" (print-info-date).
             var hDateEl  = document.getElementById("header-date");
-            var docDate  = hDateEl ? hDateEl.value : '';
+            var docDate  = getLocalDateStr();
+            if (hDateEl) hDateEl.value = docDate;
             document.getElementById("print-client-name").textContent    = state.clientName;
-            document.getElementById("print-service-date").textContent   = docDate ? formatDisplayDate(docDate) : '—';
+            document.getElementById("print-service-date").textContent   = formatDisplayDate(docDate);
             var verBadge = document.getElementById("print-version-badge");
             if (verBadge) verBadge.textContent = 'INFORME DE HALLAZGOS';
 
@@ -4951,7 +4957,7 @@
             // Sugerir nombre de archivo en el diálogo "Guardar como PDF" del navegador
             var originalTitle = document.title;
             var safeName = state.clientName.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_');
-            var dateStr  = (hDateEl && hDateEl.value) ? hDateEl.value.replace(/-/g, '') : getLocalDateStr().replace(/-/g, '');
+            var dateStr  = docDate.replace(/-/g, '');
             document.title = 'Procontrol-' + safeName + '-' + dateStr;
 
             window.print();
@@ -5723,9 +5729,11 @@
          * INICIALIZADOR GENERAL
          ************************************************************************/
         window.onload = function() {
-            // Inicializar fecha del header con hoy si no viene de estado guardado
+            // La fecha del header SIEMPRE es la fecha en que se abre/genera el reporte (hoy),
+            // nunca un valor persistido de una sesión anterior — la fecha del servicio es
+            // un campo aparte (state.currentServiceDate / historial).
             const headerDate = document.getElementById("header-date");
-            if (headerDate && !headerDate.value) {
+            if (headerDate) {
                 headerDate.value = getLocalDateStr();
             }
             initializeFromState();
