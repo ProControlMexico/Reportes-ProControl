@@ -252,6 +252,15 @@
             #bait-chart-section canvas {
                 max-width: 100% !important;
             }
+            /* ── Tabla de "qué consumió el cebo" (leyenda de impresión): evitar que una
+               fila se corte entre dos páginas, y repetir el encabezado si abarca varias ── */
+            #bait-chart-print-legend tr {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            #bait-chart-print-legend thead {
+                display: table-header-group;
+            }
 
             /* ── Leyenda de tendencias por especie (solo impresión) ── */
             #line-chart-print-legend {
@@ -3682,15 +3691,28 @@
 
             if (rows.length === 0) return;
 
-            var list = document.createElement('div');
-            list.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
-            rows.forEach(function(r) {
-                var line = document.createElement('div');
-                line.style.cssText = 'font-size:8.5pt;color:#78350f;';
-                line.textContent = r.id + ' · ' + formatDisplayDate(r.date) + ': ' + r.val + '% — ' + r.species;
-                list.appendChild(line);
+            // Tabla compacta (mismo estilo que el resto de tablas de impresión del reporte):
+            // mucho más escaneable que una lista de líneas sueltas cuando hay muchos registros.
+            var html = '<table class="w-full text-left" style="font-size:7.5pt; border-collapse:collapse;">' +
+                '<thead><tr style="background:#fffbeb; border-bottom:1px solid #fde68a;">' +
+                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Estación</th>' +
+                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Fecha</th>' +
+                    '<th style="padding:3px 6px; font-weight:700; color:#92400e; text-align:center;">Consumo</th>' +
+                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Especie(s) causante(s)</th>' +
+                '</tr></thead><tbody>';
+
+            rows.forEach(function(r, i) {
+                var bg = (i % 2 === 0) ? '#ffffff' : '#fffdf5';
+                html += '<tr style="background:' + bg + '; border-bottom:1px solid #fef3c7;">' +
+                    '<td style="padding:3px 6px; font-weight:700; color:#374151; font-family:monospace;">' + r.id + '</td>' +
+                    '<td style="padding:3px 6px; color:#4b5563;">' + formatDisplayDate(r.date) + '</td>' +
+                    '<td style="padding:3px 6px; text-align:center; font-weight:700; color:#b45309;">' + r.val + '%</td>' +
+                    '<td style="padding:3px 6px; color:#374151;">' + r.species + '</td>' +
+                '</tr>';
             });
-            container.appendChild(list);
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
         }
 
         window.maximizeBaitChart = function() {
