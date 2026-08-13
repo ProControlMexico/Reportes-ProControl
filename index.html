@@ -252,14 +252,10 @@
             #bait-chart-section canvas {
                 max-width: 100% !important;
             }
-            /* ── Tabla de "qué consumió el cebo" (leyenda de impresión): evitar que una
-               fila se corte entre dos páginas, y repetir el encabezado si abarca varias ── */
-            #bait-chart-print-legend tr {
+            /* ── Leyenda de "qué consumió el cebo" (solo servicio actual, impresión) ── */
+            #bait-chart-print-legend {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
-            }
-            #bait-chart-print-legend thead {
-                display: table-header-group;
             }
 
             /* ── Leyenda de tendencias por especie (solo impresión) ── */
@@ -3665,53 +3661,37 @@
                     }
                 }
             });
-
-            // Actualizar leyenda de "qué consumió el cebo", visible solo en impresión
-            updateBaitPrintLegend(timeline, allCebStations);
         }
 
-        // Construye, arriba de la gráfica de consumo de cebo, una leyenda fija (visible solo
-        // en impresión, ya que los tooltips del chart no se imprimen) con la especie que
-        // consumió el cebo en cada registro de cada estación.
-        function updateBaitPrintLegend(timeline, allCebStations) {
+        // Construye, arriba de la gráfica de consumo de cebo, una leyenda fija y compacta
+        // (visible solo en impresión, ya que los tooltips del chart no se imprimen) con la
+        // especie que consumió el cebo — SOLO del servicio que se está imprimiendo, no de
+        // todo el historial. Se llama desde printReport() con el mismo servicio que se
+        // muestra en "Datos del Cliente y Servicio".
+        function updateBaitPrintLegend(printDate, baitByStation, baitSpeciesByStation) {
             var container = document.getElementById('bait-chart-print-legend');
             if (!container) return;
             container.innerHTML = '';
 
-            var rows = [];
-            timeline.forEach(function(t) {
-                allCebStations.forEach(function(stInfo) {
-                    var val = t.bait[stInfo.id];
-                    var speciesArr = t.species ? t.species[stInfo.id] : null;
-                    if (val !== null && val !== undefined && speciesArr && speciesArr.length > 0) {
-                        rows.push({ date: t.date, id: stInfo.id, val: val, species: speciesArr.join(', ') });
-                    }
-                });
+            var rows = Object.keys(baitByStation || {}).filter(function(id) {
+                var sp = baitSpeciesByStation && baitSpeciesByStation[id];
+                return sp && sp.length > 0;
+            }).sort().map(function(id) {
+                return { id: id, val: baitByStation[id], species: baitSpeciesByStation[id].join(', ') };
             });
 
             if (rows.length === 0) return;
 
-            // Tabla compacta (mismo estilo que el resto de tablas de impresión del reporte):
-            // mucho más escaneable que una lista de líneas sueltas cuando hay muchos registros.
-            var html = '<table class="w-full text-left" style="font-size:7.5pt; border-collapse:collapse;">' +
-                '<thead><tr style="background:#fffbeb; border-bottom:1px solid #fde68a;">' +
-                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Estación</th>' +
-                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Fecha</th>' +
-                    '<th style="padding:3px 6px; font-weight:700; color:#92400e; text-align:center;">Consumo</th>' +
-                    '<th style="padding:3px 6px; font-weight:700; color:#92400e;">Especie(s) causante(s)</th>' +
-                '</tr></thead><tbody>';
-
-            rows.forEach(function(r, i) {
-                var bg = (i % 2 === 0) ? '#ffffff' : '#fffdf5';
-                html += '<tr style="background:' + bg + '; border-bottom:1px solid #fef3c7;">' +
-                    '<td style="padding:3px 6px; font-weight:700; color:#374151; font-family:monospace;">' + r.id + '</td>' +
-                    '<td style="padding:3px 6px; color:#4b5563;">' + formatDisplayDate(r.date) + '</td>' +
-                    '<td style="padding:3px 6px; text-align:center; font-weight:700; color:#b45309;">' + r.val + '%</td>' +
-                    '<td style="padding:3px 6px; color:#374151;">' + r.species + '</td>' +
-                '</tr>';
+            var html = '<p style="font-size:7.5pt; font-weight:700; color:#92400e; margin-bottom:4px;">' +
+                'Qué consumió el cebo — servicio del ' + formatDisplayDate(printDate) + ':</p>' +
+                '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
+            rows.forEach(function(r) {
+                html += '<span style="font-size:7.5pt; font-weight:600; color:#78350f; background:#fffbeb; ' +
+                    'border:1px solid #fde68a; border-radius:999px; padding:2px 8px; white-space:nowrap;">' +
+                    r.id + ': ' + r.val + '% — ' + r.species + '</span>';
             });
 
-            html += '</tbody></table>';
+            html += '</div>';
             container.innerHTML = html;
         }
 
@@ -5009,6 +4989,8 @@
             // Determinar servicio a imprimir: selector pie → activo → último historial
             var printDate = '';
             var stationCaptures = {};
+            var printBait = {};
+            var printBaitSpecies = {};
 
             var pSelVal = pieServiceSelector ? pieServiceSelector.value : 'current';
             if (pSelVal !== 'current' && pSelVal !== 'none' && state.history[parseInt(pSelVal)]) {
@@ -5016,10 +4998,18 @@
                 var pSel = state.history[parseInt(pSelVal)];
                 printDate = pSel.date;
                 stationCaptures = Object.assign({}, pSel.stationCaptures || {});
+                printBait = Object.assign({}, pSel.baitConsumptionByStation || {});
+                printBaitSpecies = Object.assign({}, pSel.baitConsumptionSpeciesByStation || {});
             } else if (state.isServiceStarted && state.currentServiceDate) {
                 printDate = state.currentServiceDate;
                 state.stations.forEach(function(s) {
                     stationCaptures[s.id] = Object.assign({}, s.captures);
+                    if (s.type === 'Cebadera' && s.baitConsumption !== null && s.baitConsumption !== undefined) {
+                        printBait[s.id] = s.baitConsumption;
+                        if (s.baitConsumptionSpecies && s.baitConsumptionSpecies.length > 0) {
+                            printBaitSpecies[s.id] = s.baitConsumptionSpecies;
+                        }
+                    }
                 });
             } else if (state.history.length > 0) {
                 // Tomar el servicio de fecha MÁS RECIENTE, no el último por posición en el
@@ -5029,7 +5019,11 @@
                 }, null);
                 printDate = lastSvc.date;
                 stationCaptures = Object.assign({}, lastSvc.stationCaptures || {});
+                printBait = Object.assign({}, lastSvc.baitConsumptionByStation || {});
+                printBaitSpecies = Object.assign({}, lastSvc.baitConsumptionSpeciesByStation || {});
             }
+
+            updateBaitPrintLegend(printDate, printBait, printBaitSpecies);
 
             // Actualizar encabezado de impresión: la fecha de arriba SIEMPRE es la fecha en
             // que se está generando el reporte (hoy), no una fecha guardada/editable — la
