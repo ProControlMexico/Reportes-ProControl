@@ -1484,6 +1484,8 @@
                                 <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Maximizar
                             </button>
                         </div>
+                        <!-- Qué consumió el cebo por estación/visita — visible solo en impresión -->
+                        <div id="bait-chart-print-legend" class="hidden print:block mb-3"></div>
                         <div id="bait-chart-container" class="relative h-80">
                             <canvas id="baitChart"></canvas>
                         </div>
@@ -1707,6 +1709,10 @@
                                    class="w-20 text-center py-1.5 border border-amber-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none bg-white transition-all">
                             <span class="text-sm font-extrabold text-amber-600">%</span>
                         </div>
+                    </div>
+                    <div class="mt-2.5 px-1">
+                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">¿Qué consumió el cebo?</p>
+                        <div class="flex flex-wrap gap-1.5" id="bait-consumption-species-container"></div>
                     </div>
                 </div>
             </div>
@@ -2373,10 +2379,14 @@
                     if (selectedHistory.stationCaptures && selectedHistory.stationCaptures[station.id]) {
                         station.captures = Object.assign({}, selectedHistory.stationCaptures[station.id]);
                     }
-                    // Restaurar consumo de cebo para estaciones Cebadera
+                    // Restaurar consumo de cebo (y especies causantes) para estaciones Cebadera
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                     if (station.type === 'Cebadera' && selectedHistory.baitConsumptionByStation && selectedHistory.baitConsumptionByStation[station.id] !== undefined) {
                         station.baitConsumption = selectedHistory.baitConsumptionByStation[station.id];
+                        if (selectedHistory.baitConsumptionSpeciesByStation && selectedHistory.baitConsumptionSpeciesByStation[station.id]) {
+                            station.baitConsumptionSpecies = selectedHistory.baitConsumptionSpeciesByStation[station.id].slice();
+                        }
                     }
                 });
 
@@ -2460,7 +2470,8 @@
                             type: type,
                             sequential: seq,
                             captures: {},
-                            baitConsumption: null
+                            baitConsumption: null,
+                            baitConsumptionSpecies: []
                         });
                     }
                 }
@@ -2864,6 +2875,7 @@
             });
 
             var baitConsumptionByStation = {};
+            var baitConsumptionSpeciesByStation = {};
             state.stations.forEach(function(station) {
                 const hasCaps = Object.keys(station.captures).length > 0;
                 if (hasCaps) {
@@ -2874,9 +2886,12 @@
                         currentTotals[org] = (currentTotals[org] || 0) + qty;
                     });
                 }
-                // Recopilar consumo de cebo de estaciones Cebadera
+                // Recopilar consumo de cebo (y especies causantes) de estaciones Cebadera
                 if (station.type === 'Cebadera' && station.baitConsumption !== null && station.baitConsumption !== undefined) {
                     baitConsumptionByStation[station.id] = station.baitConsumption;
+                    if (station.baitConsumptionSpecies && station.baitConsumptionSpecies.length > 0) {
+                        baitConsumptionSpeciesByStation[station.id] = station.baitConsumptionSpecies.slice();
+                    }
                 }
             });
 
@@ -2884,7 +2899,8 @@
                 date: state.currentServiceDate,
                 totals: currentTotals,
                 stationCaptures: currentStationCaptures,
-                baitConsumptionByStation: baitConsumptionByStation
+                baitConsumptionByStation: baitConsumptionByStation,
+                baitConsumptionSpeciesByStation: baitConsumptionSpeciesByStation
             };
 
             // 2. Insertar o actualizar servicio
@@ -2902,6 +2918,7 @@
             state.stations.forEach(function(station) {
                 station.captures = {};
                 station.baitConsumption = null;
+                station.baitConsumptionSpecies = [];
             });
 
             // 4. Resetear estado de servicio activo
@@ -2959,6 +2976,7 @@
                 state.stations.forEach(function(station) {
                     station.captures = {};
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                 });
 
                 state.isServiceStarted = false;
@@ -3026,12 +3044,35 @@
             // Mostrar / ocultar campo de consumo de cebo según tipo de estación
             var baitSection = document.getElementById('bait-consumption-section');
             var baitInput = document.getElementById('bait-consumption-input');
+            var baitSpeciesContainer = document.getElementById('bait-consumption-species-container');
             if (station.type === 'Cebadera') {
                 baitSection.classList.remove('hidden');
                 baitInput.value = (station.baitConsumption !== null && station.baitConsumption !== undefined) ? station.baitConsumption : '';
+
+                var selectedBaitSpecies = station.baitConsumptionSpecies || [];
+                baitSpeciesContainer.innerHTML = '';
+                TAXONOMY.OTHERS.forEach(function(org) {
+                    var isSel = selectedBaitSpecies.indexOf(org) !== -1;
+                    var chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.textContent = org;
+                    chip.dataset.species = org;
+                    chip.className = 'bait-species-chip px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ' +
+                        (isSel ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-amber-200 text-amber-700 hover:border-amber-400');
+                    chip.onclick = function() {
+                        var active = chip.classList.toggle('bg-amber-500');
+                        chip.classList.toggle('border-amber-500');
+                        chip.classList.toggle('text-white');
+                        chip.classList.toggle('bg-white');
+                        chip.classList.toggle('border-amber-200');
+                        chip.classList.toggle('text-amber-700');
+                    };
+                    baitSpeciesContainer.appendChild(chip);
+                });
             } else {
                 baitSection.classList.add('hidden');
                 if (baitInput) baitInput.value = '';
+                if (baitSpeciesContainer) baitSpeciesContainer.innerHTML = '';
             }
 
             if (Object.keys(station.captures).length === 0) {
@@ -3097,6 +3138,11 @@
                     var baitInput = document.getElementById('bait-consumption-input');
                     var baitVal = baitInput ? parseFloat(baitInput.value) : NaN;
                     station.baitConsumption = (!isNaN(baitVal) && baitVal >= 0 && baitVal <= 100) ? baitVal : null;
+
+                    var selectedChips = document.querySelectorAll('#bait-consumption-species-container .bait-species-chip.bg-amber-500');
+                    station.baitConsumptionSpecies = Array.prototype.map.call(selectedChips, function(chip) {
+                        return chip.dataset.species;
+                    });
                 }
 
                 showToast("Capturas guardadas para " + station.id, "success");
@@ -3117,6 +3163,7 @@
                 if (station) {
                     station.captures = {};
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                     showToast("Se limpió la estación " + station.id, "warning");
                 }
                 closeModal();
@@ -3452,16 +3499,20 @@
         function buildBaitTimeline(cebStations) {
             var timeline = [];
             state.history.forEach(function(h) {
-                timeline.push({ date: h.date, bait: h.baitConsumptionByStation || {} });
+                timeline.push({ date: h.date, bait: h.baitConsumptionByStation || {}, species: h.baitConsumptionSpeciesByStation || {} });
             });
             if (state.isServiceStarted) {
                 var activeBait = {};
+                var activeSpecies = {};
                 cebStations.forEach(function(s) {
                     if (s.baitConsumption !== null && s.baitConsumption !== undefined) {
                         activeBait[s.id] = s.baitConsumption;
+                        if (s.baitConsumptionSpecies && s.baitConsumptionSpecies.length > 0) {
+                            activeSpecies[s.id] = s.baitConsumptionSpecies;
+                        }
                     }
                 });
-                timeline.push({ date: state.currentServiceDate, bait: activeBait });
+                timeline.push({ date: state.currentServiceDate, bait: activeBait, species: activeSpecies });
             }
             timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
             return timeline;
@@ -3596,13 +3647,50 @@
                                     // Detectar si es un punto interpolado (null original)
                                     var origVal = timeline[ctx.dataIndex] ? timeline[ctx.dataIndex].bait[ctx.dataset.label] : undefined;
                                     var isInterp = (origVal === null || origVal === undefined);
-                                    return ctx.dataset.label + ': ' + raw + '%' + (isInterp ? ' (sin dato · interpolado)' : '');
+                                    var speciesArr = (timeline[ctx.dataIndex] && timeline[ctx.dataIndex].species) ? timeline[ctx.dataIndex].species[ctx.dataset.label] : null;
+                                    var speciesTxt = (speciesArr && speciesArr.length > 0) ? ' — ' + speciesArr.join(', ') : '';
+                                    return ctx.dataset.label + ': ' + raw + '%' + speciesTxt + (isInterp ? ' (sin dato · interpolado)' : '');
                                 }
                             }
                         }
                     }
                 }
             });
+
+            // Actualizar leyenda de "qué consumió el cebo", visible solo en impresión
+            updateBaitPrintLegend(timeline, allCebStations);
+        }
+
+        // Construye, arriba de la gráfica de consumo de cebo, una leyenda fija (visible solo
+        // en impresión, ya que los tooltips del chart no se imprimen) con la especie que
+        // consumió el cebo en cada registro de cada estación.
+        function updateBaitPrintLegend(timeline, allCebStations) {
+            var container = document.getElementById('bait-chart-print-legend');
+            if (!container) return;
+            container.innerHTML = '';
+
+            var rows = [];
+            timeline.forEach(function(t) {
+                allCebStations.forEach(function(stInfo) {
+                    var val = t.bait[stInfo.id];
+                    var speciesArr = t.species ? t.species[stInfo.id] : null;
+                    if (val !== null && val !== undefined && speciesArr && speciesArr.length > 0) {
+                        rows.push({ date: t.date, id: stInfo.id, val: val, species: speciesArr.join(', ') });
+                    }
+                });
+            });
+
+            if (rows.length === 0) return;
+
+            var list = document.createElement('div');
+            list.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+            rows.forEach(function(r) {
+                var line = document.createElement('div');
+                line.style.cssText = 'font-size:8.5pt;color:#78350f;';
+                line.textContent = r.id + ' · ' + formatDisplayDate(r.date) + ': ' + r.val + '% — ' + r.species;
+                list.appendChild(line);
+            });
+            container.appendChild(list);
         }
 
         window.maximizeBaitChart = function() {
@@ -4338,15 +4426,18 @@
                     }
                 });
 
-                // Generar consumo de cebo para estaciones Cebadera
+                // Generar consumo de cebo (y especie causante) para estaciones Cebadera
                 var baitConsumptionByStation = {};
+                var baitConsumptionSpeciesByStation = {};
                 testStations.forEach(function(station) {
                     if (station.type === 'Cebadera' && Math.random() < 0.75) {
                         baitConsumptionByStation[station.id] = Math.round(Math.random() * 90 + 5);
+                        var especie = TAXONOMY.OTHERS[Math.floor(Math.random() * TAXONOMY.OTHERS.length)];
+                        baitConsumptionSpeciesByStation[station.id] = [especie];
                     }
                 });
 
-                testHistory.push({ date: dateStr, totals: totals, stationCaptures: stationCaptures, baitConsumptionByStation: baitConsumptionByStation });
+                testHistory.push({ date: dateStr, totals: totals, stationCaptures: stationCaptures, baitConsumptionByStation: baitConsumptionByStation, baitConsumptionSpeciesByStation: baitConsumptionSpeciesByStation });
             }
 
             // Aplicar al estado
@@ -4762,6 +4853,7 @@
                             cordon:          s.cordon,
                             type:            s.type,
                             baitConsumption: (s.baitConsumption !== undefined) ? s.baitConsumption : null,
+                            baitConsumptionSpecies: Array.isArray(s.baitConsumptionSpecies) ? s.baitConsumptionSpecies.slice() : [],
                             sequential: s.sequential || 1,
                             captures:   s.captures ? JSON.parse(JSON.stringify(s.captures)) : {}
                         };
