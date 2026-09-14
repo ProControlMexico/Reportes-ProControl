@@ -36,8 +36,9 @@
                 min-height: 0 !important;
                 padding: 0 !important;
                 background-color: #ffffff !important;
-                color: #000000 !important;
-                font-size: 10pt;
+                color: #111827 !important;
+                font-size: 9.2pt;
+                line-height: 1.35;
             }
             /* Eliminar padding lateral de Tailwind (px-4, px-6, px-8) — @page ya lo maneja */
             main {
@@ -91,28 +92,155 @@
                 print-color-adjust: exact !important;
             }
             .print-card {
-                border: 1px solid #e5e7eb !important;
-                border-radius: 0.5rem !important;
-                padding: 1rem !important;
-                margin-bottom: 1.5rem !important;
+                border: 1px solid #dbe5ea !important;
+                border-top: 3px solid #0f766e !important;
+                border-radius: 8px !important;
+                padding: 12px 14px !important;
+                margin-bottom: 12px !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
                 page-break-inside: avoid !important;
+            }
+            .print-card h3,
+            .print-card h4.print\:block {
+                color: #0f172a !important;
+                font-size: 8.3pt !important;
+                font-weight: 850 !important;
+                letter-spacing: 0.055em !important;
+                text-transform: uppercase !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+                padding-bottom: 5px !important;
+                margin-bottom: 10px !important;
+            }
+            .print-client-data {
+                display: block !important;
+                border: 1px solid #cfdce5 !important;
+                border-radius: 8px !important;
+                padding: 10px 12px !important;
+                margin: 0 0 10px !important;
+                background: #f8fafc !important;
+                page-break-inside: avoid !important;
+            }
+            .print-client-data-title {
+                display: block !important;
+                font-size: 7.5pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.08em !important;
+                text-transform: uppercase !important;
+                color: #0f766e !important;
+                margin: 0 0 8px !important;
+            }
+            .print-client-data table {
+                width: 100% !important;
+                border-collapse: separate !important;
+                border-spacing: 0 6px !important;
+                table-layout: fixed !important;
+            }
+            .print-client-data td {
+                padding: 0 !important;
+                vertical-align: top !important;
+                line-height: 1.25 !important;
+            }
+            .print-client-data td:nth-child(odd) {
+                width: 92px !important;
+                color: #64748b !important;
+                font-size: 6.6pt !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.03em !important;
+                text-transform: uppercase !important;
+            }
+            .print-client-data td:nth-child(even) {
+                color: #111827 !important;
+                font-size: 7.8pt !important;
+                font-weight: 700 !important;
+                overflow-wrap: anywhere !important;
+                padding-right: 14px !important;
+            }
+            .print-client-data tr:last-child td {
+                border-top: 1px solid #e5e7eb !important;
+                padding-top: 7px !important;
+            }
+            .print-client-data hr {
+                display: none !important;
             }
             .print-header-visible {
                 display: flex !important;
                 align-items: center;
                 justify-content: space-between;
-                border-bottom: 2px solid #0f766e;
-                padding: 8px 20px 12px;
-                margin-bottom: 18px;
+                gap: 18px;
+                border-top: 5px solid #0f766e;
+                border-bottom: 1px solid #cbd5e1;
+                padding: 10px 0 12px;
+                margin-bottom: 12px;
+            }
+            .print-header-logo {
+                height: 76px !important;
+                width: auto !important;
+                object-fit: contain !important;
+            }
+            .print-doc-meta {
+                text-align: right !important;
+                min-width: 230px !important;
+                color: #0f172a !important;
+            }
+            .print-doc-kicker {
+                display: none !important;
+            }
+            .print-doc-client {
+                font-size: 15pt !important;
+                font-weight: 850 !important;
+                color: #0f172a !important;
+                line-height: 1.05 !important;
+                margin-bottom: 4px !important;
+            }
+            .print-doc-date {
+                font-size: 8pt !important;
+                color: #475569 !important;
+                font-weight: 650 !important;
+                margin-bottom: 4px !important;
+            }
+            .print-doc-badge {
+                color: #0f766e !important;
+                font-size: 7pt !important;
+                font-weight: 850 !important;
+                letter-spacing: 0.05em !important;
+                text-transform: uppercase !important;
+            }
+            #print-client-name {
+                font-size: 15pt !important;
+                font-weight: 850 !important;
+                color: #0f172a !important;
+                line-height: 1.05 !important;
+                margin-bottom: 4px !important;
+            }
+            #print-service-date {
+                font-size: 8pt !important;
+                color: #475569 !important;
+                font-weight: 650 !important;
+                margin-top: 3px !important;
+                margin-bottom: 0 !important;
+            }
+            #print-version-badge {
+                color: #0f766e !important;
+                font-size: 7.5pt !important;
+                font-weight: 850 !important;
+                letter-spacing: 0.05em !important;
+                text-transform: uppercase !important;
+                margin-top: 5px !important;
             }
             .print-footer-visible {
                 display: flex !important;
                 align-items: center;
                 justify-content: center;
-                gap: 24px;
-                border-top: 2px solid #0f766e;
-                padding: 10px 20px 8px;
+                gap: 16px;
+                border-top: 1px solid #cbd5e1;
+                padding: 8px 0 4px;
+                margin-top: 4px;
+                color: #334155;
                 page-break-inside: avoid;
+            }
+            .print-footer-visible img {
+                height: 54px !important;
             }
             #signatures-section {
                 /* Flujo natural: si cabe en la misma hoja se incluye,
@@ -124,16 +252,21 @@
             #bait-chart-section canvas {
                 max-width: 100% !important;
             }
+            /* ── Leyenda de "qué consumió el cebo" (solo servicio actual, impresión) ── */
+            #bait-chart-print-legend {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
 
             /* ── Leyenda de tendencias por especie (solo impresión) ── */
             #line-chart-print-legend {
                 display: flex !important;
                 flex-wrap: wrap;
-                gap: 5px 16px;
-                padding: 8px 12px;
-                border: 1px solid #e5e7eb;
+                gap: 4px 12px;
+                padding: 7px 10px;
+                border: 1px solid #dbe5ea;
                 border-radius: 6px;
-                background: #f9fafb;
+                background: #f8fafc;
                 margin-bottom: 8px;
             }
 
@@ -144,12 +277,22 @@
             }
             p[id^="sig-pos-print-"] {
                 display: block !important;
-                font-size: 0.72rem;
+                font-size: 7pt;
                 font-weight: 600;
                 color: #374151;
                 padding: 3px 0 2px;
                 border-bottom: 1px solid #d1d5db;
                 min-height: 1.3rem;
+            }
+            input[id^="sig-name-"] {
+                border: 0 !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+                border-radius: 0 !important;
+                text-align: center !important;
+                font-size: 8pt !important;
+                font-weight: 800 !important;
+                padding: 2px 0 !important;
+                color: #0f172a !important;
             }
         }
         /* Evita que una tarjeta de resumen NMX-F-605 se corte entre dos páginas al imprimir */
@@ -168,14 +311,6 @@
         .print-footer-visible {
             display: none;
         }
-        #obs-editor:empty:before {
-            content: attr(placeholder);
-            color: #94a3b8;
-            pointer-events: none;
-            display: block;
-        }
-        #obs-editor:focus { outline: none; }
-
         /* =====================================================
            OPTIMIZACIONES MÓVIL Y MULTI-NAVEGADOR
         ====================================================== */
@@ -261,12 +396,37 @@
 
         /* === EVIDENCIA FOTOGRÁFICA === */
         .photo-title-print { display: none; }
+        /* Nº de columnas configurable por el usuario (1 a 4), en pantalla e impresión */
+        #photos-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--photos-cols, 2), minmax(0, 1fr));
+            gap: 1.25rem;
+        }
+        @media (max-width: 480px) {
+            #photos-grid { grid-template-columns: 1fr; }
+        }
         @media print {
-            #photos-grid {
-                display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 1rem !important;
+            /* La tarjeta puede ser muy alta con varias fotos: dejarla fluir entre páginas
+               en vez de forzarla completa a la siguiente hoja (evita huecos en blanco) */
+            #photos-section-card {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
             }
+            /* Cada foto + título sí se protege para no cortarse a la mitad */
+            #photos-grid > div {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            #photos-grid {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+            }
+            #photos-grid[data-cols="1"] > div { width: 100% !important; }
+            #photos-grid[data-cols="2"] > div { width: calc((100% - 10px) / 2) !important; }
+            #photos-grid[data-cols="3"] > div { width: calc((100% - 20px) / 3) !important; }
+            #photos-grid[data-cols="4"] > div { width: calc((100% - 30px) / 4) !important; }
             #photos-empty-state    { display: none !important; }
             .photo-title-input     { display: none !important; }
             .photo-title-print {
@@ -347,27 +507,80 @@
                 max-width:  100% !important;
             }
 
-            #analytics-section > div {
+            #analytics-section > div:not(#photos-section-card) {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
             }
+            #analytics-section > #photos-section-card {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+            }
 
-            /* ── Tabla de capturas: más espacio y mejor tipografía ── */
+            /* ── Análisis Global de Hallazgos: tabla ancha (fecha + N especies), texto compacto ── */
+            #print-captures-table {
+                table-layout: fixed !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                border: 1px solid #cbd5e1 !important;
+            }
             #print-captures-table th,
             #print-captures-table td {
-                padding: 5px 8px !important;
-                font-size: 8pt !important;
-                line-height: 1.4 !important;
+                padding: 3px 4px !important;
+                font-size: 6.8pt !important;
+                line-height: 1.25 !important;
+                overflow-wrap: break-word !important;
+                border: 1px solid #dbe5ea !important;
             }
             #print-captures-table th {
-                font-size: 7.5pt !important;
-                letter-spacing: .03em !important;
+                background: #0f766e !important;
+                color: #ffffff !important;
+                font-size: 6.3pt !important;
+                font-weight: 850 !important;
+                letter-spacing: 0 !important;
+                vertical-align: bottom;
+            }
+            #print-captures-table tbody tr:nth-child(even) td {
+                background: #f8fafc !important;
+            }
+            #print-captures-table tbody tr:last-child td {
+                background: #e6fffb !important;
+                color: #0f172a !important;
+                font-weight: 850 !important;
+                border-top: 2px solid #0f766e !important;
+            }
+
+            #analytics-section .print-card {
+                border-top-color: #1d4ed8 !important;
+            }
+
+            #photos-grid > div {
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 7px !important;
+                padding: 6px !important;
+                background: #f8fafc !important;
+                box-shadow: none !important;
+                box-sizing: border-box !important;
+            }
+            #photos-grid img {
+                border-radius: 5px !important;
+                border: 1px solid #dbe5ea !important;
+                background: #ffffff !important;
+                max-height: 190px !important;
+                object-fit: contain !important;
             }
 
             /* ── Firmas: siempre completas, nunca cortadas ── */
             #signatures-section > div {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+                border-top-color: #0f172a !important;
+                padding-top: 12px !important;
+            }
+            #signatures-section .grid > div {
+                border: 1px solid #dbe5ea !important;
+                border-radius: 8px !important;
+                padding: 10px 12px !important;
+                background: #ffffff !important;
             }
         }
 
@@ -489,11 +702,11 @@
                             <i class="fa-solid fa-circle-question text-base w-4 text-center"></i>
                             <span class="text-[10px] font-black tracking-widest">AYUDA</span>
                         </a>
-                        <button onclick="toggleApiKeyModal(); closeActionsMenu();"
-                                title="Configurar clave API de Gemini para el Diagnóstico IA"
-                                class="bg-amber-900 hover:bg-amber-800 text-white border border-amber-600 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
-                            <i class="fa-solid fa-key text-base w-4 text-center"></i>
-                            <span class="text-[10px] font-black tracking-widest">CLAVE IA</span>
+                        <button onclick="abrirConfirmLimpiarTodo(); closeActionsMenu();"
+                                title="Borrar todo lo que no se haya exportado"
+                                class="bg-rose-950 hover:bg-rose-900 text-white border border-rose-700 rounded-lg px-3 py-2 flex items-center gap-2.5 transition-all">
+                            <i class="fa-solid fa-broom text-base w-4 text-center"></i>
+                            <span class="text-[10px] font-black tracking-widest">LIMPIAR</span>
                         </button>
                     </div>
                 </div>
@@ -507,23 +720,19 @@
 
     <!-- Encabezado Especial de Impresión -->
     <div class="print-header-visible">
-        <!-- Logo + título apilados verticalmente (igual que el header web) -->
+        <!-- Solo el logo (se quitó el subtítulo "Plataforma de control / Tendencias y seguimiento") -->
         <div style="display:flex; flex-direction:column; align-items:flex-start; gap:5px;">
             <img src="https://github.com/gavainc/Procontrol-Mexico/blob/main/Logo%20Procontrol%20Vectores.png?raw=true"
                  alt="Procontrol México"
-                 style="height:128px; width:auto; object-fit:contain;"
+                 class="print-header-logo"
+                 style="height:76px; width:auto; object-fit:contain;"
                  onerror="this.src='https://placehold.co/150x60/0f766e/ffffff?text=Procontrol';">
-            <div style="line-height:1.35;">
-                <div style="font-size:10pt; font-weight:800; color:#0f172a;">Plataforma de control</div>
-                <div style="font-size:10pt; font-weight:800; color:#0f766e;">Tendencias y seguimiento</div>
-                <div style="font-size:7.5pt; color:#4b5563; font-weight:600; margin-top:2px;">Depto de IT · Control de plagas</div>
-            </div>
         </div>
         <!-- Datos del documento (derecha) -->
-        <div style="text-align:right;">
+        <div class="print-doc-meta" style="text-align:right;">
             <div style="font-size:11pt; font-weight:800; color:#0f172a; margin-bottom:3px;" id="print-client-name">—</div>
+            <div style="font-size:8pt; color:#0f766e; font-weight:700; font-family:monospace;" id="print-version-badge">INFORME DE HALLAZGOS</div>
             <div style="font-size:8.5pt; color:#4b5563; margin-bottom:2px;" id="print-service-date">Fecha: —</div>
-            <div style="font-size:8pt; color:#0f766e; font-weight:700; font-family:monospace;" id="print-version-badge">VER 1.0</div>
         </div>
     </div>
 
@@ -540,7 +749,7 @@
             <section class="lg:col-span-4 space-y-6 no-print">
                 
                 <!-- 1. CONFIGURACIÓN DEL MASTER -->
-                <div id="setup-section" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <div id="setup-section" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 sm:p-6">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="bg-teal-100 text-teal-800 p-2 rounded-lg">
                             <i class="fa-solid fa-sliders text-lg"></i>
@@ -549,19 +758,26 @@
                     </div>
 
                     <!-- Nombre del Cliente -->
-                    <div class="mb-5">
+                    <div class="mb-3">
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Nombre del Cliente</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                 <i class="fa-regular fa-building"></i>
                             </span>
                             <input type="text" id="client-name-input" placeholder="Ej. Planta Alimentos Sigma"
-                                   class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                                   class="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
                         </div>
                     </div>
 
+                    <!-- Botón para capturar dirección / C.P. / ciudad / estado -->
+                    <button type="button" id="client-data-btn" onclick="openClientDataModal()"
+                            class="w-full flex items-center justify-center gap-2 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl py-2.5 mb-5 transition-all">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="client-data-btn-label">Agregar Dirección del Cliente</span>
+                    </button>
+
                     <!-- Sucursal / Técnico / Quien Recibe (escritura libre) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                    <div class="grid grid-cols-1 gap-3.5 mb-5">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Sucursal</label>
                             <div class="relative">
@@ -569,7 +785,7 @@
                                     <i class="fa-solid fa-location-dot"></i>
                                 </span>
                                 <input type="text" id="sucursal-input" placeholder="Ej. Sucursal Centro"
-                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                                       class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
                             </div>
                         </div>
                         <div>
@@ -579,7 +795,7 @@
                                     <i class="fa-solid fa-user-gear"></i>
                                 </span>
                                 <input type="text" id="tecnico-input" placeholder="Ej. Juan Pérez"
-                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                                       class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
                             </div>
                         </div>
                         <div>
@@ -589,7 +805,7 @@
                                     <i class="fa-solid fa-user-check"></i>
                                 </span>
                                 <input type="text" id="quien-recibe-input" placeholder="Ej. Gerente de Planta"
-                                       class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
+                                       class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all bg-white">
                             </div>
                         </div>
                     </div>
@@ -599,11 +815,11 @@
                     <!-- Agregar Estaciones -->
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Agregar Estaciones</h3>
                     
-                    <div class="space-y-3.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 mb-4">
+                    <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200/60 mb-4">
                         <!-- Cordón de Seguridad -->
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Cordón de Seguridad</label>
-                            <select id="cordon-select" class="w-full py-1.5 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                            <select id="cordon-select" class="w-full py-2 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
                                 <option value="" disabled selected>— Selecciona un cordón —</option>
                                 <option value="1er Cordón Interior">1 Interior (Zonas Limpias)</option>
                                 <option value="2do Cordón Exterior">2 Exterior (Fachada)</option>
@@ -615,7 +831,7 @@
                         <!-- Tipo de Estación -->
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Tipo de Estación</label>
-                            <select id="station-type-select" class="w-full py-1.5 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                            <select id="station-type-select" class="w-full py-2 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
                                 <option value="" disabled selected>— Selecciona un tipo —</option>
                                 <option value="Cebadera">Estación Cebadera (CEB)</option>
                                 <option value="UV">Estación UV (TUV)</option>
@@ -628,7 +844,7 @@
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Cantidad a Instalar (Consecutivo)</label>
                             <input type="number" id="station-qty-input" min="1" max="100" placeholder="Ej. 5"
-                                   class="w-full py-1.5 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                                   class="w-full py-2 px-3 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
                         </div>
 
                         <button id="add-stations-btn" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-semibold transition-all shadow-sm flex items-center justify-center gap-2">
@@ -703,14 +919,31 @@
                         </div>
                     </div>
 
+                    <!-- ¿Qué servicio se va a reportar? (arriba de todo, no hasta la gráfica de pastel) -->
+                    <div class="no-print mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                        <label for="pie-service-selector" class="text-xs font-bold text-teal-800 flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-file-circle-question"></i> ¿Qué servicio vas a reportar?
+                        </label>
+                        <select id="pie-service-selector" class="flex-grow bg-white border border-teal-300 text-slate-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 font-semibold cursor-pointer">
+                            <option value="current">Servicio Activo</option>
+                        </select>
+                    </div>
+
                     <!-- Datos básicos estáticos visibles para Impresión -->
-                    <div class="hidden print:block mb-4">
+                    <div class="hidden print:block print-client-data">
+                        <span class="print-client-data-title">Datos del cliente y servicio</span>
                         <table class="w-full text-xs text-left">
+                            <colgroup>
+                                <col style="width: 96px;">
+                                <col>
+                                <col style="width: 112px;">
+                                <col style="width: 148px;">
+                            </colgroup>
                             <tbody>
                                 <tr>
-                                    <td class="font-bold py-1 text-slate-500">CLIENTE INTEGRAL:</td>
+                                    <td class="font-bold py-1 text-slate-500">CLIENTE:</td>
                                     <td class="py-1 font-semibold text-slate-800" id="print-info-client">-</td>
-                                    <td class="font-bold py-1 text-slate-500">FECHA DE SERVICIO:</td>
+                                    <td class="font-bold py-1 text-slate-500">FECHA DEL SERVICIO:</td>
                                     <td class="py-1 font-semibold text-slate-800" id="print-info-date">-</td>
                                 </tr>
                                 <tr>
@@ -722,6 +955,10 @@
                                 <tr>
                                     <td class="font-bold py-1 text-slate-500">RECIBE (CLIENTE):</td>
                                     <td class="py-1 font-semibold text-slate-800" colspan="3" id="print-info-recibe">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold py-1 text-slate-500">DIRECCIÓN:</td>
+                                    <td class="py-1 font-semibold text-slate-800" colspan="3" id="print-info-direccion">-</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -735,8 +972,8 @@
                         <span>Vista de servicio histórico — las estaciones muestran capturas de esa visita. Badges en azul = solo lectura.</span>
                     </div>
 
-                    <!-- GRILLA DE ESTACIONES CLASIFICADA POR CORDONES -->
-                    <div class="space-y-6" id="stations-grid-container">
+                    <!-- GRILLA DE ESTACIONES CLASIFICADA POR CORDONES (solo pantalla — el PDF ya trae el Análisis Global de Hallazgos) -->
+                    <div class="space-y-6 no-print" id="stations-grid-container">
                         <!-- MENSAJE DE ESPERA DE CONFIGURACIÓN -->
                         <div id="grid-placeholder" class="text-center py-10 px-4">
                             <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -789,20 +1026,13 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN DETALLE DE CAPTURA EN INFORME (Visible al imprimir) -->
+                <!-- SECCIÓN ANÁLISIS GLOBAL DE HALLAZGOS (Visible al imprimir) -->
                 <div class="hidden print:block bg-white rounded-lg p-5 border border-slate-200 print-card">
                     <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 pb-1 border-b border-slate-300">
-                        <i class="fa-solid fa-file-invoice mr-1.5"></i> Detalle de Capturas del Servicio Técnico
+                        <i class="fa-solid fa-chart-simple mr-1.5"></i> Análisis Global de Hallazgos
                     </h3>
                     <table class="w-full text-xs text-left border-collapse" id="print-captures-table">
-                        <thead>
-                            <tr class="bg-slate-100 border-b border-slate-300">
-                                <th class="py-2 px-2 font-bold text-slate-700">Estación ID</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Ubicación / Cordón</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Tipo</th>
-                                <th class="py-2 px-2 font-bold text-slate-700">Organismos Identificados (Cantidades)</th>
-                            </tr>
-                        </thead>
+                        <thead id="print-captures-thead"></thead>
                         <tbody id="print-captures-tbody" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
@@ -814,20 +1044,17 @@
                             <i class="fa-solid fa-clipboard-check text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Inspección NMX-F-605 — Cumple / No Cumple</h3>
+                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Auditoría NMX-F-605 — Cumple / No Cumple</h3>
                             <p class="text-xs text-slate-400">Checklist técnico de riesgo de plagas y exclusión física. Los Puntos Críticos exigen 100% de cumplimiento.</p>
                         </div>
                     </div>
                     <h3 class="hidden print:block text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 pb-2 border-b border-slate-300">
-                        Inspección NMX-F-605 — Diagnóstico de Cumplimiento
+                        Auditoría NMX-F-605 — Diagnóstico de Cumplimiento
                     </h3>
 
-                    <!-- ¿Servicio MIP formal contratado? -->
-                    <div class="no-print bg-slate-50 border border-slate-200/60 rounded-xl p-3.5 mb-4 flex items-center justify-between flex-wrap gap-2">
-                        <label class="text-xs font-semibold text-slate-600">¿El establecimiento cuenta con un Servicio MIP formal contratado?</label>
-                        <select id="tieneServicioMIP" onchange="toggleServicioMIP()" class="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500">
-                            <option value="si">SÍ tiene servicio actualmente</option>
-                            <option value="no">NO tiene servicio MIP contratado</option>
+                    <div class="hidden">
+                        <select id="tieneServicioMIP" class="hidden" aria-hidden="true">
+                            <option value="si"></option>
                         </select>
                     </div>
 
@@ -1182,10 +1409,14 @@
                         </h4>
                         <div class="no-print mb-3">
                             <label class="block text-xs font-semibold text-slate-500 mb-1">Contexto Adicional para el Diagnóstico IA (opcional)</label>
-                            <textarea id="contextoIA" rows="2" placeholder="Ej. obra en proceso, cambio de proveedor de limpieza, temporada alta, colindancia con terreno baldío, etc." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none resize-y"></textarea>
-                            <p class="text-[10px] text-slate-400 mt-1">Se envía a la IA junto con el checklist — no lo reemplaza, solo aporta contexto de la visita.</p>
+                            <textarea id="contextoIA" rows="2" placeholder="Escribe aquí, con tus palabras, lo que el técnico hizo en sitio (ej. se reforzaron cordones sanitarios 1, 2 y 3; se dio seguimiento a estaciones; obra en proceso; cambio de proveedor de limpieza; colindancia con terreno baldío, etc.)." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none resize-y"></textarea>
+                            <p class="text-[10px] text-slate-400 mt-1">Mientras más específico seas sobre lo que hizo el técnico, menos tiene que inventar la IA. Se envía junto con el checklist — no lo reemplaza, lo complementa. Y si aun así algo sale mal, puedes corregir el texto generado a mano (es editable).</p>
                         </div>
-                        <div id="rptDictamenTexto" class="text-xs text-slate-700 leading-relaxed space-y-2">
+                        <p class="no-print text-[10px] text-slate-400 mb-1 flex items-center gap-1">
+                            <i class="fa-regular fa-pen-to-square"></i> El texto de abajo es editable — haz clic para ajustarlo a mano después de generarlo.
+                        </p>
+                        <div id="rptDictamenTexto" contenteditable="true"
+                             class="text-xs text-slate-700 leading-relaxed space-y-2 rounded-xl transition-all border border-transparent hover:border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-500 focus:outline-none px-2 py-1.5 -mx-2">
                             Completa el checklist y pulsa "Generar Análisis IA" para redactar el diagnóstico técnico del servicio.
                         </div>
                     </div>
@@ -1201,11 +1432,8 @@
                                 <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Distribución por Visita</h3>
                                 <p class="text-xs text-slate-400">Porcentaje de captura por especie del servicio seleccionado.</p>
                             </div>
-                            <!-- Selector + Maximizar -->
+                            <!-- Maximizar (el selector de servicio ahora vive arriba, junto a Estaciones) -->
                             <div class="pie-selector-container flex items-center gap-2">
-                                <select id="pie-service-selector" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 font-semibold cursor-pointer">
-                                    <option value="current">Servicio Activo</option>
-                                </select>
                                 <button onclick="maximizePieChart()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-2" title="Maximizar gráfica">
                                     <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Maximizar
                                 </button>
@@ -1261,13 +1489,15 @@
                                 <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Maximizar
                             </button>
                         </div>
+                        <!-- Qué consumió el cebo por estación/visita — visible solo en impresión -->
+                        <div id="bait-chart-print-legend" class="hidden print:block mb-3"></div>
                         <div id="bait-chart-container" class="relative h-80">
                             <canvas id="baitChart"></canvas>
                         </div>
                     </div>
 
                     <!-- MÓDULO DE EVIDENCIA FOTOGRÁFICA -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
+                    <div id="photos-section-card" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
                         <div class="flex items-center justify-between gap-3 mb-5">
                             <div class="flex items-center gap-3">
                                 <div class="bg-blue-100 text-blue-800 p-2 rounded-lg no-print">
@@ -1278,9 +1508,20 @@
                                     <p class="text-xs text-slate-400 no-print">Agrega fotos del servicio · añade un título descriptivo a cada imagen</p>
                                 </div>
                             </div>
-                            <label for="photo-file-input" class="no-print cursor-pointer bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
-                                <i class="fa-solid fa-plus"></i> Agregar Foto
-                            </label>
+                            <div class="no-print flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <label for="photos-per-row" class="text-xs font-semibold text-slate-500 whitespace-nowrap">Fotos por fila</label>
+                                    <select id="photos-per-row" onchange="setPhotosPerRow(this.value)" class="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        <option value="1">1</option>
+                                        <option value="2" selected>2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                    </select>
+                                </div>
+                                <label for="photo-file-input" class="cursor-pointer bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Agregar Foto
+                                </label>
+                            </div>
                             <input type="file" id="photo-file-input" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)">
                         </div>
 
@@ -1292,70 +1533,7 @@
                         </div>
 
                         <!-- Grilla de fotos -->
-                        <div id="photos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
-                    </div>
-
-                    <!-- MÓDULO DE OBSERVACIONES -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 print-card">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="bg-amber-100 text-amber-800 p-2 rounded-lg no-print">
-                                <i class="fa-solid fa-note-sticky text-lg"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Observaciones</h3>
-                                <p class="text-xs text-slate-400 no-print">Notas técnicas del servicio · límite 5 000 caracteres</p>
-                            </div>
-                        </div>
-
-                        <!-- Barra de herramientas (solo pantalla) -->
-                        <div class="no-print flex flex-wrap items-center gap-1.5 mb-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
-                            <select onchange="formatObs('fontName', this.value)"
-                                    class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                                <option value="Inter, sans-serif">Sans-serif</option>
-                                <option value="Georgia, serif">Serif</option>
-                                <option value="'Courier New', monospace">Monoespaciado</option>
-                                <option value="Arial, sans-serif">Arial</option>
-                            </select>
-                            <select onchange="formatObs('fontSize', this.value)"
-                                    class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500">
-                                <option value="1">Muy pequeño</option>
-                                <option value="2">Pequeño</option>
-                                <option value="3" selected>Normal</option>
-                                <option value="4">Grande</option>
-                                <option value="5">Muy grande</option>
-                            </select>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('bold')"      title="Negrita"   class="w-7 h-7 text-xs font-black border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">B</button>
-                            <button onclick="formatObs('italic')"    title="Cursiva"   class="w-7 h-7 text-xs italic     border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">I</button>
-                            <button onclick="formatObs('underline')" title="Subrayado" class="w-7 h-7 text-xs underline  border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all">U</button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('justifyLeft')"   title="Izquierda" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-left text-[10px]"></i></button>
-                            <button onclick="formatObs('justifyCenter')" title="Centro"    class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-center text-[10px]"></i></button>
-                            <button onclick="formatObs('justifyRight')"  title="Derecha"   class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-align-right text-[10px]"></i></button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('insertUnorderedList')" title="Lista"         class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-list-ul text-[10px]"></i></button>
-                            <button onclick="formatObs('insertOrderedList')"   title="Lista numerada" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 transition-all"><i class="fa-solid fa-list-ol text-[10px]"></i></button>
-                            <div class="w-px h-5 bg-slate-300 mx-0.5"></div>
-                            <button onclick="formatObs('removeFormat')" title="Limpiar formato"
-                                    class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all text-slate-500">
-                                <i class="fa-solid fa-eraser text-[10px]"></i>
-                            </button>
-                        </div>
-
-                        <!-- Área editable -->
-                        <div id="obs-editor"
-                             contenteditable="true"
-                             placeholder="Escribe aquí las observaciones técnicas del servicio..."
-                             class="min-h-[140px] max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl p-4 text-sm text-slate-700 transition-all focus:ring-2 focus:ring-teal-500 focus:border-teal-400"
-                             style="font-family:'Inter',sans-serif; line-height:1.6;"
-                             oninput="checkObsLimit(this)"></div>
-
-                        <div class="flex justify-between items-center mt-2 no-print">
-                            <span class="text-[10px] text-slate-400" id="obs-char-count">0 / 5 000 caracteres</span>
-                            <button onclick="clearObsContent()" class="text-[10px] text-rose-400 hover:text-rose-600 transition-all flex items-center gap-1">
-                                <i class="fa-regular fa-trash-can"></i> Limpiar
-                            </button>
-                        </div>
+                        <div id="photos-grid"></div>
                     </div>
 
                 </div>
@@ -1376,10 +1554,6 @@
                     <p class="text-xs text-slate-400">Toca o haz clic en el recuadro para capturar la firma con el dedo o el mouse.</p>
                 </div>
             </div>
-            <h3 class="hidden print:block text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 pb-2 border-b border-slate-300">
-                Firmas de Conformidad
-            </h3>
-
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
 
                 <!-- ── Firma 1: Elaborado Por ── -->
@@ -1453,19 +1627,19 @@
     <!-- Pie de Página Especial de Impresión -->
     <div class="print-footer-visible">
         <img src="Escudo Procontrol.png" alt="Escudo Procontrol"
-             style="height:104px; width:auto; object-fit:contain;"
+             style="height:54px; width:auto; object-fit:contain;"
              onerror="this.style.display='none'">
         <div style="text-align:center; flex-grow:1;">
-            <div style="font-size:8.5pt; font-weight:800; text-transform:uppercase; color:#0f172a; letter-spacing:.04em; line-height:1.4;">
+            <div style="font-size:7.4pt; font-weight:800; text-transform:uppercase; color:#0f172a; letter-spacing:.04em; line-height:1.35;">
                 Profesionales en Servicios de Control y Manejo de Plagas S de RL de CV
             </div>
-            <div style="font-size:7.5pt; color:#4b5563; margin-top:3px;">
+            <div style="font-size:6.8pt; color:#4b5563; margin-top:2px;">
                 © 2026 &nbsp;·&nbsp; Todos los derechos reservados &nbsp;·&nbsp;
                 <strong style="color:#0f766e;">www.procontrolmexico.com</strong>
             </div>
         </div>
         <img src="QR Procontrol.png" alt="QR Procontrol"
-             style="height:104px; width:auto; border:1px solid #e2e8f0; padding:2px; border-radius:4px;"
+             style="height:54px; width:auto; border:1px solid #e2e8f0; padding:2px; border-radius:4px;"
              onerror="this.style.display='none'">
     </div>
 
@@ -1540,6 +1714,10 @@
                                    class="w-20 text-center py-1.5 border border-amber-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none bg-white transition-all">
                             <span class="text-sm font-extrabold text-amber-600">%</span>
                         </div>
+                    </div>
+                    <div class="mt-2.5 px-1">
+                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">¿Qué consumió el cebo?</p>
+                        <div class="flex flex-wrap gap-1.5" id="bait-consumption-species-container"></div>
                     </div>
                 </div>
             </div>
@@ -1647,6 +1825,81 @@
                         Volver a la Captura
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMACIÓN: LIMPIAR TODO LO NO GUARDADO -->
+    <div id="confirm-limpiar-todo-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">¿Borrar todo lo que no se haya guardado?</h3>
+                <p class="text-sm text-slate-500 mb-6">Esto limpia cliente, estaciones, capturas, historial, checklist NMX-F-605, diagnóstico IA, firmas, fotos y observaciones — todo lo que no hayas exportado como JSON se perderá. Esta acción no se puede deshacer.</p>
+                <div class="flex justify-center gap-3">
+                    <button id="confirm-limpiar-cancel-btn" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+                        Cancelar
+                    </button>
+                    <button id="confirm-limpiar-ok-btn" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-5 rounded-xl text-sm transition-all shadow-md">
+                        Sí, borrar todo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DATOS DEL CLIENTE (DIRECCIÓN, C.P., CIUDAD, ESTADO) -->
+    <div id="client-data-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 transform transition-all">
+            <div class="bg-slate-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-teal-400 text-xl"><i class="fa-solid fa-location-dot"></i></span>
+                    <div>
+                        <h3 class="text-lg font-bold">Datos del Cliente</h3>
+                        <p class="text-xs text-slate-400">Dirección, código postal, ciudad y estado</p>
+                    </div>
+                </div>
+                <button onclick="closeClientDataModal()" class="text-slate-400 hover:text-white transition-all text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Dirección</label>
+                    <input type="text" id="direccion-input" placeholder="Calle, número, colonia..."
+                           class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Código Postal</label>
+                        <div class="relative">
+                            <input type="text" id="cp-modal-input" maxlength="5" placeholder="Ej. 97000" oninput="buscarCPModal()"
+                                   class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <span id="cp-modal-spinner" class="hidden absolute right-3 top-2.5 text-teal-500 animate-spin text-xs">🌀</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Ciudad / Municipio</label>
+                        <input type="text" id="ciudad-input" placeholder="Ej. Mérida"
+                               class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Estado</label>
+                    <input type="text" id="estado-input" placeholder="Ej. Yucatán"
+                           class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+                <p id="cp-modal-status" class="text-[10px] text-slate-400 italic">Ingresa el C.P. para autocompletar Estado y Ciudad — puedes editarlos después a mano.</p>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="closeClientDataModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                    Cancelar
+                </button>
+                <button onclick="guardarClientDataModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-5 rounded-lg text-xs transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Guardar Datos
+                </button>
             </div>
         </div>
     </div>
@@ -1773,6 +2026,10 @@
             sucursal: "",
             tecnico: "",
             quienRecibe: "",
+            direccion: "",
+            cp: "",
+            ciudad: "",
+            estado: "",
             isConfigFinished: false,
             isServiceStarted: false,
             currentServiceDate: "",
@@ -2127,10 +2384,14 @@
                     if (selectedHistory.stationCaptures && selectedHistory.stationCaptures[station.id]) {
                         station.captures = Object.assign({}, selectedHistory.stationCaptures[station.id]);
                     }
-                    // Restaurar consumo de cebo para estaciones Cebadera
+                    // Restaurar consumo de cebo (y especies causantes) para estaciones Cebadera
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                     if (station.type === 'Cebadera' && selectedHistory.baitConsumptionByStation && selectedHistory.baitConsumptionByStation[station.id] !== undefined) {
                         station.baitConsumption = selectedHistory.baitConsumptionByStation[station.id];
+                        if (selectedHistory.baitConsumptionSpeciesByStation && selectedHistory.baitConsumptionSpeciesByStation[station.id]) {
+                            station.baitConsumptionSpecies = selectedHistory.baitConsumptionSpeciesByStation[station.id].slice();
+                        }
                     }
                 });
 
@@ -2214,7 +2475,8 @@
                             type: type,
                             sequential: seq,
                             captures: {},
-                            baitConsumption: null
+                            baitConsumption: null,
+                            baitConsumptionSpecies: []
                         });
                     }
                 }
@@ -2618,6 +2880,7 @@
             });
 
             var baitConsumptionByStation = {};
+            var baitConsumptionSpeciesByStation = {};
             state.stations.forEach(function(station) {
                 const hasCaps = Object.keys(station.captures).length > 0;
                 if (hasCaps) {
@@ -2628,9 +2891,12 @@
                         currentTotals[org] = (currentTotals[org] || 0) + qty;
                     });
                 }
-                // Recopilar consumo de cebo de estaciones Cebadera
+                // Recopilar consumo de cebo (y especies causantes) de estaciones Cebadera
                 if (station.type === 'Cebadera' && station.baitConsumption !== null && station.baitConsumption !== undefined) {
                     baitConsumptionByStation[station.id] = station.baitConsumption;
+                    if (station.baitConsumptionSpecies && station.baitConsumptionSpecies.length > 0) {
+                        baitConsumptionSpeciesByStation[station.id] = station.baitConsumptionSpecies.slice();
+                    }
                 }
             });
 
@@ -2638,7 +2904,8 @@
                 date: state.currentServiceDate,
                 totals: currentTotals,
                 stationCaptures: currentStationCaptures,
-                baitConsumptionByStation: baitConsumptionByStation
+                baitConsumptionByStation: baitConsumptionByStation,
+                baitConsumptionSpeciesByStation: baitConsumptionSpeciesByStation
             };
 
             // 2. Insertar o actualizar servicio
@@ -2656,6 +2923,7 @@
             state.stations.forEach(function(station) {
                 station.captures = {};
                 station.baitConsumption = null;
+                station.baitConsumptionSpecies = [];
             });
 
             // 4. Resetear estado de servicio activo
@@ -2713,6 +2981,7 @@
                 state.stations.forEach(function(station) {
                     station.captures = {};
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                 });
 
                 state.isServiceStarted = false;
@@ -2780,12 +3049,35 @@
             // Mostrar / ocultar campo de consumo de cebo según tipo de estación
             var baitSection = document.getElementById('bait-consumption-section');
             var baitInput = document.getElementById('bait-consumption-input');
+            var baitSpeciesContainer = document.getElementById('bait-consumption-species-container');
             if (station.type === 'Cebadera') {
                 baitSection.classList.remove('hidden');
                 baitInput.value = (station.baitConsumption !== null && station.baitConsumption !== undefined) ? station.baitConsumption : '';
+
+                var selectedBaitSpecies = station.baitConsumptionSpecies || [];
+                baitSpeciesContainer.innerHTML = '';
+                TAXONOMY.OTHERS.forEach(function(org) {
+                    var isSel = selectedBaitSpecies.indexOf(org) !== -1;
+                    var chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.textContent = org;
+                    chip.dataset.species = org;
+                    chip.className = 'bait-species-chip px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ' +
+                        (isSel ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-amber-200 text-amber-700 hover:border-amber-400');
+                    chip.onclick = function() {
+                        var active = chip.classList.toggle('bg-amber-500');
+                        chip.classList.toggle('border-amber-500');
+                        chip.classList.toggle('text-white');
+                        chip.classList.toggle('bg-white');
+                        chip.classList.toggle('border-amber-200');
+                        chip.classList.toggle('text-amber-700');
+                    };
+                    baitSpeciesContainer.appendChild(chip);
+                });
             } else {
                 baitSection.classList.add('hidden');
                 if (baitInput) baitInput.value = '';
+                if (baitSpeciesContainer) baitSpeciesContainer.innerHTML = '';
             }
 
             if (Object.keys(station.captures).length === 0) {
@@ -2851,6 +3143,11 @@
                     var baitInput = document.getElementById('bait-consumption-input');
                     var baitVal = baitInput ? parseFloat(baitInput.value) : NaN;
                     station.baitConsumption = (!isNaN(baitVal) && baitVal >= 0 && baitVal <= 100) ? baitVal : null;
+
+                    var selectedChips = document.querySelectorAll('#bait-consumption-species-container .bait-species-chip.bg-amber-500');
+                    station.baitConsumptionSpecies = Array.prototype.map.call(selectedChips, function(chip) {
+                        return chip.dataset.species;
+                    });
                 }
 
                 showToast("Capturas guardadas para " + station.id, "success");
@@ -2871,6 +3168,7 @@
                 if (station) {
                     station.captures = {};
                     station.baitConsumption = null;
+                    station.baitConsumptionSpecies = [];
                     showToast("Se limpió la estación " + station.id, "warning");
                 }
                 closeModal();
@@ -2939,9 +3237,18 @@
                 pieServiceSelector.appendChild(optPlaceholder);
             }
 
-            // Preservar la selección previa si sigue estando disponible
+            // Preservar la selección previa si sigue estando disponible; si no,
+            // por default mostrar siempre el servicio MÁS RECIENTE (nunca el más antiguo)
             if (pieServiceSelector.querySelector("option[value='" + currentValue + "']")) {
                 pieServiceSelector.value = currentValue;
+            } else if (state.isServiceStarted) {
+                pieServiceSelector.value = "current";
+            } else if (state.history.length > 0) {
+                var mostRecentIdx = 0;
+                state.history.forEach(function(h, idx) {
+                    if (new Date(h.date) > new Date(state.history[mostRecentIdx].date)) mostRecentIdx = idx;
+                });
+                pieServiceSelector.value = String(mostRecentIdx);
             } else {
                 pieServiceSelector.selectedIndex = 0;
             }
@@ -3197,16 +3504,20 @@
         function buildBaitTimeline(cebStations) {
             var timeline = [];
             state.history.forEach(function(h) {
-                timeline.push({ date: h.date, bait: h.baitConsumptionByStation || {} });
+                timeline.push({ date: h.date, bait: h.baitConsumptionByStation || {}, species: h.baitConsumptionSpeciesByStation || {} });
             });
             if (state.isServiceStarted) {
                 var activeBait = {};
+                var activeSpecies = {};
                 cebStations.forEach(function(s) {
                     if (s.baitConsumption !== null && s.baitConsumption !== undefined) {
                         activeBait[s.id] = s.baitConsumption;
+                        if (s.baitConsumptionSpecies && s.baitConsumptionSpecies.length > 0) {
+                            activeSpecies[s.id] = s.baitConsumptionSpecies;
+                        }
                     }
                 });
-                timeline.push({ date: state.currentServiceDate, bait: activeBait });
+                timeline.push({ date: state.currentServiceDate, bait: activeBait, species: activeSpecies });
             }
             timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
             return timeline;
@@ -3341,13 +3652,47 @@
                                     // Detectar si es un punto interpolado (null original)
                                     var origVal = timeline[ctx.dataIndex] ? timeline[ctx.dataIndex].bait[ctx.dataset.label] : undefined;
                                     var isInterp = (origVal === null || origVal === undefined);
-                                    return ctx.dataset.label + ': ' + raw + '%' + (isInterp ? ' (sin dato · interpolado)' : '');
+                                    var speciesArr = (timeline[ctx.dataIndex] && timeline[ctx.dataIndex].species) ? timeline[ctx.dataIndex].species[ctx.dataset.label] : null;
+                                    var speciesTxt = (speciesArr && speciesArr.length > 0) ? ' — ' + speciesArr.join(', ') : '';
+                                    return ctx.dataset.label + ': ' + raw + '%' + speciesTxt + (isInterp ? ' (sin dato · interpolado)' : '');
                                 }
                             }
                         }
                     }
                 }
             });
+        }
+
+        // Construye, arriba de la gráfica de consumo de cebo, una leyenda fija y compacta
+        // (visible solo en impresión, ya que los tooltips del chart no se imprimen) con la
+        // especie que consumió el cebo — SOLO del servicio que se está imprimiendo, no de
+        // todo el historial. Se llama desde printReport() con el mismo servicio que se
+        // muestra en "Datos del Cliente y Servicio".
+        function updateBaitPrintLegend(printDate, baitByStation, baitSpeciesByStation) {
+            var container = document.getElementById('bait-chart-print-legend');
+            if (!container) return;
+            container.innerHTML = '';
+
+            var rows = Object.keys(baitByStation || {}).filter(function(id) {
+                var sp = baitSpeciesByStation && baitSpeciesByStation[id];
+                return sp && sp.length > 0;
+            }).sort().map(function(id) {
+                return { id: id, val: baitByStation[id], species: baitSpeciesByStation[id].join(', ') };
+            });
+
+            if (rows.length === 0) return;
+
+            var html = '<p style="font-size:7.5pt; font-weight:700; color:#92400e; margin-bottom:4px;">' +
+                'Qué consumió el cebo — servicio del ' + formatDisplayDate(printDate) + ':</p>' +
+                '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
+            rows.forEach(function(r) {
+                html += '<span style="font-size:7.5pt; font-weight:600; color:#78350f; background:#fffbeb; ' +
+                    'border:1px solid #fde68a; border-radius:999px; padding:2px 8px; white-space:nowrap;">' +
+                    r.id + ': ' + r.val + '% — ' + r.species + '</span>';
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         window.maximizeBaitChart = function() {
@@ -3963,6 +4308,10 @@
                 state.sucursal = "";
                 state.tecnico = "";
                 state.quienRecibe = "";
+                state.direccion = "";
+                state.cp = "";
+                state.ciudad = "";
+                state.estado = "";
                 state.isConfigFinished = false;
                 state.isServiceStarted = false;
                 state.currentServiceDate = "";
@@ -3974,6 +4323,7 @@
                 if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
                 if (tecnicoInput) { tecnicoInput.value = ""; tecnicoInput.disabled = false; }
                 if (quienRecibeInput) { quienRecibeInput.value = ""; quienRecibeInput.disabled = false; }
+                actualizarBotonDatosCliente();
                 clientNameInput.disabled = false;
                 cordonSelect.disabled = false;
                 stationTypeSelect.disabled = false;
@@ -3994,6 +4344,21 @@
 
                 btn.classList.remove("bg-emerald-700", "border-emerald-500");
                 btn.classList.add("bg-violet-900", "border-violet-600");
+
+                // Resetear checklist NMX-F-605, contexto y diagnóstico IA a su estado inicial
+                if (typeof PREGUNTAS_TODAS !== "undefined") {
+                    PREGUNTAS_TODAS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = "cumple";
+                    });
+                    var servicioMipReset = document.getElementById("tieneServicioMIP");
+                    if (servicioMipReset) servicioMipReset.value = "si";
+                    if (typeof evaluarNOM === "function") evaluarNOM();
+                }
+                var contextoReset = document.getElementById("contextoIA");
+                if (contextoReset) contextoReset.value = "";
+                var dictamenReset = document.getElementById("rptDictamenTexto");
+                if (dictamenReset) dictamenReset.innerHTML = "Completa el checklist y pulsa \"Generar Análisis IA\" para redactar el diagnóstico técnico del servicio.";
 
                 renderStationsGrid();
                 renderHistoryList();
@@ -4063,15 +4428,18 @@
                     }
                 });
 
-                // Generar consumo de cebo para estaciones Cebadera
+                // Generar consumo de cebo (y especie causante) para estaciones Cebadera
                 var baitConsumptionByStation = {};
+                var baitConsumptionSpeciesByStation = {};
                 testStations.forEach(function(station) {
                     if (station.type === 'Cebadera' && Math.random() < 0.75) {
                         baitConsumptionByStation[station.id] = Math.round(Math.random() * 90 + 5);
+                        var especie = TAXONOMY.OTHERS[Math.floor(Math.random() * TAXONOMY.OTHERS.length)];
+                        baitConsumptionSpeciesByStation[station.id] = [especie];
                     }
                 });
 
-                testHistory.push({ date: dateStr, totals: totals, stationCaptures: stationCaptures, baitConsumptionByStation: baitConsumptionByStation });
+                testHistory.push({ date: dateStr, totals: totals, stationCaptures: stationCaptures, baitConsumptionByStation: baitConsumptionByStation, baitConsumptionSpeciesByStation: baitConsumptionSpeciesByStation });
             }
 
             // Aplicar al estado
@@ -4079,6 +4447,10 @@
             state.sucursal = "Sucursal Centro (DEMO)";
             state.tecnico = "Técnico Demo ProControl";
             state.quienRecibe = "Gerente de Planta (DEMO)";
+            state.direccion = "Calle 60 #450 x 33 y 35 (DEMO)";
+            state.cp = "97000";
+            state.ciudad = "Mérida";
+            state.estado = "Yucatán";
             state.isConfigFinished = true;
             state.isServiceStarted = false;
             state.editingHistoryIndex = null;
@@ -4090,6 +4462,7 @@
             if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
             if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
             if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
+            actualizarBotonDatosCliente();
             clientNameInput.disabled = true;
             cordonSelect.disabled = true;
             stationTypeSelect.disabled = true;
@@ -4108,14 +4481,164 @@
             btn.classList.remove("bg-violet-900", "border-violet-600");
             btn.classList.add("bg-emerald-700", "border-emerald-500");
 
+            // Poblar el checklist NMX-F-605 con una mezcla de ejemplo (Cumple / No Cumple)
+            // para poder ver funcionando los badges, el banner de estatus y el panel de
+            // Pendientes por Cumplir sin tener que responder las 29 preguntas a mano
+            if (typeof PREGUNTAS_TODAS !== "undefined") {
+                PREGUNTAS_TODAS.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = "cumple";
+                });
+                var demoNoCumple = ["q_pla_1", "q_qui_2", "q_her_3", "q_alm_2"];
+                demoNoCumple.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = "no_cumple";
+                });
+                var servicioMipDemo = document.getElementById("tieneServicioMIP");
+                if (servicioMipDemo) servicioMipDemo.value = "si";
+                if (typeof evaluarNOM === "function") evaluarNOM();
+            }
+
+            // Contexto de ejemplo para el diagnóstico IA
+            var contextoDemo = document.getElementById("contextoIA");
+            if (contextoDemo) contextoDemo.value = "Ejemplo de contexto (DEMO): la sucursal se encuentra junto a un terreno baldío y hubo cambio reciente de proveedor de limpieza.";
+
+            // Texto de ejemplo en el bloque de Diagnóstico IA — se sobreescribe al presionar
+            // "Generar Análisis IA" con una clave de Gemini configurada
+            var dictamenDemo = document.getElementById("rptDictamenTexto");
+            if (dictamenDemo) {
+                dictamenDemo.innerHTML =
+                    '<p class="mb-2 leading-relaxed text-xs text-slate-800 italic">Texto de ejemplo (modo TEST) — pulsa "Generar Análisis IA" con tu clave de Gemini configurada (Opciones ▸ Clave IA) para reemplazar este párrafo por el diagnóstico técnico real, redactado a partir de las respuestas del checklist NMX-F-605 de arriba.</p>';
+            }
+
             renderStationsGrid();
             renderHistoryList();
             updatePieServiceSelector();
             initCheckboxes();
             updateCharts();
-            showToast("Datos de prueba cargados: 20 estaciones · 6 servicios.", "success");
+            showToast("Datos de prueba cargados: 20 estaciones · 6 servicios · checklist NMX-F-605.", "success");
 
             // La gráfica de cebo se actualiza dentro de updateCharts()
+        }
+
+        /************************************************************************
+         * LIMPIAR TODO (BORRAR TODO LO NO GUARDADO)
+         ************************************************************************/
+        window.abrirConfirmLimpiarTodo = function() {
+            var modal = document.getElementById('confirm-limpiar-todo-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+
+        function cerrarConfirmLimpiarTodo() {
+            var modal = document.getElementById('confirm-limpiar-todo-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        var confirmLimpiarCancelBtn = document.getElementById('confirm-limpiar-cancel-btn');
+        var confirmLimpiarOkBtn = document.getElementById('confirm-limpiar-ok-btn');
+        if (confirmLimpiarCancelBtn) confirmLimpiarCancelBtn.addEventListener('click', cerrarConfirmLimpiarTodo);
+
+        if (confirmLimpiarOkBtn) {
+            confirmLimpiarOkBtn.addEventListener('click', function() {
+                // — Estado del proyecto —
+                testModeActive = false;
+                state.clientName = "";
+                state.sucursal = "";
+                state.tecnico = "";
+                state.quienRecibe = "";
+                state.direccion = "";
+                state.cp = "";
+                state.ciudad = "";
+                state.estado = "";
+                state.isConfigFinished = false;
+                state.isServiceStarted = false;
+                state.currentServiceDate = "";
+                state.editingHistoryIndex = null;
+                state.stations = [];
+                state.history = [];
+
+                // — Formulario de configuración —
+                clientNameInput.value = "";
+                clientNameInput.disabled = false;
+                if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
+                if (tecnicoInput) { tecnicoInput.value = ""; tecnicoInput.disabled = false; }
+                if (quienRecibeInput) { quienRecibeInput.value = ""; quienRecibeInput.disabled = false; }
+                actualizarBotonDatosCliente();
+                cordonSelect.disabled = false;
+                stationTypeSelect.disabled = false;
+                stationQtyInput.disabled = false;
+                addStationsBtn.disabled = false;
+                finalizeSetupBtn.disabled = false;
+                finalizeSetupBtn.classList.remove("hidden");
+                document.getElementById("edit-config-btn").classList.add("hidden");
+
+                dashClientTitle.textContent = "Estaciones Registradas";
+                document.getElementById("header-client-name").textContent = "Sin cliente configurado";
+                serviceCreationSection.classList.add("opacity-50", "pointer-events-none");
+
+                serviceDateInput.disabled = false;
+                serviceDateInput.value = getLocalDateStr();
+                startServiceBtn.classList.remove("hidden");
+                document.getElementById("active-service-controls").classList.add("hidden");
+
+                var testBtn = document.getElementById("toggle-test-btn");
+                if (testBtn) {
+                    testBtn.classList.remove("bg-emerald-700", "border-emerald-500");
+                    testBtn.classList.add("bg-violet-900", "border-violet-600");
+                }
+
+                // — Encabezado (fecha / versión) —
+                var hd = document.getElementById("header-date");
+                var hv = document.getElementById("header-version");
+                if (hd) hd.value = getLocalDateStr();
+                if (hv) hv.value = "VER 1.0";
+
+                // — Checklist NMX-F-605, contexto y diagnóstico IA —
+                if (typeof PREGUNTAS_TODAS !== "undefined") {
+                    PREGUNTAS_TODAS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = "cumple";
+                    });
+                    var servicioMipLimpiar = document.getElementById("tieneServicioMIP");
+                    if (servicioMipLimpiar) servicioMipLimpiar.value = "si";
+                    if (typeof evaluarNOM === "function") evaluarNOM();
+                }
+                var contextoLimpiar = document.getElementById("contextoIA");
+                if (contextoLimpiar) contextoLimpiar.value = "";
+                var dictamenLimpiar = document.getElementById("rptDictamenTexto");
+                if (dictamenLimpiar) dictamenLimpiar.innerHTML = "Completa el checklist y pulsa \"Generar Análisis IA\" para redactar el diagnóstico técnico del servicio.";
+
+                // — Firmas —
+                SIG_KEYS.forEach(function(key) {
+                    clearSignature(key);
+                    var nameEl = document.getElementById('sig-name-' + key);
+                    var posEl = document.getElementById('sig-pos-' + key);
+                    var customEl = document.getElementById('sig-custom-pos-' + key);
+                    var printEl = document.getElementById('sig-pos-print-' + key);
+                    if (nameEl) nameEl.value = '';
+                    if (posEl) { posEl.value = ''; posEl.classList.remove('hidden'); }
+                    if (customEl) { customEl.value = ''; customEl.classList.add('hidden'); }
+                    if (printEl) printEl.textContent = '—';
+                });
+
+                // — Fotos —
+                photoData = [];
+                photosPerRow = 2;
+                renderPhotosGrid();
+
+                // — Refrescar paneles y gráficas —
+                renderStationsGrid();
+                renderHistoryList();
+                updatePieServiceSelector();
+                updateCharts();
+
+                cerrarConfirmLimpiarTodo();
+                showToast("Se borró todo lo que no estaba guardado. Sistema en blanco.", "warning");
+            });
         }
 
         /************************************************************************
@@ -4137,6 +4660,7 @@
                 if (sucursalInput) { sucursalInput.value = state.sucursal || ""; sucursalInput.disabled = true; }
                 if (tecnicoInput) { tecnicoInput.value = state.tecnico || ""; tecnicoInput.disabled = true; }
                 if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe || ""; quienRecibeInput.disabled = true; }
+                actualizarBotonDatosCliente();
                 clientNameInput.disabled = true;
                 cordonSelect.disabled = true;
                 stationTypeSelect.disabled = true;
@@ -4171,9 +4695,23 @@
         }
 
         /************************************************************************
+         * NOMBRE DE ARCHIVO COMPARTIDO: Cliente-Sucursal-FechaDeReporte
+         * (usado tanto para el .json exportado como para el PDF impreso)
+         ************************************************************************/
+        function buildReportBaseFilename() {
+            var limpiar = function(s) {
+                return (s || '').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_');
+            };
+            var cliente   = limpiar(state.clientName);
+            var sucursal  = limpiar(sucursalInput ? sucursalInput.value : (state.sucursal || ''));
+            var fecha     = getLocalDateStr().replace(/-/g, '');
+            return [cliente, sucursal, fecha].filter(function(p) { return p; }).join('-');
+        }
+
+        /************************************************************************
          * EXPORTAR PROYECTO COMO JSON
          ************************************************************************/
-        window.exportProject = function() {
+        window.exportProject = async function() {
             if (testModeActive) {
                 showToast('Desactiva el modo TEST antes de exportar.', 'error');
                 return;
@@ -4213,6 +4751,10 @@
                 sucursal:        sucursalInput ? sucursalInput.value.trim() : (state.sucursal || ''),
                 tecnico:         tecnicoInput ? tecnicoInput.value.trim() : (state.tecnico || ''),
                 quienRecibe:     quienRecibeInput ? quienRecibeInput.value.trim() : (state.quienRecibe || ''),
+                direccion:       state.direccion || '',
+                cp:              state.cp || '',
+                ciudad:          state.ciudad || '',
+                estado:          state.estado || '',
                 isConfigFinished: state.isConfigFinished,
                 isServiceStarted: state.isServiceStarted,
                 currentServiceDate: state.currentServiceDate,
@@ -4220,8 +4762,8 @@
                 history:         JSON.parse(JSON.stringify(state.history)),
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
-                obsContent:      (document.getElementById('obs-editor') ? document.getElementById('obs-editor').innerHTML : ''),
                 photos:          JSON.parse(JSON.stringify(photoData)),
+                photosPerRow:    photosPerRow,
                 nmxChecklist:    nmxChecklist,
                 tieneServicioMIP: tieneServicioMIPEl ? tieneServicioMIPEl.value : 'si',
                 contextoIA:      contextoIAEl ? contextoIAEl.value : '',
@@ -4232,18 +4774,45 @@
                 }
             };
 
-            const safeName = state.clientName.replace(/[^a-zA-Z0-9]/g, '_');
-            const filename = 'Procontrol-' + safeName + '.json';
-            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' });
+            const defaultFilename = buildReportBaseFilename() + '.json';
+            const jsonStr = JSON.stringify(snapshot, null, 2);
+            const resumen = snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.';
+
+            // Preferir el diálogo nativo "Guardar como" (Chrome/Edge de escritorio): permite
+            // elegir nombre y carpeta en el momento. Si el navegador no lo soporta (Firefox,
+            // Safari, webviews), se pide el nombre con un prompt y se descarga como antes.
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultFilename,
+                        types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonStr);
+                    await writable.close();
+                    showToast('Exportado: ' + handle.name + ' — ' + resumen, 'success');
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // el usuario canceló el diálogo
+                    // si falla por otro motivo, sigue con el método de respaldo abajo
+                }
+            }
+
+            var nombreElegido = prompt('Nombre del archivo a guardar:', defaultFilename.replace(/\.json$/i, ''));
+            if (nombreElegido === null) return; // canceló
+            nombreElegido = nombreElegido.trim() || defaultFilename.replace(/\.json$/i, '');
+            if (!/\.json$/i.test(nombreElegido)) nombreElegido += '.json';
+
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = filename;
+            a.href = url; a.download = nombreElegido;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            showToast('Exportado: ' + filename + ' — ' + snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.', 'success');
+            showToast('Exportado: ' + nombreElegido + ' — ' + resumen, 'success');
         };
 
         /************************************************************************
@@ -4272,6 +4841,10 @@
                     state.sucursal             = data.sucursal || '';
                     state.tecnico              = data.tecnico || '';
                     state.quienRecibe          = data.quienRecibe || '';
+                    state.direccion            = data.direccion || '';
+                    state.cp                   = data.cp || '';
+                    state.ciudad               = data.ciudad || '';
+                    state.estado               = data.estado || '';
                     state.isConfigFinished     = data.isConfigFinished !== false;
                     state.isServiceStarted     = data.isServiceStarted || false;
                     state.currentServiceDate   = data.currentServiceDate || '';
@@ -4282,17 +4855,17 @@
                             cordon:          s.cordon,
                             type:            s.type,
                             baitConsumption: (s.baitConsumption !== undefined) ? s.baitConsumption : null,
+                            baitConsumptionSpecies: Array.isArray(s.baitConsumptionSpecies) ? s.baitConsumptionSpecies.slice() : [],
                             sequential: s.sequential || 1,
                             captures:   s.captures ? JSON.parse(JSON.stringify(s.captures)) : {}
                         };
                     });
                     state.history = data.history;
 
-                    // Restaurar header
+                    // Restaurar header: solo la versión — la fecha nunca se restaura desde el
+                    // archivo, siempre es la fecha en que se está generando el reporte (hoy).
                     if (data.header) {
-                        var hd = document.getElementById('header-date');
                         var hv = document.getElementById('header-version');
-                        if (hd && data.header.date)    hd.value = data.header.date;
                         if (hv && data.header.version) hv.value = data.header.version;
                     }
 
@@ -4301,6 +4874,7 @@
                     if (sucursalInput) { sucursalInput.value = state.sucursal; sucursalInput.disabled = true; }
                     if (tecnicoInput) { tecnicoInput.value = state.tecnico; tecnicoInput.disabled = true; }
                     if (quienRecibeInput) { quienRecibeInput.value = state.quienRecibe; quienRecibeInput.disabled = true; }
+                    actualizarBotonDatosCliente();
                     clientNameInput.disabled = true;
                     cordonSelect.disabled    = true;
                     stationTypeSelect.disabled = true;
@@ -4366,14 +4940,9 @@
                         });
                     }
 
-                    // Restaurar observaciones
-                    if (data.obsContent !== undefined) {
-                        var obsEd = document.getElementById('obs-editor');
-                        if (obsEd) { obsEd.innerHTML = data.obsContent; checkObsLimit(obsEd); }
-                    }
-
                     // Restaurar fotos
                     photoData = Array.isArray(data.photos) ? data.photos : [];
+                    photosPerRow = parseInt(data.photosPerRow, 10) || 2;
                     renderPhotosGrid();
 
                     // Restaurar checklist NMX-F-605 (Cumple / No Cumple)
@@ -4420,6 +4989,8 @@
             // Determinar servicio a imprimir: selector pie → activo → último historial
             var printDate = '';
             var stationCaptures = {};
+            var printBait = {};
+            var printBaitSpecies = {};
 
             var pSelVal = pieServiceSelector ? pieServiceSelector.value : 'current';
             if (pSelVal !== 'current' && pSelVal !== 'none' && state.history[parseInt(pSelVal)]) {
@@ -4427,25 +4998,43 @@
                 var pSel = state.history[parseInt(pSelVal)];
                 printDate = pSel.date;
                 stationCaptures = Object.assign({}, pSel.stationCaptures || {});
+                printBait = Object.assign({}, pSel.baitConsumptionByStation || {});
+                printBaitSpecies = Object.assign({}, pSel.baitConsumptionSpeciesByStation || {});
             } else if (state.isServiceStarted && state.currentServiceDate) {
                 printDate = state.currentServiceDate;
                 state.stations.forEach(function(s) {
                     stationCaptures[s.id] = Object.assign({}, s.captures);
+                    if (s.type === 'Cebadera' && s.baitConsumption !== null && s.baitConsumption !== undefined) {
+                        printBait[s.id] = s.baitConsumption;
+                        if (s.baitConsumptionSpecies && s.baitConsumptionSpecies.length > 0) {
+                            printBaitSpecies[s.id] = s.baitConsumptionSpecies;
+                        }
+                    }
                 });
             } else if (state.history.length > 0) {
-                var lastSvc = state.history[state.history.length - 1];
+                // Tomar el servicio de fecha MÁS RECIENTE, no el último por posición en el
+                // arreglo (el orden de inserción no garantiza orden cronológico).
+                var lastSvc = state.history.reduce(function(latest, h) {
+                    return (!latest || new Date(h.date) > new Date(latest.date)) ? h : latest;
+                }, null);
                 printDate = lastSvc.date;
                 stationCaptures = Object.assign({}, lastSvc.stationCaptures || {});
+                printBait = Object.assign({}, lastSvc.baitConsumptionByStation || {});
+                printBaitSpecies = Object.assign({}, lastSvc.baitConsumptionSpeciesByStation || {});
             }
 
-            // Actualizar encabezado de impresión
-            var hVer     = document.getElementById("header-version");
+            updateBaitPrintLegend(printDate, printBait, printBaitSpecies);
+
+            // Actualizar encabezado de impresión: la fecha de arriba SIEMPRE es la fecha en
+            // que se está generando el reporte (hoy), no una fecha guardada/editable — la
+            // fecha del servicio va aparte, en "Datos del Cliente y Servicio" (print-info-date).
             var hDateEl  = document.getElementById("header-date");
-            var docDate  = hDateEl ? hDateEl.value : '';
+            var docDate  = getLocalDateStr();
+            if (hDateEl) hDateEl.value = docDate;
             document.getElementById("print-client-name").textContent    = state.clientName;
-            document.getElementById("print-service-date").textContent   = docDate ? formatDisplayDate(docDate) : '—';
+            document.getElementById("print-service-date").textContent   = formatDisplayDate(docDate);
             var verBadge = document.getElementById("print-version-badge");
-            if (verBadge) verBadge.textContent = hVer ? hVer.value : 'VER 1.0';
+            if (verBadge) verBadge.textContent = 'INFORME DE HALLAZGOS';
 
             // Actualizar tabla de detalle de capturas
             document.getElementById("print-info-client").textContent = state.clientName.toUpperCase();
@@ -4453,97 +5042,75 @@
             document.getElementById("print-info-sucursal").textContent = (sucursalInput && sucursalInput.value.trim()) ? sucursalInput.value.trim() : '-';
             document.getElementById("print-info-tecnico").textContent  = (tecnicoInput && tecnicoInput.value.trim()) ? tecnicoInput.value.trim() : '-';
             document.getElementById("print-info-recibe").textContent   = (quienRecibeInput && quienRecibeInput.value.trim()) ? quienRecibeInput.value.trim() : '-';
+            var direccionPartes = [];
+            if (state.direccion) direccionPartes.push(state.direccion);
+            if (state.cp) direccionPartes.push('C.P. ' + state.cp);
+            if (state.ciudad) direccionPartes.push(state.ciudad);
+            if (state.estado) direccionPartes.push(state.estado);
+            document.getElementById("print-info-direccion").textContent = direccionPartes.length ? direccionPartes.join(', ') : '-';
 
+            // Análisis Global de Hallazgos: una fila por visita (historial), columnas = especies
+            // con actividad registrada — reemplaza el detalle estación-por-estación
+            var printThead = document.getElementById("print-captures-thead");
             var printTbody = document.getElementById("print-captures-tbody");
+            printThead.innerHTML = "";
             printTbody.innerHTML = "";
-            var idx = 0;
-            state.stations.forEach(function(station) {
-                var caps    = stationCaptures[station.id] || {};
-                var hasCaps = Object.keys(caps).some(function(k) { return caps[k] > 0; });
-                if (!hasCaps) return; // omitir estaciones sin datos
-                var capsStr = Object.entries(caps)
-                    .filter(function(e) { return e[1] > 0; })
-                    .map(function(e) { return '<strong>' + e[0] + ':<\/strong> ' + e[1]; })
-                    .join(" | ");
-                var row = document.createElement("tr");
-                row.className = (idx % 2 === 0) ? "bg-white" : "bg-slate-50";
-                row.innerHTML =
-                    '<td class="py-2 px-2 font-mono font-bold text-slate-800 border border-slate-200">' + station.id + '<\/td>' +
-                    '<td class="py-2 px-2 text-slate-600 border border-slate-200">' + station.cordon + '<\/td>' +
-                    '<td class="py-2 px-2 font-semibold text-slate-600 border border-slate-200">' + station.type + '<\/td>' +
-                    '<td class="py-2 px-2 text-xs border border-slate-200">' + capsStr + '<\/td>';
-                printTbody.appendChild(row);
-                idx++;
+
+            var globalHistory = state.history.slice().sort(function(a, b) {
+                return new Date(a.date) - new Date(b.date);
             });
-            if (idx === 0) {
-                printTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400 italic">No se registraron capturas en este servicio.<\/td><\/tr>';
+            var activeCols = ALL_SPECIES.filter(function(sp) {
+                return globalHistory.some(function(h) { return (h.totals[sp] || 0) > 0; });
+            });
+
+            if (globalHistory.length === 0 || activeCols.length === 0) {
+                printThead.innerHTML = '<tr class="bg-slate-100 border-b border-slate-300"><th class="py-2 px-2 font-bold text-slate-700">Fecha<\/th></tr>';
+                printTbody.innerHTML = '<tr><td class="text-center py-4 text-slate-400 italic">Sin visitas registradas en el historial.<\/td><\/tr>';
+            } else {
+                // Columna de Fecha con ancho fijo mayor (evita que el texto se monte con
+                // la primera columna de especie cuando table-layout es "fixed")
+                var headHtml = '<th class="py-2 px-1.5 font-bold text-slate-700" style="width:52px;">Fecha</th>';
+                activeCols.forEach(function(sp) {
+                    headHtml += '<th class="py-2 px-1 font-bold text-slate-700 text-center">' + sp + '<\/th>';
+                });
+                var headRow = document.createElement("tr");
+                headRow.className = "bg-slate-100 border-b border-slate-300";
+                headRow.innerHTML = headHtml;
+                printThead.appendChild(headRow);
+
+                var colTotals = {};
+                activeCols.forEach(function(sp) { colTotals[sp] = 0; });
+
+                globalHistory.forEach(function(h, i) {
+                    var rowHtml = '<td class="py-1.5 px-1.5 font-mono font-bold text-slate-800 border border-slate-200">' + formatDisplayDate(h.date) + '<\/td>';
+                    activeCols.forEach(function(sp) {
+                        var qty = h.totals[sp] || 0;
+                        colTotals[sp] += qty;
+                        rowHtml += '<td class="py-1.5 px-1.5 text-center border border-slate-200">' + qty + '<\/td>';
+                    });
+                    var row = document.createElement("tr");
+                    row.className = (i % 2 === 0) ? "bg-white" : "bg-slate-50";
+                    row.innerHTML = rowHtml;
+                    printTbody.appendChild(row);
+                });
+
+                var totalHtml = '<td class="py-1.5 px-1.5 border border-slate-200 text-slate-800">TOTAL<\/td>';
+                activeCols.forEach(function(sp) {
+                    totalHtml += '<td class="py-1.5 px-1.5 text-center border border-slate-200 text-slate-800">' + colTotals[sp] + '<\/td>';
+                });
+                var totalRow = document.createElement("tr");
+                totalRow.className = "bg-slate-100 font-bold";
+                totalRow.innerHTML = totalHtml;
+                printTbody.appendChild(totalRow);
             }
             // Sugerir nombre de archivo en el diálogo "Guardar como PDF" del navegador
             var originalTitle = document.title;
-            var safeName = state.clientName.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_');
-            var dateStr  = (hDateEl && hDateEl.value) ? hDateEl.value.replace(/-/g, '') : getLocalDateStr().replace(/-/g, '');
-            document.title = 'Procontrol-' + safeName + '-' + dateStr;
+            document.title = buildReportBaseFilename();
 
             window.print();
 
             // Restaurar título original después de que el diálogo cierre
             setTimeout(function() { document.title = originalTitle; }, 1000);
-        };
-
-        /************************************************************************
-         * MÓDULO DE OBSERVACIONES
-         ************************************************************************/
-
-        /* Aplica un estilo CSS inline al texto seleccionado (reemplazo de execCommand
-           para fontName / fontSize, que están deprecados en Chrome 127+)            */
-        function applyStyleToSelection(prop, value) {
-            var sel = window.getSelection ? window.getSelection() : null;
-            if (!sel || sel.rangeCount === 0) return;
-            var range = sel.getRangeAt(0);
-            if (range.collapsed) return;
-            var span = document.createElement('span');
-            span.style[prop] = value;
-            var fragment = range.extractContents();
-            span.appendChild(fragment);
-            range.insertNode(span);
-            sel.removeAllRanges();
-            var newRange = document.createRange();
-            newRange.selectNodeContents(span);
-            sel.addRange(newRange);
-        }
-
-        var FONT_SIZE_MAP = { '1': '8pt', '2': '10pt', '3': '12pt', '4': '14pt', '5': '18pt', '6': '24pt', '7': '36pt' };
-
-        window.formatObs = function(cmd, val) {
-            var ed = document.getElementById('obs-editor');
-            ed.focus();
-            if (cmd === 'fontName') {
-                applyStyleToSelection('fontFamily', val || '');
-            } else if (cmd === 'fontSize') {
-                applyStyleToSelection('fontSize', FONT_SIZE_MAP[val] || '12pt');
-            } else {
-                /* bold, italic, underline, justify*, insertUnorderedList,
-                   insertOrderedList y removeFormat son válidos en contenteditable */
-                document.execCommand(cmd, false, val || null);
-            }
-        };
-
-        function checkObsLimit(el) {
-            var len = (el.innerText || el.textContent || '').length;
-            var counter = document.getElementById('obs-char-count');
-            if (!counter) return;
-            if (len > 5000) {
-                counter.textContent = len + ' / 5 000 caracteres (límite excedido)';
-                counter.style.color = '#ef4444';
-            } else {
-                counter.textContent = len + ' / 5 000 caracteres';
-                counter.style.color = '';
-            }
-        }
-
-        window.clearObsContent = function() {
-            var ed = document.getElementById('obs-editor');
-            if (ed) { ed.innerHTML = ''; checkObsLimit(ed); }
         };
 
         /************************************************************************
@@ -4725,6 +5292,22 @@
          * MÓDULO DE EVIDENCIA FOTOGRÁFICA
          ************************************************************************/
         var photoData = [];
+        var photosPerRow = 2;
+
+        window.setPhotosPerRow = function(n) {
+            photosPerRow = parseInt(n, 10) || 2;
+            applyPhotosPerRow();
+        };
+
+        function applyPhotosPerRow() {
+            var grid = document.getElementById('photos-grid');
+            var sel  = document.getElementById('photos-per-row');
+            if (grid) {
+                grid.style.setProperty('--photos-cols', photosPerRow);
+                grid.setAttribute('data-cols', String(photosPerRow));
+            }
+            if (sel)  sel.value = String(photosPerRow);
+        }
 
         window.handlePhotoUpload = function(event) {
             var files = Array.from(event.target.files);
@@ -4751,6 +5334,7 @@
             var grid  = document.getElementById('photos-grid');
             var empty = document.getElementById('photos-empty-state');
             if (!grid) return;
+            applyPhotosPerRow();
             grid.innerHTML = '';
             if (photoData.length === 0) {
                 if (empty) empty.style.display = '';
@@ -4980,6 +5564,16 @@
                     return;
                 }
 
+                // Títulos de sección tipo "1. **Qué Vimos**" (regla #10 del prompt): la línea completa,
+                // sin nada más, es "número + negritas" — se tratan como encabezado, NO como ítem de lista
+                // numerada (si no, cada título abre su propio <ol> y los tres arrancan mostrando "1.").
+                var seccionMatch = trimmed.match(/^(\d+)\.\s+\*\*([^*]+)\*\*\s*$/);
+                if (seccionMatch) {
+                    cerrarLista();
+                    resultHTML += '<p class="mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">' + seccionMatch[1] + '. ' + seccionMatch[2] + '</p>';
+                    return;
+                }
+
                 var formattedLine = trimmed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold text-slate-900">$1</strong>');
                 formattedLine = formattedLine.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
@@ -5041,12 +5635,10 @@
         /************************************************************************
          * CLAVE API DE GEMINI (DIAGNÓSTICO IA)
          ************************************************************************/
-        var DEFAULT_API_KEY = "***REMOVED-EXPOSED-KEY***";
-
         function getApiKey() {
             var saved = localStorage.getItem("GEMINI_API_KEY");
             if (saved && saved.trim().length > 10) return saved.trim();
-            return DEFAULT_API_KEY;
+            return "";
         }
 
         window.toggleApiKeyModal = function() {
@@ -5064,6 +5656,100 @@
             if (val) localStorage.setItem("GEMINI_API_KEY", val);
             toggleApiKeyModal();
             showToast("Clave API de Gemini guardada.", "success");
+        };
+
+        /************************************************************************
+         * MODAL DE DATOS DEL CLIENTE (DIRECCIÓN, C.P., CIUDAD, ESTADO)
+         ************************************************************************/
+        var timerBusquedaCPModal = null;
+
+        function actualizarBotonDatosCliente() {
+            var btnLabel = document.getElementById('client-data-btn-label');
+            if (!btnLabel) return;
+            var partes = [];
+            if (state.direccion) partes.push(state.direccion);
+            if (state.ciudad) partes.push(state.ciudad);
+            if (state.estado) partes.push(state.estado);
+            btnLabel.textContent = partes.length ? partes.join(', ') : 'Agregar Dirección del Cliente';
+        }
+
+        window.openClientDataModal = function() {
+            var modal = document.getElementById('client-data-modal');
+            if (!modal) return;
+            var dirEl = document.getElementById('direccion-input');
+            var cpEl = document.getElementById('cp-modal-input');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            if (dirEl) dirEl.value = state.direccion || '';
+            if (cpEl) cpEl.value = state.cp || '';
+            if (ciudadEl) ciudadEl.value = state.ciudad || '';
+            if (estadoEl) estadoEl.value = state.estado || '';
+            var statusEl = document.getElementById('cp-modal-status');
+            if (statusEl) statusEl.textContent = 'Ingresa el C.P. para autocompletar Estado y Ciudad — puedes editarlos después a mano.';
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+
+        window.closeClientDataModal = function() {
+            var modal = document.getElementById('client-data-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        window.buscarCPModal = function() {
+            var cpEl = document.getElementById('cp-modal-input');
+            var spinner = document.getElementById('cp-modal-spinner');
+            var statusEl = document.getElementById('cp-modal-status');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            if (!cpEl) return;
+            var cp = cpEl.value.trim();
+
+            if (cp.length !== 5 || !/^\d{5}$/.test(cp)) {
+                if (statusEl) statusEl.textContent = 'Ingresa 5 dígitos de C.P. para autocompletar.';
+                return;
+            }
+
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusEl) statusEl.textContent = 'Consultando C.P....';
+
+            clearTimeout(timerBusquedaCPModal);
+            timerBusquedaCPModal = setTimeout(function() {
+                fetch('https://api.zippopotam.us/MX/' + cp)
+                    .then(function(res) {
+                        if (!res.ok) throw new Error('C.P. no encontrado');
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.places && data.places.length > 0) {
+                            var place = data.places[0];
+                            if (estadoEl) estadoEl.value = place['state'] || '';
+                            if (ciudadEl) ciudadEl.value = place['place name'] || '';
+                            if (statusEl) statusEl.textContent = '✓ C.P. localizado — revisa y ajusta si hace falta.';
+                        }
+                    })
+                    .catch(function() {
+                        if (statusEl) statusEl.textContent = 'C.P. no encontrado. Ingresa Ciudad y Estado manualmente.';
+                    })
+                    .finally(function() {
+                        if (spinner) spinner.classList.add('hidden');
+                    });
+            }, 400);
+        };
+
+        window.guardarClientDataModal = function() {
+            var dirEl = document.getElementById('direccion-input');
+            var cpEl = document.getElementById('cp-modal-input');
+            var ciudadEl = document.getElementById('ciudad-input');
+            var estadoEl = document.getElementById('estado-input');
+            state.direccion = dirEl ? dirEl.value.trim() : '';
+            state.cp = cpEl ? cpEl.value.trim() : '';
+            state.ciudad = ciudadEl ? ciudadEl.value.trim() : '';
+            state.estado = estadoEl ? estadoEl.value.trim() : '';
+            actualizarBotonDatosCliente();
+            closeClientDataModal();
+            showToast('Dirección del cliente guardada.', 'success');
         };
 
         /************************************************************************
@@ -5188,9 +5874,11 @@
          * INICIALIZADOR GENERAL
          ************************************************************************/
         window.onload = function() {
-            // Inicializar fecha del header con hoy si no viene de estado guardado
+            // La fecha del header SIEMPRE es la fecha en que se abre/genera el reporte (hoy),
+            // nunca un valor persistido de una sesión anterior — la fecha del servicio es
+            // un campo aparte (state.currentServiceDate / historial).
             const headerDate = document.getElementById("header-date");
-            if (headerDate && !headerDate.value) {
+            if (headerDate) {
                 headerDate.value = getLocalDateStr();
             }
             initializeFromState();

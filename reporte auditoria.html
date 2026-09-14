@@ -1346,8 +1346,6 @@
             event.preventDefault();
         });
 
-        const DEFAULT_API_KEY = "***REMOVED-EXPOSED-KEY***";
-
         // Nombres individuales y específicos por área
         const OPCIONES_ZONAS_PREDEFINIDAS = [
             "Cocina Caliente",
@@ -1977,7 +1975,7 @@
         function getApiKey() {
             const saved = localStorage.getItem("GEMINI_API_KEY");
             if (saved && saved.trim().length > 10) return saved.trim();
-            return DEFAULT_API_KEY;
+            return "";
         }
 
         // FOLIO DE RESPALDO (AAAAMM001) SI EL CAMPO SE DEJÓ VACÍO — NUNCA UN NÚMERO DE EJEMPLO FIJO
@@ -2082,6 +2080,16 @@
                     if (headerText.length > 0) {
                         resultHTML += `<p class="avoid-break mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">${headerText}</p>`;
                     }
+                    return;
+                }
+
+                // Títulos de sección tipo "1. **Qué Vimos**" (regla #10 del prompt): la línea completa,
+                // sin nada más, es "número + negritas" — se tratan como encabezado, NO como ítem de lista
+                // numerada (si no, cada título abre su propio <ol> y los tres arrancan mostrando "1.").
+                const seccionMatch = trimmed.match(/^(\d+)\.\s+\*\*([^*]+)\*\*\s*$/);
+                if (seccionMatch) {
+                    cerrarLista();
+                    resultHTML += `<p class="avoid-break mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">${seccionMatch[1]}. ${seccionMatch[2]}</p>`;
                     return;
                 }
 

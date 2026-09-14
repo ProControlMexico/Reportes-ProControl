@@ -1,0 +1,9 @@
+# Configuración local del editor/agente (rutas de máquina de cada dev)
+.claude/settings.local.json
+
+# Capturas de pantalla sueltas (debug/pruebas, no parte del sitio)
+Captura de pantalla*.png
+
+# Basura de SO/editor
+.DS_Store
+Thumbs.db
