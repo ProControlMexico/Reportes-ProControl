@@ -1952,6 +1952,23 @@
         // Gemini vive como secret en el Worker, nunca en este archivo.
         const IA_PROXY_URL = "https://procontrol-ia-proxy.luisbrito2000.workers.dev";
 
+        // Reintenta hasta 2 veces (con espera corta) si Gemini responde "modelo
+        // saturado" (503 / UNAVAILABLE) — transitorio y frecuente en modelos preview.
+        async function fetchIAConReintento(body, intentosRestantes = 2) {
+            const res = await fetch(IA_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            const saturado = data?.error && (data.error.code === 503 || data.error.status === 'UNAVAILABLE');
+            if (saturado && intentosRestantes > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                return fetchIAConReintento(body, intentosRestantes - 1);
+            }
+            return data;
+        }
+
         // FOLIO DE RESPALDO (AAAAMM001) SI EL CAMPO SE DEJÓ VACÍO — NUNCA UN NÚMERO DE EJEMPLO FIJO
         function generarFolioAuto() {
             const hoy = new Date();
@@ -2988,12 +3005,7 @@ ESTRUCTURA (3 secciones):
             }
 
             try {
-                const res = await fetch(IA_PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await res.json();
+                const data = await fetchIAConReintento({ contents: [{ parts: [{ text: prompt }] }] });
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (text) {
@@ -3043,12 +3055,7 @@ PRECISIÓN NORMATIVA: No inventes números de artículo o cláusula específicos
 Consulta del usuario: "${msg}"`;
 
             try {
-                const res = await fetch(IA_PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: promptChat }] }] })
-                });
-                const data = await res.json();
+                const data = await fetchIAConReintento({ contents: [{ parts: [{ text: promptChat }] }] });
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
                     || (data?.error?.message ? `Error de la API de Gemini: ${data.error.message}` : "No se pudo obtener respuesta del servidor.");
 
