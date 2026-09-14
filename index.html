@@ -1588,21 +1588,14 @@
                     </button>
                 </div>
 
-                <!-- ── Firma 2: Autorizado Por ── -->
+                <!-- ── Firma 2: Autorizado Por (fija — Biol. Ernesto Luna, no editable) ── -->
                 <div class="flex flex-col gap-2">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-600 text-center pb-1.5 border-b border-slate-100">Autorizado Por</p>
                     <div class="relative" style="height:88px">
-                        <img id="sig-img-autorizado" src="" alt="" class="hidden absolute inset-0 w-full h-full object-contain p-1 pointer-events-none">
-                        <div id="sig-placeholder-autorizado" class="no-print absolute inset-0 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-all select-none" onclick="openSignatureModal('autorizado')">
-                            <i class="fa-solid fa-pen-nib text-2xl text-slate-300"></i>
-                            <span class="text-[10px] font-semibold text-slate-300">Firmar aquí</span>
-                        </div>
-                        <button id="sig-edit-btn-autorizado" class="no-print hidden absolute bottom-1 right-1 text-[10px] font-semibold text-teal-600 hover:text-teal-800 transition-all" onclick="openSignatureModal('autorizado')">
-                            <i class="fa-regular fa-pen-to-square"></i> Editar
-                        </button>
+                        <img id="sig-img-autorizado" src="Firma Ernesto.jpg" alt="Firma Biol. Ernesto Luna" class="absolute inset-0 w-full h-full object-contain p-1 pointer-events-none">
                         <div class="absolute bottom-0 left-0 right-0 border-b-2 border-slate-300"></div>
                     </div>
-                    <input type="text" id="sig-name-autorizado" placeholder="Nombre completo" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
+                    <input type="text" id="sig-name-autorizado" value="Biol. Ernesto Luna" readonly class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 text-slate-600 cursor-not-allowed">
                     <select id="sig-pos-autorizado" onchange="handlePosChange('autorizado')" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white transition-all">
                         <option value="">— Seleccionar Puesto —</option>
                         <option value="Operaciones">Operaciones</option>
@@ -1615,9 +1608,6 @@
                     </select>
                     <input type="text" id="sig-custom-pos-autorizado" placeholder="Escribe el puesto..." class="hidden w-full text-xs border border-teal-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all">
                     <p id="sig-pos-print-autorizado" style="display:none" class="text-xs font-semibold text-slate-700 py-0.5 border-b border-slate-200">—</p>
-                    <button onclick="clearSignature('autorizado')" class="no-print text-[10px] text-rose-400 hover:text-rose-600 transition-all self-center flex items-center gap-1">
-                        <i class="fa-regular fa-trash-can"></i> Limpiar firma
-                    </button>
                 </div>
 
             </div>
@@ -4612,14 +4602,17 @@
                 var dictamenLimpiar = document.getElementById("rptDictamenTexto");
                 if (dictamenLimpiar) dictamenLimpiar.innerHTML = "Completa el checklist y pulsa \"Generar Análisis IA\" para redactar el diagnóstico técnico del servicio.";
 
-                // — Firmas —
+                // — Firmas — ("autorizado" es fija: Biol. Ernesto Luna, no se borra —
+                // solo se limpia su puesto, igual que el resto de los campos.
                 SIG_KEYS.forEach(function(key) {
-                    clearSignature(key);
-                    var nameEl = document.getElementById('sig-name-' + key);
+                    if (key !== 'autorizado') {
+                        clearSignature(key);
+                        var nameEl = document.getElementById('sig-name-' + key);
+                        if (nameEl) nameEl.value = '';
+                    }
                     var posEl = document.getElementById('sig-pos-' + key);
                     var customEl = document.getElementById('sig-custom-pos-' + key);
                     var printEl = document.getElementById('sig-pos-print-' + key);
-                    if (nameEl) nameEl.value = '';
                     if (posEl) { posEl.value = ''; posEl.classList.remove('hidden'); }
                     if (customEl) { customEl.value = ''; customEl.classList.add('hidden'); }
                     if (printEl) printEl.textContent = '—';
@@ -4901,10 +4894,12 @@
                         document.getElementById('active-service-controls').classList.add('hidden');
                     }
 
-                    // Restaurar firmas
+                    // Restaurar firmas ("autorizado" es fija: Biol. Ernesto Luna, nunca se
+                    // sobrescribe con lo que traiga el archivo importado)
                     if (data.signatures) {
                         sigData = data.signatures;
                         SIG_KEYS.forEach(function(k) {
+                            if (k === 'autorizado') return;
                             if (sigData[k]) {
                                 var img         = document.getElementById('sig-img-' + k);
                                 var placeholder = document.getElementById('sig-placeholder-' + k);
@@ -4919,7 +4914,7 @@
                         SIG_KEYS.forEach(function(k) {
                             var info = data.signatureInfo[k];
                             if (!info) return;
-                            var nameEl   = document.getElementById('sig-name-' + k);
+                            var nameEl   = k !== 'autorizado' ? document.getElementById('sig-name-' + k) : null;
                             var posEl    = document.getElementById('sig-pos-' + k);
                             var customEl = document.getElementById('sig-custom-pos-' + k);
                             if (nameEl) nameEl.value = info.name || '';
