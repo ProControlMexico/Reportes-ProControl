@@ -5073,8 +5073,14 @@
 
             window.print();
 
-            // Restaurar título original después de que el diálogo cierre
-            setTimeout(function() { document.title = originalTitle; }, 1000);
+            // Restaurar el título cuando el diálogo de impresión realmente cierre —
+            // NUNCA con un setTimeout fijo: si el usuario tarda más de ese tiempo en
+            // escribir el nombre del archivo, el título cambia con el diálogo de
+            // "Guardar como" todavía abierto y Chrome cancela el guardado.
+            window.addEventListener('afterprint', function restoreTitleAfterPrint() {
+                document.title = originalTitle;
+                window.removeEventListener('afterprint', restoreTitleAfterPrint);
+            });
         };
 
         /************************************************************************
