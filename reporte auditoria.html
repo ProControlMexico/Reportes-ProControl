@@ -113,12 +113,6 @@
                                 Limpiar Datos
                             </button>
                         </div>
-                        <div class="py-1">
-                            <button onclick="toggleApiKeyModal(); toggleMenu();" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-slate-800 flex items-center gap-2.5 transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                                Configuración Clave API
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1320,24 +1314,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIGURACIÓN CLAVE API -->
-    <div id="modalApiKey" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                Configurar Clave API de Google Gemini
-            </h3>
-            <p class="text-xs text-slate-400 leading-relaxed">
-                Ingrese su clave API de Google AI Studio para habilitar la generación de análisis técnico de riesgos con IA.
-            </p>
-            <input type="password" id="inputApiKeyModal" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="toggleApiKeyModal()" class="px-4 py-2 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl active:scale-95">Cancelar</button>
-                <button onclick="guardarApiKeyModal()" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl active:scale-95">Guardar Clave</button>
-            </div>
-        </div>
-    </div>
-
     <!-- LOGIC SCRIPT COMPLETO -->
     <script>
         // Prevenir reyecciones de promesas no capturadas (unhandledrejection)
@@ -1972,11 +1948,9 @@
             if (statusGPS) statusGPS.textContent = "Coordenadas borradas";
         }
 
-        function getApiKey() {
-            const saved = localStorage.getItem("GEMINI_API_KEY");
-            if (saved && saved.trim().length > 10) return saved.trim();
-            return "";
-        }
+        // DIAGNÓSTICO IA: URL del proxy (Cloudflare Worker). La API key de
+        // Gemini vive como secret en el Worker, nunca en este archivo.
+        const IA_PROXY_URL = "https://procontrol-ia-proxy.luisbrito2000.workers.dev";
 
         // FOLIO DE RESPALDO (AAAAMM001) SI EL CAMPO SE DEJÓ VACÍO — NUNCA UN NÚMERO DE EJEMPLO FIJO
         function generarFolioAuto() {
@@ -2163,22 +2137,6 @@
         function toggleChatIA() {
             const chat = document.getElementById('chat-box-ia');
             if (chat) chat.classList.toggle('hidden');
-        }
-
-        function toggleApiKeyModal() {
-            const modal = document.getElementById('modalApiKey');
-            if (modal) {
-                modal.classList.toggle('hidden');
-                document.getElementById('inputApiKeyModal').value = getApiKey();
-            }
-        }
-
-        function guardarApiKeyModal() {
-            const val = document.getElementById('inputApiKeyModal').value.trim();
-            if (val) {
-                localStorage.setItem("GEMINI_API_KEY", val);
-            }
-            toggleApiKeyModal();
         }
 
         function actualizarTarjetaGiro() {
@@ -2935,7 +2893,6 @@ INSTRUCCIÓN SOBRE ESTOS DATOS: son registros verificados de captura de un progr
         }
 
         async function generarDictamenIA() {
-            const apiKey = getApiKey();
             const cliente = document.getElementById('cliente').value || 'Establecimiento';
             const contextoIA = document.getElementById('contextoIA')?.value.trim() || '';
             const targetDiv = document.getElementById('rptDictamenTexto');
@@ -3030,13 +2987,8 @@ ESTRUCTURA (3 secciones):
 3. **Qué Sugerimos** — para cada desviación que depende del establecimiento (ver regla 15), la recomendación puntual para la gerencia, en tono constructivo y no acusatorio.`;
             }
 
-            if (!apiKey) {
-                targetDiv.textContent = "Falta configurar la clave API de Gemini. Ve a Opciones ▸ Configuración Clave API e ingresa tu clave.";
-                return;
-            }
-
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+                const res = await fetch(IA_PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -3081,7 +3033,6 @@ ESTRUCTURA (3 secciones):
             chatContainer.appendChild(loadingDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            const apiKey = getApiKey();
             const promptChat = `Eres el asistente de consulta normativa de ProControl México (empresa certificada bajo NMX-F-610-NORMEX / ISO 9001 / ISO 14001 / ISO 45001), usado en campo por el ejecutivo/técnico durante el levantamiento.
 
 ALCANCE ESTRICTO: SOLO respondes consultas sobre la norma NMX-F-605, Manejo Integrado de Plagas (MIP), técnicas de control, exclusión física o criterios de este levantamiento. Si la consulta no se relaciona con esto, indícalo en una frase y redirige al tema normativo — no respondas temas ajenos.
@@ -3091,15 +3042,8 @@ PRECISIÓN NORMATIVA: No inventes números de artículo o cláusula específicos
 
 Consulta del usuario: "${msg}"`;
 
-            if (!apiKey) {
-                loadingDiv.className = "bg-rose-950/50 text-rose-300 p-2.5 rounded-xl text-xs";
-                loadingDiv.textContent = "Falta configurar la clave API de Gemini. Ve a Opciones ▸ Configuración Clave API.";
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                return;
-            }
-
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+                const res = await fetch(IA_PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: promptChat }] }] })
