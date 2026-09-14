@@ -23,19 +23,29 @@ export default {
       return withCors(jsonResponse({ error: { message: "Falta 'contents' en la petición" } }, 400));
     }
 
-    const upstream = await fetch(`${GEMINI_URL}?key=${env.GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: body.contents }),
-    });
-
-    const data = await upstream.text();
-    return withCors(new Response(data, {
-      status: upstream.status,
-      headers: { "Content-Type": "application/json" },
-    }));
+    const { status, text } = await callGeminiWithRetry(body.contents, env.GEMINI_API_KEY);
+    return withCors(new Response(text, { status, headers: { "Content-Type": "application/json" } }));
   },
 };
+
+// Gemini (modelo preview) devuelve 503/UNAVAILABLE seguido cuando está saturado.
+// Reintenta acá, en el único lugar por el que pasan todas las llamadas, con
+// backoff creciente (1s, 2s, 3s) antes de rendirse.
+async function callGeminiWithRetry(contents, apiKey, retries = 3) {
+  for (let intento = 0; ; intento++) {
+    const upstream = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents }),
+    });
+    const text = await upstream.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = null; }
+    const saturado = data?.error && (data.error.code === 503 || data.error.status === "UNAVAILABLE");
+    if (!saturado || intento >= retries) return { status: upstream.status, text };
+    await new Promise((resolve) => setTimeout(resolve, 1000 * (intento + 1)));
+  }
+}
 
 function jsonResponse(obj, status) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });

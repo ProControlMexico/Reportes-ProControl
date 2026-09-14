@@ -5784,7 +5784,15 @@
                     "3. **Qué Sugerimos** — para cada desviación que depende del establecimiento (ver regla 15), la recomendación puntual para la gerencia, en tono constructivo y no acusatorio.";
             }
 
-            fetchIAConReintento({ contents: [{ parts: [{ text: prompt }] }] }).then(function(data) {
+            // El reintento por saturación (503) ya lo maneja el Worker — aquí solo se
+            // espera la respuesta final.
+            fetch(IA_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            }).then(function(res) {
+                return res.json();
+            }).then(function(data) {
                 var text = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
                     data.candidates[0].content.parts && data.candidates[0].content.parts[0]) ? data.candidates[0].content.parts[0].text : null;
 
@@ -5801,24 +5809,6 @@
                 targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión o clave API.";
             });
         };
-
-        // Reintenta hasta 2 veces (con espera corta) si Gemini responde "modelo
-        // saturado" (503 / UNAVAILABLE) — transitorio y frecuente en modelos preview.
-        function fetchIAConReintento(body, intentosRestantes) {
-            if (intentosRestantes === undefined) intentosRestantes = 2;
-            return fetch(IA_PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }).then(function(res) { return res.json(); }).then(function(data) {
-                var saturado = data && data.error && (data.error.code === 503 || data.error.status === 'UNAVAILABLE');
-                if (saturado && intentosRestantes > 0) {
-                    return new Promise(function(resolve) { setTimeout(resolve, 1500); })
-                        .then(function() { return fetchIAConReintento(body, intentosRestantes - 1); });
-                }
-                return data;
-            });
-        }
 
         /************************************************************************
          * INICIALIZADOR GENERAL
