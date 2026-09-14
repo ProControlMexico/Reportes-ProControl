@@ -4,6 +4,9 @@
 # Capturas de pantalla sueltas (debug/pruebas, no parte del sitio)
 Captura de pantalla*.png
 
+# Respaldo de la firma original (el sitio usa Firma Ernesto.png)
+Firma Ernesto.jpg
+
 # Basura de SO/editor
 .DS_Store
 Thumbs.db
