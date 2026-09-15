@@ -4760,21 +4760,21 @@
                 }
             }
 
-            var nombreElegido = prompt('Nombre del archivo a guardar:', defaultFilename.replace(/\.json$/i, ''));
-            if (nombreElegido === null) return; // canceló
-            nombreElegido = nombreElegido.trim() || defaultFilename.replace(/\.json$/i, '');
-            if (!/\.json$/i.test(nombreElegido)) nombreElegido += '.json';
-
+            // Respaldo para navegadores sin diálogo nativo (móvil, Firefox, webviews
+            // embebidos como el navegador interno de WhatsApp): descarga directo con el
+            // nombre sugerido. NUNCA usar window.prompt() aquí — en varios webviews
+            // embebidos está deshabilitado y devuelve null sin mostrar nada, lo que antes
+            // se interpretaba como "canceló" y el archivo simplemente no se guardaba.
             const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = nombreElegido;
+            a.href = url; a.download = defaultFilename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            showToast('Exportado: ' + nombreElegido + ' — ' + resumen, 'success');
+            showToast('Exportado: ' + defaultFilename + ' — ' + resumen, 'success');
         };
 
         /************************************************************************
