@@ -5,8 +5,11 @@
 // ponytail: sin rate-limit por IP — el nombre del Worker no es adivinable,
 // pero si el costo de Gemini se dispara, agregar Cloudflare Rate Limiting aquí.
 
+// Modelo ESTABLE (no "-preview") — los modelos preview de Gemini son los que
+// devuelven 503/UNAVAILABLE seguido por saturación; Google recomienda no
+// usarlos en producción.
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
 
 export default {
   async fetch(request, env) {
