@@ -9,7 +9,7 @@
 // devuelven 503/UNAVAILABLE seguido por saturación; Google recomienda no
 // usarlos en producción.
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
 export default {
   async fetch(request, env) {
