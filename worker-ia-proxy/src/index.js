@@ -21,9 +21,11 @@ const MODELOS_PERMITIDOS = [
 ];
 const MODELO_DEFAULT = "gemini-3.8-flash";
 
-// Corto a propósito: si Google no contesta en 10s, se corta y se prueba la
-// siguiente key — peor caso ~20s, no minutos.
-const TIMEOUT_MS = 10000;
+// Un diagnóstico real (prompt largo + "thinking" del modelo) puede tardar
+// legítimamente 10-30s en responder — 10s cortaba respuestas que sí iban a
+// llegar. Con 2 keys, peor caso ahora ~50s (antes ~20s), pero deja tiempo
+// real a que Gemini termine de pensar antes de rendirse.
+const TIMEOUT_MS = 25000;
 
 export default {
   async fetch(request, env) {
