@@ -53,12 +53,13 @@ export default {
 // cualquier otro resultado (éxito o error real) se regresa tal cual.
 async function intentarKeys(contents, modelo, apiKeys) {
   let ultimo = { status: 504, text: JSON.stringify({ error: { message: "Gemini no respondió a tiempo. Intenta de nuevo." } }) };
-  for (const apiKey of apiKeys) {
+  for (let i = 0; i < apiKeys.length; i++) {
+    const inicio = Date.now();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
       const upstream = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKeys[i]}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -68,9 +69,10 @@ async function intentarKeys(contents, modelo, apiKeys) {
       );
       const text = await upstream.text();
       ultimo = { status: upstream.status, text };
+      console.log(`modelo=${modelo} key=${i + 1}/${apiKeys.length} status=${upstream.status} ms=${Date.now() - inicio}`);
       if (upstream.status !== 429 && upstream.status !== 503) return ultimo;
     } catch (err) {
-      // timeout o falla de red: se sigue con la siguiente key.
+      console.log(`modelo=${modelo} key=${i + 1}/${apiKeys.length} status=timeout ms=${Date.now() - inicio}`);
     } finally {
       clearTimeout(timer);
     }
