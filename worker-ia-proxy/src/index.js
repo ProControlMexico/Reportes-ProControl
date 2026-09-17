@@ -5,11 +5,21 @@
 // ponytail: sin rate-limit por IP — el nombre del Worker no es adivinable,
 // pero si el costo de Gemini se dispara, agregar Cloudflare Rate Limiting aquí.
 
-// Modelo ESTABLE (no "-preview") — los modelos preview de Gemini son los que
-// devuelven 503/UNAVAILABLE seguido por saturación; Google recomienda no
-// usarlos en producción.
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+// En cuenta gratuita, cada modelo de Gemini tiene su PROPIO cupo diario
+// separado (20 RPD c/u, visto en el dashboard de rate limits). Si el modelo
+// preferido está saturado (503) o sin cupo (429), probamos el siguiente de
+// la lista — multiplica el cupo gratis real sin pagar nada.
+// ponytail: orden fijo, sin recordar cuál falló entre peticiones — si el
+// primero casi siempre falla, reordenar esta lista a mano.
+const MODELOS = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-2.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-2.5-flash-lite",
+];
 
 export default {
   async fetch(request, env) {
@@ -26,17 +36,37 @@ export default {
       return withCors(jsonResponse({ error: { message: "Falta 'contents' en la petición" } }, 400));
     }
 
-    // Sin reintento: en cuenta gratuita cada intento extra cuenta contra el
-    // mismo cupo de 20/día — un solo intento por clic.
-    const upstream = await fetch(`${GEMINI_URL}?key=${env.GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: body.contents }),
-    });
-    const text = await upstream.text();
-    return withCors(new Response(text, { status: upstream.status, headers: { "Content-Type": "application/json" } }));
+    // Todas las keys gratuitas configuradas (GEMINI_API_KEY, GEMINI_API_KEY_2, ...).
+    const apiKeys = [env.GEMINI_API_KEY, env.GEMINI_API_KEY_2].filter(Boolean);
+    const { status, text } = await intentarModelos(body.contents, apiKeys);
+    return withCors(new Response(text, { status, headers: { "Content-Type": "application/json" } }));
   },
 };
+
+// Para cada modelo, prueba cada key antes de rendirse con ese modelo y pasar
+// al siguiente. Un intento por combinación (nada de reintentos repetidos
+// sobre la misma pareja modelo+key — eso sí gastaría cupo de más). Solo
+// avanza cuando el error es saturación (503) o cupo agotado (429);
+// cualquier otro resultado (éxito o error real) se regresa tal cual.
+async function intentarModelos(contents, apiKeys) {
+  let ultimo = null;
+  for (const modelo of MODELOS) {
+    for (const apiKey of apiKeys) {
+      const upstream = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents }),
+        }
+      );
+      const text = await upstream.text();
+      ultimo = { status: upstream.status, text };
+      if (upstream.status !== 429 && upstream.status !== 503) return ultimo;
+    }
+  }
+  return ultimo; // se agotaron todos los modelos y todas las keys — regresa el último error
+}
 
 function jsonResponse(obj, status) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
