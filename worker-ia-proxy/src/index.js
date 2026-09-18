@@ -2,11 +2,20 @@
 // poniendo la API key desde el lado del servidor (GEMINI_API_KEY /
 // GEMINI_API_KEY_2, secrets de este Worker). El navegador nunca ve las keys.
 //
+// El modelo lo elige el usuario desde la app (se manda en el body como
+// "model"); acá solo se valida contra la lista permitida. Con 2 keys: si la
+// primera da 503/429/timeout con el modelo elegido, se prueba la segunda
+// antes de rendirse — nunca se cambia el modelo por cuenta propia.
+//
+// ponytail: sin rate-limit por IP — el nombre del Worker no es adivinable,
+// pero si el costo de Gemini se dispara, agregar Cloudflare Rate Limiting aquí.
 // ALERTAS POR EMAIL: si Gemini falla (429/503/timeout) con TODAS las keys,
 // envía un email al ALERT_EMAIL vía Resend para que el admin se entere sin
 // que el usuario tenga que reportarlo. El envío es async (no bloquea la
 // respuesta al usuario).
 
+// Modelos ESTABLES permitidos (no "-preview" — traen límites más
+// restrictivos y Google no los recomienda para producción).
 const MODELOS_PERMITIDOS = [
   "gemini-3.8-flash",
   "gemini-3.7-flash",
@@ -18,6 +27,10 @@ const MODELOS_PERMITIDOS = [
 ];
 const MODELO_DEFAULT = "gemini-3.5-flash-lite";
 
+// Un diagnóstico real (prompt largo + "thinking" del modelo) puede tardar
+// legítimamente 10-30s en responder — 10s cortaba respuestas que sí iban a
+// llegar. Con 2 keys, peor caso ahora ~50s (antes ~20s), pero deja tiempo
+// real a que Gemini termine de pensar antes de rendirse.
 const TIMEOUT_MS = 25000;
 
 export default {
@@ -49,6 +62,9 @@ export default {
   },
 };
 
+// Un intento por key, mismo modelo. Solo pasa a la siguiente key si la
+// actual está saturada (503), sin cupo (429), o se colgó (timeout) —
+// cualquier otro resultado (éxito o error real) se regresa tal cual.
 // ── Alerta por email (Resend) ────────────────────────────────────────
 async function enviarAlertaEmail(env, modelo, status, responseText, keysUsadas) {
   if (!env.RESEND_API_KEY || !env.ALERT_EMAIL) return;
@@ -126,6 +142,13 @@ async function intentarKeys(contents, modelo, apiKeys) {
       if (upstream.status !== 429 && upstream.status !== 503) return ultimo;
     } catch (err) {
       console.log(`modelo=${modelo} key=${i + 1}/${apiKeys.length} status=timeout ms=${Date.now() - inicio}`);
+      // Si fue timeout, Google está lento. No tiene caso intentar con la segunda key
+      // porque también va a tardar. Mejor regresamos el error rápido.
+      ultimo = { 
+        status: 504, 
+        text: JSON.stringify({ error: { message: "Gemini tardó demasiado en responder. Los servidores de Google están saturados, por favor intenta de nuevo usando el modelo 'Gemini 3.5 Flash Lite'." } }) 
+      };
+      return ultimo;
     } finally {
       clearTimeout(timer);
     }
@@ -144,3 +167,4 @@ function withCors(res) {
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   return new Response(res.body, { status: res.status, headers });
 }
+
