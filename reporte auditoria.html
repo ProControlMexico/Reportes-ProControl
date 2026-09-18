@@ -56,6 +56,28 @@
             .page-break { page-break-before: always; }
         }
     </style>
+    <!-- Reporte de errores de JavaScript al Worker (Cloudflare ▸ Observability ▸ Logs, buscar "page-error") -->
+    <script>
+    (function () {
+        var enviados = 0;
+        function reportar(msg, src, line, col, stack) {
+            try {
+                if (enviados >= 5 || typeof IA_PROXY_URL === 'undefined') return;
+                msg = String(msg || '');
+                // Ruido de extensiones del navegador: no es de la página.
+                if (/message channel closed|chrome-extension:|moz-extension:|ResizeObserver loop/.test(msg + ' ' + (src || '') + ' ' + (stack || ''))) return;
+                enviados++;
+                fetch(IA_PROXY_URL + '/log', {
+                    method: 'POST', keepalive: true,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ msg: msg, src: src, line: line, col: col, stack: stack, page: location.href, ua: navigator.userAgent })
+                }).catch(function () {});
+            } catch (e) {}
+        }
+        window.addEventListener('error', function (ev) { reportar(ev.message, ev.filename, ev.lineno, ev.colno, ev.error && ev.error.stack); });
+        window.addEventListener('unhandledrejection', function (ev) { var r = ev.reason; reportar('Promesa rechazada: ' + ((r && r.message) || r), '', 0, 0, r && r.stack); });
+    })();
+    </script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
 

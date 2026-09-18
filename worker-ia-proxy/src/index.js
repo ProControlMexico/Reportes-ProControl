@@ -38,6 +38,9 @@ export default {
     if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }));
     if (request.method !== "POST") return withCors(new Response("Method not allowed", { status: 405 }));
 
+    // Errores de JavaScript de la página (los manda el HTML con window.onerror).
+    if (new URL(request.url).pathname === "/log") return registrarErrorPagina(request);
+
     let body;
     try {
       body = await request.json();
@@ -154,6 +157,29 @@ async function intentarKeys(contents, modelo, apiKeys) {
     }
   }
   return ultimo;
+}
+
+// ── Errores de la página ─────────────────────────────────────────────
+// Solo se escribe en Workers Logs (Cloudflare ▸ Observability ▸ Logs, buscar
+// "page-error"). Sin email ni almacenamiento: el HTML ya limita a 5 por carga.
+async function registrarErrorPagina(request) {
+  try {
+    const raw = (await request.text()).slice(0, 4000);
+    const e = JSON.parse(raw);
+    const corto = (v, n) => String(v ?? "").slice(0, n);
+    console.error("page-error " + JSON.stringify({
+      msg: corto(e.msg, 300),
+      src: corto(e.src, 200),
+      line: e.line,
+      col: e.col,
+      stack: corto(e.stack, 1200),
+      page: corto(e.page, 200),
+      ua: corto(e.ua, 200),
+    }));
+  } catch {
+    // cuerpo inválido: se ignora
+  }
+  return withCors(new Response(null, { status: 204 }));
 }
 
 function jsonResponse(obj, status) {
