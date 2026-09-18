@@ -2,16 +2,11 @@
 // poniendo la API key desde el lado del servidor (GEMINI_API_KEY /
 // GEMINI_API_KEY_2, secrets de este Worker). El navegador nunca ve las keys.
 //
-// El modelo lo elige el usuario desde la app (se manda en el body como
-// "model"); acá solo se valida contra la lista permitida. Con 2 keys: si la
-// primera da 503/429/timeout con el modelo elegido, se prueba la segunda
-// antes de rendirse — nunca se cambia el modelo por cuenta propia.
-//
-// ponytail: sin rate-limit por IP — el nombre del Worker no es adivinable,
-// pero si el costo de Gemini se dispara, agregar Cloudflare Rate Limiting aquí.
+// ALERTAS POR EMAIL: si Gemini falla (429/503/timeout) con TODAS las keys,
+// envía un email al ALERT_EMAIL vía Resend para que el admin se entere sin
+// que el usuario tenga que reportarlo. El envío es async (no bloquea la
+// respuesta al usuario).
 
-// Modelos ESTABLES permitidos (no "-preview" — traen límites más
-// restrictivos y Google no los recomienda para producción).
 const MODELOS_PERMITIDOS = [
   "gemini-3.8-flash",
   "gemini-3.7-flash",
@@ -23,14 +18,10 @@ const MODELOS_PERMITIDOS = [
 ];
 const MODELO_DEFAULT = "gemini-3.5-flash-lite";
 
-// Un diagnóstico real (prompt largo + "thinking" del modelo) puede tardar
-// legítimamente 10-30s en responder — 10s cortaba respuestas que sí iban a
-// llegar. Con 2 keys, peor caso ahora ~50s (antes ~20s), pero deja tiempo
-// real a que Gemini termine de pensar antes de rendirse.
 const TIMEOUT_MS = 25000;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }));
     if (request.method !== "POST") return withCors(new Response("Method not allowed", { status: 405 }));
 
@@ -48,13 +39,71 @@ export default {
     const apiKeys = [env.GEMINI_API_KEY, env.GEMINI_API_KEY_2].filter(Boolean);
 
     const { status, text } = await intentarKeys(body.contents, modelo, apiKeys);
+
+    // Si falló con todas las keys, enviar alerta por email (sin bloquear la respuesta)
+    if (status >= 400) {
+      ctx.waitUntil(enviarAlertaEmail(env, modelo, status, text, apiKeys.length));
+    }
+
     return withCors(new Response(text, { status, headers: { "Content-Type": "application/json" } }));
   },
 };
 
-// Un intento por key, mismo modelo. Solo pasa a la siguiente key si la
-// actual está saturada (503), sin cupo (429), o se colgó (timeout) —
-// cualquier otro resultado (éxito o error real) se regresa tal cual.
+// ── Alerta por email (Resend) ────────────────────────────────────────
+async function enviarAlertaEmail(env, modelo, status, responseText, keysUsadas) {
+  if (!env.RESEND_API_KEY || !env.ALERT_EMAIL) return;
+
+  let errorMsg = "";
+  try {
+    const parsed = JSON.parse(responseText);
+    errorMsg = parsed?.error?.message || `HTTP ${status}`;
+  } catch {
+    errorMsg = `HTTP ${status}`;
+  }
+
+  const ahora = new Date().toLocaleString("es-MX", {
+    timeZone: "America/Mexico_City",
+    dateStyle: "medium",
+    timeStyle: "medium",
+  });
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "ProControl IA <onboarding@resend.dev>",
+        to: [env.ALERT_EMAIL],
+        subject: `⚠️ Error IA ProControl — ${modelo} (${status})`,
+        html: `
+          <div style="font-family:system-ui,sans-serif;max-width:480px">
+            <h3 style="color:#dc2626">⚠️ Error en ProControl IA</h3>
+            <table style="border-collapse:collapse;font-size:14px">
+              <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Modelo:</td><td>${modelo}</td></tr>
+              <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Status:</td><td>${status}</td></tr>
+              <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Error:</td><td>${errorMsg}</td></tr>
+              <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Keys probadas:</td><td>${keysUsadas}</td></tr>
+              <tr><td style="padding:4px 12px 4px 0;font-weight:bold">Hora (CDMX):</td><td>${ahora}</td></tr>
+            </table>
+            <p style="color:#666;font-size:11px;margin-top:16px">
+              Email automático del Worker procontrol-ia-proxy.
+              Si ves muchos de estos, revisa la cuota en
+              <a href="https://aistudio.google.com/rate-limit">AI Studio</a>.
+            </p>
+          </div>
+        `,
+      }),
+    });
+    console.log(`alerta-email: enviada (${modelo} ${status})`);
+  } catch (e) {
+    console.log(`alerta-email: error enviando — ${e.message}`);
+  }
+}
+
+// ── Intento por key ──────────────────────────────────────────────────
 async function intentarKeys(contents, modelo, apiKeys) {
   let ultimo = { status: 504, text: JSON.stringify({ error: { message: "Gemini no respondió a tiempo. Intenta de nuevo." } }) };
   for (let i = 0; i < apiKeys.length; i++) {
@@ -95,4 +144,3 @@ function withCors(res) {
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   return new Response(res.body, { status: res.status, headers });
 }
-
