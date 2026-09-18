@@ -21,7 +21,7 @@ const MODELOS_PERMITIDOS = [
   "gemini-3.1-flash-lite",
   "gemini-3-flash-preview",
 ];
-const MODELO_DEFAULT = "gemini-3.8-flash";
+const MODELO_DEFAULT = "gemini-3.5-flash-lite";
 
 // Un diagnóstico real (prompt largo + "thinking" del modelo) puede tardar
 // legítimamente 10-30s en responder — 10s cortaba respuestas que sí iban a
