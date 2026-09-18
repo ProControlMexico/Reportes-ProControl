@@ -95,3 +95,4 @@ function withCors(res) {
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   return new Response(res.body, { status: res.status, headers });
 }
+
