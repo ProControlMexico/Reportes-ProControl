@@ -4631,6 +4631,7 @@
                 updatePieServiceSelector();
                 updateCharts();
 
+                try { localStorage.removeItem('procontrol_autosave_v1'); } catch (e) {}
                 cerrarConfirmLimpiarTodo();
                 showToast("Se borró todo lo que no estaba guardado. Sistema en blanco.", "warning");
             });
@@ -4706,16 +4707,8 @@
         /************************************************************************
          * EXPORTAR PROYECTO COMO JSON
          ************************************************************************/
-        window.exportProject = async function() {
-            if (testModeActive) {
-                showToast('Desactiva el modo TEST antes de exportar.', 'error');
-                return;
-            }
-            if (!state.clientName) {
-                showToast('Configura un cliente antes de exportar.', 'error');
-                return;
-            }
-
+        // Snapshot completo del proyecto: lo usan exportar (JSON) y el autoguardado.
+        function buildProjectSnapshot(sinFotos) {
             const hDate = document.getElementById('header-date');
             const hVer  = document.getElementById('header-version');
 
@@ -4757,7 +4750,7 @@
                 history:         JSON.parse(JSON.stringify(state.history)),
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
-                photos:          JSON.parse(JSON.stringify(photoData)),
+                photos:          sinFotos ? [] : JSON.parse(JSON.stringify(photoData)),
                 photosPerRow:    photosPerRow,
                 nmxChecklist:    nmxChecklist,
                 tieneServicioMIP: tieneServicioMIPEl ? tieneServicioMIPEl.value : 'si',
@@ -4768,7 +4761,20 @@
                     version: hVer  ? hVer.value  : 'VER 1.0'
                 }
             };
+            return snapshot;
+        }
 
+        window.exportProject = async function() {
+            if (testModeActive) {
+                showToast('Desactiva el modo TEST antes de exportar.', 'error');
+                return;
+            }
+            if (!state.clientName) {
+                showToast('Configura un cliente antes de exportar.', 'error');
+                return;
+            }
+
+            const snapshot = buildProjectSnapshot();
             const defaultFilename = buildReportBaseFilename() + '.json';
             const jsonStr = JSON.stringify(snapshot, null, 2);
             const resumen = snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.';
@@ -4831,6 +4837,21 @@
                         return;
                     }
 
+                    applyProjectData(data);
+                } catch(err) {
+                    showToast('Error al leer el archivo. Verifica que sea un JSON válido.', 'error');
+                }
+
+                e.target.value = ''; // Permite importar el mismo archivo de nuevo
+            };
+            reader.readAsText(file);
+        });
+
+        // Aplica un proyecto (de un JSON importado o del autoguardado) a la pantalla.
+        // silent = true: sin el aviso de "Importado" (lo usa la restauración).
+        function applyProjectData(data, silent) {
+            {
+                {
                     // Restaurar estado
                     state.clientName           = data.clientName;
                     state.sucursal             = data.sucursal || '';
@@ -4963,16 +4984,10 @@
                     initCheckboxes();
                     updateCharts();
 
-                    showToast('Importado: ' + state.clientName + ' — ' + state.history.length + ' servicio(s), ' + state.stations.length + ' estaciones.', 'success');
-
-                } catch(err) {
-                    showToast('Error al leer el archivo. Verifica que sea un JSON válido.', 'error');
+                    if (!silent) showToast('Importado: ' + state.clientName + ' — ' + state.history.length + ' servicio(s), ' + state.stations.length + ' estaciones.', 'success');
                 }
-
-                e.target.value = ''; // Permite importar el mismo archivo de nuevo
-            };
-            reader.readAsText(file);
-        });
+            }
+        }
 
         /************************************************************************
          * IMPRIMIR / GUARDAR PDF
@@ -5856,6 +5871,84 @@
         };
 
         /************************************************************************
+         * AUTOGUARDADO EN EL NAVEGADOR (localStorage)
+         * Protege contra refresh, pestaña descargada por el navegador o cierre
+         * accidental. NO reemplaza a Exportar: solo vive en este navegador.
+         * Las fotos NO se guardan (pesan demasiado para localStorage, ~5 MB).
+         ************************************************************************/
+        var AUTOSAVE_KEY = 'procontrol_autosave_v1';
+        var autosaveTimer = null;
+        var autosavePausado = false; // true mientras el aviso de restaurar espera respuesta
+
+        function autosaveNow() {
+            try {
+                if (autosavePausado || testModeActive || !state.clientName) return;
+                var snap = buildProjectSnapshot(true);
+                var payload = { savedAt: new Date().toISOString(), fotos: photoData.length, data: snap };
+                try {
+                    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+                } catch (cuota) {
+                    // Sin espacio: reintenta sin firmas (lo más pesado después de las fotos).
+                    snap.signatures = { elaborado: null, autorizado: null };
+                    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+                }
+            } catch (err) {
+                // localStorage bloqueado o lleno: el autoguardado es un extra, no debe romper nada.
+            }
+        }
+
+        function autosaveProgramar() {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(autosaveNow, 2000);
+        }
+
+        function autosaveOfrecerRestaurar() {
+            var saved = null;
+            try { saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null'); } catch (e) {}
+            if (!saved || !saved.data || !saved.data.clientName) return;
+            if (state.clientName) return; // ya hay algo cargado en pantalla
+
+            autosavePausado = true; // que un guardado nuevo no pise el anterior mientras decide
+            var cuando = '';
+            try { cuando = new Date(saved.savedAt).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) {}
+            var aviso = document.createElement('div');
+            aviso.id = 'autosave-banner';
+            aviso.className = 'no-print';
+            aviso.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;max-width:92vw;width:440px;background:#0f172a;color:#fff;border:1px solid #14b8a6;border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13px;line-height:1.4';
+            var nombre = String(saved.data.clientName).replace(/[<>&]/g, '');
+            aviso.innerHTML =
+                '<div style="font-weight:700;margin-bottom:4px">Se encontró un avance sin exportar</div>' +
+                '<div style="color:#cbd5e1;margin-bottom:10px">' + nombre + (cuando ? ' — guardado ' + cuando : '') +
+                (saved.fotos ? '<br><span style="color:#fbbf24">Las ' + saved.fotos + ' foto(s) no se recuperan, habrá que subirlas de nuevo.</span>' : '') + '</div>' +
+                '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+                '<button id="autosave-descartar" style="padding:6px 12px;border-radius:8px;background:#334155;color:#fff;font-weight:600">Descartar</button>' +
+                '<button id="autosave-restaurar" style="padding:6px 12px;border-radius:8px;background:#0d9488;color:#fff;font-weight:700">Restaurar</button>' +
+                '</div>';
+            document.body.appendChild(aviso);
+
+            document.getElementById('autosave-descartar').onclick = function() {
+                try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+                aviso.remove();
+                autosavePausado = false;
+            };
+            document.getElementById('autosave-restaurar').onclick = function() {
+                try {
+                    applyProjectData(saved.data, true);
+                    aviso.remove();
+                    autosavePausado = false;
+                    showToast('Avance restaurado: ' + saved.data.clientName + '. Recuerda exportarlo cuando termines.', 'success');
+                } catch (err) {
+                    showToast('No se pudo restaurar el avance guardado.', 'error');
+                }
+            };
+        }
+
+        ['input', 'change', 'click'].forEach(function(ev) { document.addEventListener(ev, autosaveProgramar, true); });
+        document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') autosaveNow(); });
+        window.addEventListener('pagehide', autosaveNow);
+        setInterval(autosaveNow, 30000); // red de seguridad (p. ej. lo que llega de la IA sin un clic)
+
+        /************************************************************************
          * INICIALIZADOR GENERAL
          ************************************************************************/
         window.onload = function() {
@@ -5870,6 +5963,7 @@
             updateCharts();
             initSigCanvas();
             evaluarNOM();
+            autosaveOfrecerRestaurar();
         };
     </script>
 </body>
