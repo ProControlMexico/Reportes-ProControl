@@ -6061,7 +6061,7 @@
 
         // ── Catálogo de trabajos (multiselector). Para agregar o quitar opciones, editar aquí. ──
         var EXTRA_SERVICIOS = ['Aspersión', 'Nebulización', 'Termonebulización', 'Aplicación de gel', 'Aplicación de polvo'];
-        var EXTRA_OTROS = 'Otros';
+        var EXTRA_OTROS = 'Otro';   // (los servicios guardados antes decían "Otros": extraNormalizar los actualiza)
         var EXTRA_PREF_REV = 'Revisión de estaciones: ';
 
         // Una opción "Revisión de estaciones: <tipo>" por cada tipo del selector de estaciones,
@@ -6196,21 +6196,22 @@
             };
             cont.innerHTML = grupo('Aplicaciones', EXTRA_SERVICIOS) +
                 grupo('Revisión de estaciones', extraOpcionesRevision()) +
-                '<div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Otros</p>' + chip(EXTRA_OTROS) +
-                '<input type="text" id="extra-otros" maxlength="200" oninput="extraCampoCambio()" placeholder="Especifica qué otro trabajo se realizó" ' +
+                '<div>' + chip(EXTRA_OTROS) +
+                '<input type="text" id="extra-otros" maxlength="200" oninput="extraCampoCambio()" placeholder="¿Qué otro trabajo se realizó?" ' +
                 'class="hidden mt-2 w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 focus:outline-none"></div>';
         }
 
-        // Los trabajos marcados como texto legible ("Otros" se muestra con lo que escribieron).
+        // Los trabajos marcados como texto legible ("Otro" se muestra con lo que escribieron).
         function extraListaTrabajos(x) {
             return (x.trabajos || []).map(function(t) {
-                return t === EXTRA_OTROS ? (x.otros && x.otros.trim() ? 'Otros: ' + x.otros.trim() : 'Otros') : t;
+                return t === EXTRA_OTROS ? (x.otros && x.otros.trim() ? EXTRA_OTROS + ': ' + x.otros.trim() : EXTRA_OTROS) : t;
             });
         }
 
-        // Servicios guardados antes del multiselector traían "descripcion" en texto libre: pasa a "Otros".
+        // Servicios guardados antes: la opción se llamaba "Otros" y la descripción era un texto libre ("descripcion").
         function extraNormalizar(x) {
             x.trabajos = Array.isArray(x.trabajos) ? x.trabajos : [];
+            x.trabajos = x.trabajos.map(function(t) { return t === 'Otros' ? EXTRA_OTROS : t; });
             if (x.descripcion && !x.otros) {
                 x.otros = x.descripcion;
                 if (x.trabajos.indexOf(EXTRA_OTROS) === -1) x.trabajos.push(EXTRA_OTROS);
