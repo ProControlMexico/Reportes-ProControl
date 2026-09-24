@@ -622,6 +622,33 @@
                 padding: 8px !important;
             }
         }
+
+        /* === SERVICIO EXTRAORDINARIO ===
+           Sin captura de estaciones ni gráficas (pantalla e impresión). Se conservan
+           datos del cliente, fotos, firmas y el resto de secciones del reporte. */
+        #extra-service-card, #extra-mode-title, #extra-actions-bar { display: none; }
+        body.modo-extra #extra-actions-bar { display: block; }
+        .extra-chip:has(input:checked) { background: #f5f3ff; border-color: #8b5cf6; font-weight: 600; color: #5b21b6; }
+        #start-service-btn.hidden ~ #start-extra-btn { display: none !important; } /* no ofrecer extraordinario con un servicio normal en curso */
+        body.modo-extra #extra-service-card { display: block; }
+        body.modo-extra #extra-mode-title { display: block; }
+        #extra-estaciones-hint { display: none; }
+        body.modo-extra.extra-con-estaciones #extra-estaciones-hint { display: block; }
+        /* Siempre, en modo extraordinario */
+        body.modo-extra #extra-mode-title + p,
+        body.modo-extra #dash-client-title,
+        body.modo-extra #stations-card-footer,
+        body.modo-extra #pie-selector-block,
+        body.modo-extra #historical-view-banner,
+        body.modo-extra #start-service-btn,
+        body.modo-extra #start-extra-btn,
+        body.modo-extra #active-service-controls,
+        body.modo-extra #global-analysis-card { display: none !important; }
+        /* Solo si NO se revisan estaciones (clase extra-con-estaciones = se marcó alguna "Revisión de estaciones") */
+        body.modo-extra:not(.extra-con-estaciones) #stations-grid-container,
+        body.modo-extra:not(.extra-con-estaciones) #analytics-section > div:not(#photos-section-card) { display: none !important; }
+        /* Con revisión de estaciones pero sin Cebadera: no hay consumo de cebo que graficar */
+        body.modo-extra:not(.extra-con-cebadera) #analytics-section > div:has(#baitChart) { display: none !important; }
     </style>
     <!-- Reporte de errores de JavaScript al Worker (Cloudflare ▸ Observability ▸ Logs, buscar "page-error") -->
     <script>
@@ -911,6 +938,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 no-print">
                         <div>
                             <h2 class="text-xl font-bold text-slate-900" id="dash-client-title">Estaciones Registradas</h2>
+                            <h2 class="text-xl font-bold text-violet-800" id="extra-mode-title"><i class="fa-solid fa-screwdriver-wrench mr-1.5"></i> Servicio Extraordinario <span id="extra-estado-badge" class="ml-2 align-middle bg-violet-600 text-white text-[9px] font-extrabold px-2 py-1 rounded-full leading-none">NUEVO</span></h2>
                             <p class="text-xs text-slate-500 mt-0.5">Modifica el nombre con el botón editar de cada estación. Registra capturas haciendo click sobre los equipos.</p>
                         </div>
                         <!-- Registro de Servicio (compacto, integrado en el header) -->
@@ -928,6 +956,9 @@
                             <button id="start-service-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-play"></i> Iniciar Reporte de Captura
                             </button>
+                            <button id="start-extra-btn" onclick="iniciarServicioExtra()" class="w-full bg-violet-600 hover:bg-violet-700 text-white py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-screwdriver-wrench"></i> Servicio Extraordinario
+                            </button>
                             <div id="active-service-controls" class="hidden space-y-1.5">
                                 <button id="finish-service-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-circle-check"></i> Terminar Servicio Actual
@@ -942,7 +973,7 @@
                     </div>
 
                     <!-- ¿Qué servicio se va a reportar? (arriba de todo, no hasta la gráfica de pastel) -->
-                    <div class="no-print mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <div id="pie-selector-block" class="no-print mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <label for="pie-service-selector" class="text-xs font-bold text-teal-800 flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-file-circle-question"></i> ¿Qué servicio vas a reportar?
                         </label>
@@ -994,8 +1025,43 @@
                         <span>Vista de servicio histórico — las estaciones muestran capturas de esa visita. Badges en azul = solo lectura.</span>
                     </div>
 
+                    <!-- SERVICIO EXTRAORDINARIO: formulario. Solo visible en modo extraordinario (ver CSS "modo-extra").
+                         Va entre el título de arriba y las estaciones (las estaciones salen abajo, solo si se revisan). -->
+                    <div id="extra-service-card" class="mb-6">
+                        <!-- Título para impresión (en pantalla el título es el de arriba) -->
+                        <div class="hidden print:block mb-3">
+                            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Servicio Extraordinario</h3>
+                            <p class="text-xs text-slate-500">Fecha: <strong id="extra-fecha-txt">-</strong></p>
+                        </div>
+
+                        <!-- Captura (solo pantalla) -->
+                        <div class="no-print space-y-3">
+                            <div>
+                                <label for="extra-motivo" class="block text-xs font-semibold text-slate-500 mb-1">Motivo del servicio</label>
+                                <input type="text" id="extra-motivo" oninput="extraCampoCambio()" maxlength="200" placeholder="Ej. Atención por reporte de roedores en almacén"
+                                       class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Trabajos realizados <span class="font-normal text-slate-400">— puedes marcar varios</span></label>
+                                <!-- Las casillas las genera extraRenderTrabajos() (una por servicio y una por tipo de estación) -->
+                                <div id="extra-trabajos" class="space-y-3"></div>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Si marcas una <strong>Revisión de estaciones</strong>, abajo aparece la captura solo de ese tipo de estación, con sus gráficas. La auditoría NMX-F-605 y la evidencia fotográfica también forman parte de este servicio. Al terminar todo, guarda con el botón del final de la página.</p>
+                        </div>
+
+                        <!-- Vista de impresión (texto fijo, los campos de arriba se cortan al imprimir) -->
+                        <div class="hidden print:block text-xs text-slate-800">
+                            <p class="font-bold uppercase text-slate-500 mt-1">Motivo</p>
+                            <p id="extra-motivo-print" class="mb-3 font-semibold">-</p>
+                            <p class="font-bold uppercase text-slate-500">Trabajos realizados</p>
+                            <ul id="extra-trabajos-print" class="list-disc pl-5 leading-relaxed"><li>-</li></ul>
+                        </div>
+                    </div>
+
                     <!-- GRILLA DE ESTACIONES CLASIFICADA POR CORDONES (solo pantalla — el PDF ya trae el Análisis Global de Hallazgos) -->
                     <div class="space-y-6 no-print" id="stations-grid-container">
+                        <!-- Ayuda solo del servicio extraordinario con revisión de estaciones -->
+                        <p id="extra-estaciones-hint" class="text-xs text-slate-500"><i class="fa-solid fa-hand-pointer text-violet-500 mr-1"></i> Estaciones a revisar: registra las capturas haciendo clic sobre cada equipo.</p>
                         <!-- MENSAJE DE ESPERA DE CONFIGURACIÓN -->
                         <div id="grid-placeholder" class="text-center py-10 px-4">
                             <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -1042,14 +1108,14 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400 no-print">
+                    <div id="stations-card-footer" class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400 no-print">
                         <span id="autosave-status"><i class="fa-solid fa-cloud-arrow-up mr-1 text-teal-500"></i>  Sistema listo para captura.</span>
                         <span class="text-[10px] font-mono">ID: PRO-LOGIC-V26</span>
                     </div>
                 </div>
 
                 <!-- SECCIÓN ANÁLISIS GLOBAL DE HALLAZGOS (Visible al imprimir) -->
-                <div class="hidden print:block bg-white rounded-lg p-5 border border-slate-200 print-card">
+                <div id="global-analysis-card" class="hidden print:block bg-white rounded-lg p-5 border border-slate-200 print-card">
                     <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 pb-1 border-b border-slate-300">
                         <i class="fa-solid fa-chart-simple mr-1.5"></i> Análisis Global de Hallazgos
                     </h3>
@@ -1651,6 +1717,21 @@
         </div>
     </section>
 
+    <!-- SERVICIO EXTRAORDINARIO: guardar / descartar, al final de todo el reporte (solo modo extraordinario, no se imprime) -->
+    <section id="extra-actions-bar" class="no-print max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-violet-200 p-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-slate-500"><i class="fa-solid fa-screwdriver-wrench text-violet-600 mr-1.5"></i> Servicio extraordinario en captura: revisa que la auditoría, las fotos y las firmas estén completas antes de guardar.</p>
+            <div class="flex flex-wrap gap-2 justify-end">
+                <button onclick="descartarServicioExtra()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-ban mr-1"></i> Descartar
+                </button>
+                <button onclick="guardarServicioExtra()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-5 rounded-lg text-xs transition-all shadow-md">
+                    <i class="fa-solid fa-circle-check mr-1"></i> Guardar servicio extraordinario
+                </button>
+            </div>
+        </div>
+    </section>
+
     <!-- Pie de Página Especial de Impresión -->
     <div class="print-footer-visible">
         <img src="Escudo Procontrol.png" alt="Escudo Procontrol"
@@ -2031,8 +2112,15 @@
             currentServiceDate: "",
             editingHistoryIndex: null,
             stations: [],
-            history: []
+            history: [],
+            // Servicios extraordinarios: lista APARTE de history a propósito, para que
+            // nunca entren en gráficas, selector de servicios, análisis global ni en el
+            // resumen de historial que se le manda a la IA.
+            extraordinarios: [],
+            extraActivo: null   // borrador en edición: { idx, date, motivo, descripcion } | null
         };
+        if (!Array.isArray(state.extraordinarios)) state.extraordinarios = [];
+        if (state.extraActivo === undefined) state.extraActivo = null;
 
         // Constante para el cargado seguro del historial demostrativo
         const DEMO_HISTORY_DATA = [
@@ -2239,8 +2327,10 @@
          ************************************************************************/
         function renderHistoryList() {
             historyList.innerHTML = "";
+            aplicarModoExtra(); // renderHistoryList se llama en todo cambio de estado: aquí se mantiene el modo al día
 
-            var hasItems = state.isServiceStarted || state.history.length > 0;
+            var hasItems = state.isServiceStarted || state.history.length > 0 ||
+                state.extraordinarios.length > 0 || !!state.extraActivo;
             if (!hasItems) {
                 historySection.classList.add("hidden");
                 return;
@@ -2248,8 +2338,9 @@
 
             historySection.classList.remove("hidden");
 
-            // Mostrar servicio activo al inicio de la lista (si hay uno en curso)
-            if (state.isServiceStarted) {
+            // Mostrar servicio activo al inicio de la lista (si hay uno en curso). En modo
+            // extraordinario el "activo" es el propio extraordinario y ya sale más abajo.
+            if (state.isServiceStarted && !state.extraActivo) {
                 var volActive = 0;
                 state.stations.forEach(function(s) {
                     Object.values(s.captures).forEach(function(v) { volActive += v; });
@@ -2312,9 +2403,43 @@
 
                 historyList.appendChild(item);
             });
+
+            // Servicios extraordinarios (lista aparte, en violeta)
+            if (state.extraActivo && state.extraActivo.idx === null) {
+                var draft = document.createElement("div");
+                draft.className = "flex justify-between items-center bg-violet-50 p-3 rounded-xl border border-violet-300 text-xs";
+                draft.innerHTML = '<div>' +
+                    '<div class="flex items-center gap-1.5 mb-0.5">' +
+                    '<span class="bg-violet-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none">EXTRAORDINARIO · EN CURSO</span>' +
+                    '<p class="font-bold text-slate-800"><i class="fa-regular fa-calendar mr-1"></i>' + formatDisplayDate(state.extraActivo.date) + '</p>' +
+                    '</div><p class="text-[10px] text-slate-500 mt-0.5">Pendiente de guardar</p></div>' +
+                    '<span class="text-violet-500 text-base"><i class="fa-solid fa-circle-dot"></i></span>';
+                historyList.appendChild(draft);
+            }
+            state.extraordinarios.forEach(function(x, i) {
+                var editando = state.extraActivo && state.extraActivo.idx === i;
+                var it = document.createElement("div");
+                it.className = "flex justify-between items-center p-3 rounded-xl border text-xs " +
+                    (editando ? "bg-violet-50 border-violet-300" : "bg-slate-50 border-slate-200");
+                it.innerHTML = '<div class="min-w-0">' +
+                    '<div class="flex items-center gap-1.5 mb-0.5">' +
+                    '<span class="bg-violet-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none">' + (editando ? 'EDITANDO' : 'EXTRAORDINARIO') + '</span>' +
+                    '<p class="font-bold text-slate-800"><i class="fa-regular fa-calendar mr-1"></i>' + formatDisplayDate(x.date) + '</p>' +
+                    '</div><p class="text-[10px] text-slate-600 mt-0.5 truncate">' + extraEsc(x.motivo) + '</p>' +
+                    '<p class="text-[10px] text-slate-400 truncate">' + extraEsc(extraListaTrabajos(x).join(', ')) + '</p></div>' +
+                    '<div class="flex items-center flex-shrink-0">' +
+                    '<button onclick="editarServicioExtra(' + i + ')" class="text-amber-600 hover:text-amber-800 p-1 mr-1" title="Editar servicio extraordinario"><i class="fa-regular fa-edit text-sm"></i></button>' +
+                    '<button onclick="eliminarServicioExtra(' + i + ')" class="text-rose-600 hover:text-rose-800 p-1" title="Eliminar servicio extraordinario"><i class="fa-regular fa-trash-can text-sm"></i></button>' +
+                    '</div>';
+                historyList.appendChild(it);
+            });
         }
 
         window.confirmEditHistory = function(idx) {
+            if (state.extraActivo) {
+                showToast('Guarda o descarta el servicio extraordinario abierto antes de editar otro servicio.', 'error');
+                return;
+            }
             pendingEditIndex = idx;
             confirmEditModal.classList.remove("hidden");
             document.body.classList.add("overflow-hidden");
@@ -2616,7 +2741,9 @@
             let c3Count = 0;
             let c4Count = 0;
 
+            var tiposExtra = extraTiposActivos(); // servicio extraordinario: solo los tipos que se revisan
             state.stations.forEach(function(station) {
+                if (tiposExtra && tiposExtra.indexOf(station.type) === -1) return;
                 const meta = STATION_METADATA[station.type];
                 const stationBtn = document.createElement("button");
                 stationBtn.type = "button";
@@ -3359,7 +3486,7 @@
             if (lineSelVal === 'current' || lineSelVal === 'none') {
                 // Mostrar todo el historial + servicio activo en curso
                 state.history.forEach(function(h) {
-                    timeline.push({ date: h.date, totals: Object.assign({}, h.totals) });
+                    timeline.push({ date: h.date, totals: totalesVisita(h) });
                 });
                 if (state.isServiceStarted) {
                     let activeTotals = {};
@@ -4150,7 +4277,7 @@
 
             var timeline = [];
             state.history.forEach(function(h) {
-                timeline.push({ date: h.date, totals: Object.assign({}, h.totals) });
+                timeline.push({ date: h.date, totals: totalesVisita(h) });
             });
             if (state.isServiceStarted) {
                 var curT = {};
@@ -4314,6 +4441,8 @@
                 state.editingHistoryIndex = null;
                 state.stations = [];
                 state.history = [];
+                state.extraordinarios = [];
+                state.extraActivo = null;
 
                 clientNameInput.value = "";
                 if (sucursalInput) { sucursalInput.value = ""; sucursalInput.disabled = false; }
@@ -4452,6 +4581,8 @@
             state.editingHistoryIndex = null;
             state.stations = testStations;
             state.history = testHistory;
+            state.extraordinarios = [];
+            state.extraActivo = null;
 
             // Actualizar UI (igual que finalizeSetupBtn)
             clientNameInput.value = state.clientName;
@@ -4556,6 +4687,8 @@
                 state.editingHistoryIndex = null;
                 state.stations = [];
                 state.history = [];
+                state.extraordinarios = [];
+                state.extraActivo = null;
 
                 // — Formulario de configuración —
                 clientNameInput.value = "";
@@ -4705,7 +4838,8 @@
             var cliente   = limpiar(state.clientName);
             var sucursal  = limpiar(sucursalInput ? sucursalInput.value : (state.sucursal || ''));
             var fecha     = getLocalDateStr().replace(/-/g, '');
-            return [cliente, sucursal, fecha].filter(function(p) { return p; }).join('-');
+            var tipo      = state.extraActivo ? 'Extraordinario' : '';
+            return [cliente, sucursal, tipo, fecha].filter(function(p) { return p; }).join('-');
         }
 
         /************************************************************************
@@ -4737,7 +4871,7 @@
             var dictamenEl = document.getElementById('rptDictamenTexto');
 
             const snapshot = {
-                version:         '2.0',
+                version:         '2.1',   // 2.1: agrega "extraordinarios" y "extraActivo" (un archivo 2.0 sigue abriéndose)
                 exportDate:      new Date().toISOString(),
                 clientName:      state.clientName,
                 sucursal:        sucursalInput ? sucursalInput.value.trim() : (state.sucursal || ''),
@@ -4752,6 +4886,12 @@
                 currentServiceDate: state.currentServiceDate,
                 stations:        JSON.parse(JSON.stringify(state.stations)),
                 history:         JSON.parse(JSON.stringify(state.history)),
+                extraordinarios: (state.extraordinarios || []).map(function(x) {
+                    var c = JSON.parse(JSON.stringify(x));
+                    if (sinFotos && c.auditoria) c.auditoria.photos = []; // el autoguardado no lleva fotos
+                    return c;
+                }),
+                extraActivo:     state.extraActivo ? JSON.parse(JSON.stringify(state.extraActivo)) : null,
                 signatures:      JSON.parse(JSON.stringify(sigData)),
                 signatureInfo:   sigInfo,
                 photos:          sinFotos ? [] : JSON.parse(JSON.stringify(photoData)),
@@ -4781,7 +4921,10 @@
             const snapshot = buildProjectSnapshot();
             const defaultFilename = buildReportBaseFilename() + '.json';
             const jsonStr = JSON.stringify(snapshot, null, 2);
-            const resumen = snapshot.history.length + ' servicio(s), ' + snapshot.stations.length + ' estaciones.';
+            const resumen = snapshot.history.length + ' servicio(s), ' +
+                (snapshot.extraordinarios.length ? snapshot.extraordinarios.length + ' extraordinario(s), ' : '') +
+                (snapshot.extraActivo ? 'extraordinario abierto (borrador), ' : '') +
+                snapshot.stations.length + ' estaciones.';
 
             // Preferir el diálogo nativo "Guardar como" (Chrome/Edge de escritorio): permite
             // elegir nombre y carpeta en el momento. Si el navegador no lo soporta (Firefox,
@@ -4881,6 +5024,9 @@
                         };
                     });
                     state.history = data.history;
+                    // Proyectos exportados antes de existir el servicio extraordinario no traen estos campos.
+                    state.extraordinarios = Array.isArray(data.extraordinarios) ? data.extraordinarios.map(extraNormalizar) : [];
+                    state.extraActivo = data.extraActivo ? extraNormalizar(data.extraActivo) : null;
 
                     // Restaurar header: solo la versión — la fecha nunca se restaura desde el
                     // archivo, siempre es la fecha en que se está generando el reporte (hoy).
@@ -4909,14 +5055,16 @@
                     serviceCreationSection.classList.remove('opacity-50', 'pointer-events-none');
 
                     // Restaurar estado de servicio activo si aplica
+                    extraPrevio = null; // el reporte normal que se hubiera apartado ya no aplica: se cargó otro proyecto
                     if (state.isServiceStarted) {
                         serviceDateInput.value    = state.currentServiceDate;
-                        serviceDateInput.disabled = true;
+                        serviceDateInput.disabled = !state.extraActivo; // en un extraordinario la fecha sigue editable
                         startServiceBtn.classList.add('hidden');
                         document.getElementById('active-service-controls').classList.remove('hidden');
                     } else {
                         serviceDateInput.disabled = false;
-                        serviceDateInput.value    = getLocalDateStr();
+                        // Extraordinario abierto en el archivo: conserva SU fecha, no la de hoy
+                        serviceDateInput.value    = state.extraActivo ? state.extraActivo.date : getLocalDateStr();
                         startServiceBtn.classList.remove('hidden');
                         document.getElementById('active-service-controls').classList.add('hidden');
                     }
@@ -4988,7 +5136,10 @@
                     initCheckboxes();
                     updateCharts();
 
-                    if (!silent) showToast('Importado: ' + state.clientName + ' — ' + state.history.length + ' servicio(s), ' + state.stations.length + ' estaciones.', 'success');
+                    if (!silent) showToast('Importado: ' + state.clientName + ' — ' + state.history.length + ' servicio(s), ' +
+                        (state.extraordinarios.length ? state.extraordinarios.length + ' extraordinario(s), ' : '') +
+                        (state.extraActivo ? 'extraordinario abierto (borrador), ' : '') +
+                        state.stations.length + ' estaciones.', 'success');
                 }
             }
         }
@@ -5039,6 +5190,14 @@
                 printBaitSpecies = Object.assign({}, lastSvc.baitConsumptionSpeciesByStation || {});
             }
 
+            // Servicio extraordinario SIN revisión de estaciones: la fecha del reporte es la del
+            // extraordinario y no hay datos de estaciones. Con revisión, corre la rama normal
+            // de "servicio activo" (sus capturas viven en las estaciones, igual que en uno normal).
+            if (state.extraActivo && !extraTiposActivos()) {
+                printDate = state.extraActivo.date;
+                stationCaptures = {}; printBait = {}; printBaitSpecies = {};
+            }
+
             updateBaitPrintLegend(printDate, printBait, printBaitSpecies);
 
             // Actualizar encabezado de impresión: la fecha de arriba SIEMPRE es la fecha en
@@ -5050,7 +5209,7 @@
             document.getElementById("print-client-name").textContent    = state.clientName;
             document.getElementById("print-service-date").textContent   = formatDisplayDate(docDate);
             var verBadge = document.getElementById("print-version-badge");
-            if (verBadge) verBadge.textContent = 'INFORME DE HALLAZGOS';
+            if (verBadge) verBadge.textContent = state.extraActivo ? 'INFORME DE SERVICIO EXTRAORDINARIO' : 'INFORME DE HALLAZGOS';
 
             // Actualizar tabla de detalle de capturas
             document.getElementById("print-info-client").textContent = state.clientName.toUpperCase();
@@ -5875,6 +6034,410 @@
         };
 
         /************************************************************************
+         * SERVICIO EXTRAORDINARIO
+         * Sin estaciones ni gráficas. Se guarda en state.extraordinarios (lista
+         * aparte de state.history). state.extraActivo es el borrador en pantalla:
+         * mientras exista, <body> lleva la clase "modo-extra" (ver CSS).
+         ************************************************************************/
+        function extraEsc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        // Confirmación en dos pasos SIN window.confirm (falla en navegadores embebidos):
+        // el primer clic avisa, el segundo (dentro de 4 s) ejecuta.
+        var extraConfirm = { key: null, timer: null };
+        function extraDosPasos(key, aviso) {
+            if (extraConfirm.key === key) {
+                clearTimeout(extraConfirm.timer);
+                extraConfirm.key = null;
+                return true;
+            }
+            extraConfirm.key = key;
+            clearTimeout(extraConfirm.timer);
+            extraConfirm.timer = setTimeout(function() { extraConfirm.key = null; }, 4000);
+            showToast(aviso, 'warning');
+            return false;
+        }
+
+        // ── Catálogo de trabajos (multiselector). Para agregar o quitar opciones, editar aquí. ──
+        var EXTRA_SERVICIOS = ['Aspersión', 'Nebulización', 'Termonebulización', 'Aplicación de gel', 'Aplicación de polvo'];
+        var EXTRA_OTROS = 'Otros';
+        var EXTRA_PREF_REV = 'Revisión de estaciones: ';
+
+        // Una opción "Revisión de estaciones: <tipo>" por cada tipo del selector de estaciones,
+        // leídas de ahí para que siempre coincidan (Cebadera, UV, Captura, Monitoreo...).
+        function extraOpcionesRevision() {
+            var ops = [];
+            for (var i = 0; i < stationTypeSelect.options.length; i++) {
+                if (stationTypeSelect.options[i].value) ops.push(EXTRA_PREF_REV + stationTypeSelect.options[i].value);
+            }
+            return ops;
+        }
+
+        // Tipos de estación que se revisan en el extraordinario abierto (["Cebadera", "UV"...]),
+        // o null si no hay extraordinario abierto o no se marcó ninguna revisión de estaciones.
+        function extraTiposActivos() {
+            var e = state.extraActivo;
+            if (!e || !e.trabajos) return null;
+            var ts = e.trabajos.filter(function(t) { return t.indexOf(EXTRA_PREF_REV) === 0; })
+                .map(function(t) { return t.slice(EXTRA_PREF_REV.length); });
+            return ts.length ? ts : null;
+        }
+
+        // Tipo de una estación: de la estación si aún existe, o del código de su id ("C1-CEB-01").
+        function extraTipoDeEstacion(id) {
+            var s = state.stations.filter(function(x) { return x.id === id; })[0];
+            if (s) return s.type;
+            return { CEB: 'Cebadera', TUV: 'UV', CAP: 'Captura', MON: 'Monitoreo' }[String(id).split('-')[1]] || null;
+        }
+
+        // Totales por especie de una visita del historial. En un extraordinario con revisión de
+        // estaciones solo cuentan los tipos revisados (las gráficas no mezclan otros tipos).
+        function totalesVisita(h) {
+            var tipos = extraTiposActivos();
+            if (!tipos || !h.stationCaptures) return Object.assign({}, h.totals);
+            var t = {};
+            Object.keys(h.stationCaptures).forEach(function(id) {
+                if (tipos.indexOf(extraTipoDeEstacion(id)) === -1) return;
+                Object.entries(h.stationCaptures[id]).forEach(function(en) { t[en[0]] = (t[en[0]] || 0) + en[1]; });
+            });
+            return t;
+        }
+
+        function extraLimpiarCapturas() {
+            state.stations.forEach(function(s) { s.captures = {}; s.baitConsumption = null; s.baitConsumptionSpecies = []; });
+        }
+
+        // Capturas de las estaciones revisadas, con la misma forma que un servicio del historial.
+        function extraCapturarEstaciones(tipos) {
+            var totals = {}, sc = {}, bait = {}, baitSp = {};
+            ALL_SPECIES.forEach(function(sp) { totals[sp] = 0; });
+            state.stations.forEach(function(st) {
+                if (tipos.indexOf(st.type) === -1) return;
+                if (Object.keys(st.captures).length > 0) {
+                    sc[st.id] = Object.assign({}, st.captures);
+                    Object.entries(st.captures).forEach(function(en) { totals[en[0]] = (totals[en[0]] || 0) + en[1]; });
+                }
+                if (st.type === 'Cebadera' && st.baitConsumption !== null && st.baitConsumption !== undefined) {
+                    bait[st.id] = st.baitConsumption;
+                    if (st.baitConsumptionSpecies && st.baitConsumptionSpecies.length > 0) baitSp[st.id] = st.baitConsumptionSpecies.slice();
+                }
+            });
+            return { totals: totals, stationCaptures: sc, baitConsumptionByStation: bait, baitConsumptionSpeciesByStation: baitSp };
+        }
+
+        // Devuelve a las estaciones las capturas guardadas en un extraordinario (para editarlo).
+        function extraCargarCapturas(cap) {
+            cap = cap || {};
+            extraLimpiarCapturas();
+            state.stations.forEach(function(st) {
+                var c = cap.stationCaptures && cap.stationCaptures[st.id];
+                if (c) st.captures = Object.assign({}, c);
+                if (st.type === 'Cebadera' && cap.baitConsumptionByStation && cap.baitConsumptionByStation[st.id] !== undefined) {
+                    st.baitConsumption = cap.baitConsumptionByStation[st.id];
+                    st.baitConsumptionSpecies = ((cap.baitConsumptionSpeciesByStation || {})[st.id] || []).slice();
+                }
+            });
+        }
+
+        // Marcar "Revisión de estaciones" convierte el extraordinario en una sesión de captura:
+        // reutiliza el "servicio activo" (captura, gráficas e impresión ya funcionan así).
+        // Sin ninguna revisión marcada no hay servicio activo, ni estaciones, ni gráficas.
+        function extraSincronizarEstaciones() {
+            var e = state.extraActivo;
+            if (!e) return;
+            var con = !!extraTiposActivos();
+            if (con && !state.isServiceStarted) {
+                state.isServiceStarted = true;
+                state.currentServiceDate = e.date;
+                state.editingHistoryIndex = null;
+                initCheckboxes();
+            } else if (!con && state.isServiceStarted) {
+                extraLimpiarCapturas();
+                state.isServiceStarted = false;
+                state.currentServiceDate = '';
+            }
+            aplicarModoExtra();
+            renderStationsGrid();
+            updatePieServiceSelector();
+            // La gráfica debe mostrar SIEMPRE las capturas de este extraordinario (el selector está oculto).
+            if (con && pieServiceSelector && pieServiceSelector.querySelector('option[value="current"]')) pieServiceSelector.value = 'current';
+            updateCharts();
+            renderHistoryList();
+        }
+
+        // Salida común de guardar / descartar / eliminar: apaga el "servicio activo" del extraordinario y
+        // devuelve el reporte normal.
+        function extraSalirModo() {
+            if (state.isServiceStarted) {
+                extraLimpiarCapturas();
+                state.isServiceStarted = false;
+                state.currentServiceDate = '';
+            }
+            state.extraActivo = null;
+            extraRestaurarPrevio();
+            aplicarModoExtra();
+            renderStationsGrid();
+            updatePieServiceSelector();
+            updateCharts();
+            renderHistoryList();
+        }
+
+        function extraRenderTrabajos() {
+            var cont = document.getElementById('extra-trabajos');
+            if (!cont) return;
+            var chip = function(o) {
+                return '<label class="extra-chip inline-flex items-center gap-1.5 text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-violet-400 select-none">' +
+                    '<input type="checkbox" class="extra-chk accent-violet-600" value="' + extraEsc(o) + '" onchange="extraTrabajoCambio(this)"> ' + extraEsc(o) + '</label>';
+            };
+            var grupo = function(titulo, opciones) {
+                return '<div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">' + titulo + '</p>' +
+                    '<div class="flex flex-wrap gap-2">' + opciones.map(chip).join('') + '</div></div>';
+            };
+            cont.innerHTML = grupo('Aplicaciones', EXTRA_SERVICIOS) +
+                grupo('Revisión de estaciones', extraOpcionesRevision()) +
+                '<div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Otros</p>' + chip(EXTRA_OTROS) +
+                '<input type="text" id="extra-otros" maxlength="200" oninput="extraCampoCambio()" placeholder="Especifica qué otro trabajo se realizó" ' +
+                'class="hidden mt-2 w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 focus:outline-none"></div>';
+        }
+
+        // Los trabajos marcados como texto legible ("Otros" se muestra con lo que escribieron).
+        function extraListaTrabajos(x) {
+            return (x.trabajos || []).map(function(t) {
+                return t === EXTRA_OTROS ? (x.otros && x.otros.trim() ? 'Otros: ' + x.otros.trim() : 'Otros') : t;
+            });
+        }
+
+        // Servicios guardados antes del multiselector traían "descripcion" en texto libre: pasa a "Otros".
+        function extraNormalizar(x) {
+            x.trabajos = Array.isArray(x.trabajos) ? x.trabajos : [];
+            if (x.descripcion && !x.otros) {
+                x.otros = x.descripcion;
+                if (x.trabajos.indexOf(EXTRA_OTROS) === -1) x.trabajos.push(EXTRA_OTROS);
+            }
+            delete x.descripcion;
+            x.otros = x.otros || '';
+            return x;
+        }
+
+        // ── Auditoría NMX-F-605 + IA + fotos: cada servicio extraordinario lleva las suyas. ──
+        // (Son campos únicos de la página: se guardan con el servicio al terminar y se
+        // vuelven a cargar al editarlo; el reporte normal que hubiera en pantalla se
+        // aparta en extraPrevio y se devuelve al salir del modo.)
+        var EXTRA_DICTAMEN_VACIO = 'Completa el checklist y pulsa "Generar Análisis IA" para redactar el diagnóstico técnico del servicio.';
+        var extraPrevio = null;
+
+        function capturarAuditoria(sinFotos) {
+            var chk = {};
+            PREGUNTAS_TODAS.forEach(function(id) { var el = document.getElementById(id); if (el) chk[id] = el.value; });
+            var mip = document.getElementById('tieneServicioMIP');
+            var ctx = document.getElementById('contextoIA');
+            var dic = document.getElementById('rptDictamenTexto');
+            return {
+                nmxChecklist: chk,
+                tieneServicioMIP: mip ? mip.value : 'si',
+                contextoIA: ctx ? ctx.value : '',
+                dictamenIA: dic ? dic.innerHTML : '',
+                photos: sinFotos ? [] : JSON.parse(JSON.stringify(photoData)),
+                photosPerRow: photosPerRow
+            };
+        }
+
+        // a = null o sin campos => auditoría en blanco (mismos valores que "Limpiar todo").
+        function aplicarAuditoria(a) {
+            a = a || {};
+            PREGUNTAS_TODAS.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = (a.nmxChecklist && a.nmxChecklist[id]) || 'cumple';
+            });
+            var mip = document.getElementById('tieneServicioMIP');
+            var ctx = document.getElementById('contextoIA');
+            var dic = document.getElementById('rptDictamenTexto');
+            if (mip) mip.value = a.tieneServicioMIP || 'si';
+            if (ctx) ctx.value = a.contextoIA || '';
+            if (dic) dic.innerHTML = a.dictamenIA || EXTRA_DICTAMEN_VACIO;
+            photoData = Array.isArray(a.photos) ? JSON.parse(JSON.stringify(a.photos)) : [];
+            photosPerRow = parseInt(a.photosPerRow, 10) || 2;
+            renderPhotosGrid();
+            evaluarNOM();
+        }
+
+        // Al salir del modo (guardar / descartar / eliminar) se devuelve el reporte normal.
+        function extraRestaurarPrevio() {
+            aplicarAuditoria(extraPrevio);
+            extraPrevio = null;
+        }
+
+        function extraLeerCampos(e) {
+            e.motivo = document.getElementById('extra-motivo').value;
+            e.trabajos = [];
+            document.querySelectorAll('#extra-trabajos .extra-chk').forEach(function(c) { if (c.checked) e.trabajos.push(c.value); });
+            var o = document.getElementById('extra-otros');
+            e.otros = o ? o.value : '';
+            if (o) o.classList.toggle('hidden', e.trabajos.indexOf(EXTRA_OTROS) === -1);
+        }
+
+        function extraPintarImpresion(e) {
+            document.getElementById('extra-motivo-print').textContent = e.motivo || '-';
+            var lista = extraListaTrabajos(e);
+            document.getElementById('extra-trabajos-print').innerHTML = lista.length
+                ? lista.map(function(t) { return '<li>' + extraEsc(t) + '</li>'; }).join('')
+                : '<li>-</li>';
+        }
+
+        // Sincroniza la pantalla con state.extraActivo (modo extraordinario sí/no).
+        function aplicarModoExtra() {
+            var e = state.extraActivo;
+            var tipos = extraTiposActivos();
+            document.body.classList.toggle('modo-extra', !!e);
+            document.body.classList.toggle('extra-con-estaciones', !!tipos);
+            document.body.classList.toggle('extra-con-cebadera', !!tipos && tipos.indexOf('Cebadera') !== -1);
+            if (!e) return;
+            var m = document.getElementById('extra-motivo');
+            if (m && m.value !== e.motivo) m.value = e.motivo;
+            document.querySelectorAll('#extra-trabajos .extra-chk').forEach(function(c) {
+                var on = e.trabajos.indexOf(c.value) !== -1;
+                if (c.checked !== on) c.checked = on;
+            });
+            var o = document.getElementById('extra-otros');
+            if (o) {
+                if (o.value !== e.otros) o.value = e.otros;
+                o.classList.toggle('hidden', e.trabajos.indexOf(EXTRA_OTROS) === -1);
+            }
+            document.getElementById('extra-fecha-txt').textContent = formatDisplayDate(e.date);
+            document.getElementById('extra-estado-badge').textContent = e.idx === null ? 'NUEVO' : 'EDITANDO';
+            extraPintarImpresion(e);
+        }
+
+        // Cada cambio en los campos actualiza el borrador (así lo toman el autoguardado y el PDF).
+        window.extraCampoCambio = function() {
+            var e = state.extraActivo;
+            if (!e) return;
+            extraLeerCampos(e);
+            extraPintarImpresion(e);
+        };
+
+        // Casilla marcada / desmarcada. Quitar una revisión de estaciones que ya tiene capturas las borraría:
+        // pide confirmación (dos pasos) antes.
+        window.extraTrabajoCambio = function(chk) {
+            if (!chk.checked && chk.value.indexOf(EXTRA_PREF_REV) === 0) {
+                var tipo = chk.value.slice(EXTRA_PREF_REV.length);
+                var hay = state.stations.some(function(s) { return s.type === tipo && Object.keys(s.captures).length > 0; });
+                if (hay) {
+                    if (!extraDosPasos('quitar-' + tipo, 'Desmarcar borrará las capturas de las estaciones ' + tipo + '. Desmárcalo otra vez para confirmar.')) {
+                        chk.checked = true;
+                        return;
+                    }
+                    state.stations.forEach(function(s) {
+                        if (s.type === tipo) { s.captures = {}; s.baitConsumption = null; s.baitConsumptionSpecies = []; }
+                    });
+                }
+            }
+            window.extraCampoCambio();
+            extraSincronizarEstaciones();
+        };
+
+        extraRenderTrabajos();
+
+        window.iniciarServicioExtra = function() {
+            if (state.isServiceStarted) {
+                showToast('Termina o descarta el servicio en curso antes de iniciar uno extraordinario.', 'error');
+                return;
+            }
+            var fecha = serviceDateInput.value;
+            if (!fecha) {
+                showToast('Por favor selecciona una fecha válida en el calendario.', 'error');
+                return;
+            }
+            extraPrevio = capturarAuditoria();   // aparta el reporte normal que hubiera en pantalla
+            aplicarAuditoria(null);              // el extraordinario empieza con auditoría y fotos en blanco
+            state.extraActivo = { idx: null, date: fecha, motivo: '', trabajos: [], otros: '' };
+            aplicarModoExtra();
+            renderHistoryList();
+            showToast('Servicio extraordinario iniciado.', 'success');
+            var m = document.getElementById('extra-motivo');
+            if (m) m.focus();
+        };
+
+        window.editarServicioExtra = function(i) {
+            if (state.extraActivo) {
+                showToast('Guarda o descarta el servicio extraordinario abierto antes de editar otro.', 'error');
+                return;
+            }
+            if (state.isServiceStarted) {
+                showToast('Termina o descarta el servicio en curso primero.', 'error');
+                return;
+            }
+            var s = state.extraordinarios[i];
+            if (!s) return;
+            extraNormalizar(s);
+            extraPrevio = capturarAuditoria();
+            aplicarAuditoria(s.auditoria);       // carga SU auditoría y SUS fotos
+            state.extraActivo = { idx: i, date: s.date, motivo: s.motivo, trabajos: s.trabajos.slice(), otros: s.otros };
+            if (serviceDateInput) serviceDateInput.value = s.date;
+            // Si revisó estaciones: vuelve a abrir la sesión de captura con SUS capturas
+            if (extraTiposActivos()) {
+                extraCargarCapturas(s.captura);
+                state.isServiceStarted = true;
+                state.currentServiceDate = s.date;
+                state.editingHistoryIndex = null;
+                initCheckboxes();
+            }
+            extraSincronizarEstaciones();
+            var card = document.getElementById('extra-service-card');
+            if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        window.guardarServicioExtra = function() {
+            var e = state.extraActivo;
+            if (!e) return;
+            window.extraCampoCambio();
+            if (!e.motivo.trim()) { showToast('Escribe el motivo del servicio.', 'error'); return; }
+            if (!e.trabajos.length) { showToast('Marca al menos un trabajo realizado.', 'error'); return; }
+            if (e.trabajos.indexOf(EXTRA_OTROS) !== -1 && !e.otros.trim()) { showToast('Especifica qué otro trabajo se realizó.', 'error'); return; }
+            var tipos = extraTiposActivos();
+            var reg = { date: e.date, motivo: e.motivo.trim(), trabajos: e.trabajos.slice(), otros: e.otros.trim(), auditoria: capturarAuditoria() };
+            if (tipos) reg.captura = extraCapturarEstaciones(tipos);   // capturas de las estaciones revisadas
+            if (e.idx === null) state.extraordinarios.push(reg);
+            else state.extraordinarios[e.idx] = reg;
+            extraSalirModo();                    // apaga la captura y devuelve el reporte normal
+            showToast('Servicio extraordinario guardado. Recuerda exportar el proyecto.', 'success');
+        };
+
+        window.descartarServicioExtra = function() {
+            var e = state.extraActivo;
+            if (!e) return;
+            if (!extraDosPasos('descartar', 'Se perderá lo capturado (incluidas auditoría, fotos y capturas de estaciones). Presiona Descartar otra vez para confirmar.')) return;
+            extraSalirModo();
+            showToast('Servicio extraordinario descartado.', 'warning');
+        };
+
+        window.eliminarServicioExtra = function(i) {
+            if (!state.extraordinarios[i]) return;
+            if (!extraDosPasos('del' + i, 'Presiona eliminar otra vez para confirmar.')) return;
+            state.extraordinarios.splice(i, 1);
+            if (state.extraActivo && state.extraActivo.idx !== null) {
+                if (state.extraActivo.idx === i) extraSalirModo();
+                else if (state.extraActivo.idx > i) state.extraActivo.idx--;
+            }
+            aplicarModoExtra();
+            renderHistoryList();
+            showToast('Servicio extraordinario eliminado.', 'warning');
+        };
+
+        // Si cambian la fecha del calendario mientras editan un extraordinario, se actualiza.
+        if (serviceDateInput) {
+            serviceDateInput.addEventListener('change', function() {
+                if (!state.extraActivo || !serviceDateInput.value) return;
+                state.extraActivo.date = serviceDateInput.value;
+                if (state.isServiceStarted) { state.currentServiceDate = serviceDateInput.value; updateCharts(); } // la fecha sale en gráficas e impresión
+                aplicarModoExtra();
+            });
+        }
+
+        /************************************************************************
          * AUTOGUARDADO EN EL NAVEGADOR (localStorage)
          * Protege contra refresh, pestaña descargada por el navegador o cierre
          * accidental. NO reemplaza a Exportar: solo vive en este navegador.
@@ -5888,7 +6451,8 @@
             try {
                 if (autosavePausado || testModeActive || !state.clientName) return;
                 var snap = buildProjectSnapshot(true);
-                var payload = { savedAt: new Date().toISOString(), fotos: photoData.length, data: snap };
+                var fotosExtra = (state.extraordinarios || []).reduce(function(n, x) { return n + ((x.auditoria && x.auditoria.photos) ? x.auditoria.photos.length : 0); }, 0);
+                var payload = { savedAt: new Date().toISOString(), fotos: photoData.length + fotosExtra, data: snap };
                 try {
                     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
                 } catch (cuota) {
@@ -5972,3 +6536,4 @@
     </script>
 </body>
 </html>
+Deja de hace
