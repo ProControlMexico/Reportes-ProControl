@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(wrangler deploy*)",
+      "Bash(npx wrangler deploy*)",
+      "PowerShell(git commit *)",
+      "PowerShell(git push)",
+      "PowerShell(git push *)",
+      "PowerShell(wrangler deploy*)",
+      "PowerShell(npx wrangler deploy*)"
+    ],
+    "deny": [
+      "WebFetch(domain:generativelanguage.googleapis.com)",
+      "WebFetch(domain:procontrol-ia-proxy.luisbrito2000.workers.dev)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/guard-bash.js\"",
+            "timeout": 15,
+            "statusMessage": "Revisando reglas del proyecto..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/guard-code.js\"",
+            "timeout": 15,
+            "statusMessage": "Revisando reglas de código..."
+          }
+        ]
+      }
+    ]
+  }
+}
