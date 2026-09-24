@@ -6190,15 +6190,16 @@
                 return '<label class="extra-chip inline-flex items-center gap-1.5 text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-violet-400 select-none">' +
                     '<input type="checkbox" class="extra-chk accent-violet-600" value="' + extraEsc(o) + '" onchange="extraTrabajoCambio(this)"> ' + extraEsc(o) + '</label>';
             };
-            var grupo = function(titulo, opciones) {
+            // "pie" = contenido extra debajo de las casillas del grupo (aquí, la barra de "Otro")
+            var grupo = function(titulo, opciones, pie) {
                 return '<div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">' + titulo + '</p>' +
-                    '<div class="flex flex-wrap gap-2">' + opciones.map(chip).join('') + '</div></div>';
+                    '<div class="flex flex-wrap gap-2">' + opciones.map(chip).join('') + '</div>' + (pie || '') + '</div>';
             };
-            cont.innerHTML = grupo('Aplicaciones', EXTRA_SERVICIOS) +
-                grupo('Revisión de estaciones', extraOpcionesRevision()) +
-                '<div>' + chip(EXTRA_OTROS) +
-                '<input type="text" id="extra-otros" maxlength="200" oninput="extraCampoCambio()" placeholder="¿Qué otro trabajo se realizó?" ' +
-                'class="hidden mt-2 w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 focus:outline-none"></div>';
+            // "Otro" va como una casilla más de Aplicaciones; su barra aparece debajo de esa fila al marcarlo.
+            var barraOtro = '<input type="text" id="extra-otros" maxlength="200" oninput="extraCampoCambio()" placeholder="¿Qué otro trabajo se realizó?" ' +
+                'class="hidden mt-2 w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-violet-500 focus:outline-none">';
+            cont.innerHTML = grupo('Aplicaciones', EXTRA_SERVICIOS.concat([EXTRA_OTROS]), barraOtro) +
+                grupo('Revisión de estaciones', extraOpcionesRevision());
         }
 
         // Los trabajos marcados como texto legible ("Otro" se muestra con lo que escribieron).
