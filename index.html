@@ -626,10 +626,13 @@
         /* === SERVICIO EXTRAORDINARIO ===
            Sin captura de estaciones ni gráficas (pantalla e impresión). Se conservan
            datos del cliente, fotos, firmas y el resto de secciones del reporte. */
-        #extra-service-card, #extra-mode-title, #extra-actions-bar { display: none; }
-        body.modo-extra #extra-actions-bar { display: block; }
+        #extra-service-card, #extra-mode-title { display: none; }
         .extra-chip:has(input:checked) { background: #f5f3ff; border-color: #8b5cf6; font-weight: 600; color: #5b21b6; }
-        #start-service-btn.hidden ~ #start-extra-btn { display: none !important; } /* no ofrecer extraordinario con un servicio normal en curso */
+        /* Los dos botones principales (servicio normal / extraordinario) NUNCA desaparecen: el del tipo que
+           está en uso solo se ve deshabilitado. El servicio normal marca "en uso" poniéndole la clase hidden
+           a su botón (por eso se fuerza a mostrarlo); el extraordinario, con la clase modo-extra del body. */
+        #start-service-btn.hidden { display: flex !important; opacity: .4; pointer-events: none; cursor: not-allowed; }
+        body.modo-extra #start-extra-btn { opacity: .4; pointer-events: none; cursor: not-allowed; }
         body.modo-extra #extra-service-card { display: block; }
         body.modo-extra #extra-mode-title { display: block; }
         #extra-estaciones-hint { display: none; }
@@ -640,8 +643,6 @@
         body.modo-extra #stations-card-footer,
         body.modo-extra #pie-selector-block,
         body.modo-extra #historical-view-banner,
-        body.modo-extra #start-service-btn,
-        body.modo-extra #start-extra-btn,
         body.modo-extra #active-service-controls,
         body.modo-extra #global-analysis-card { display: none !important; }
         /* Solo si NO se revisan estaciones (clase extra-con-estaciones = se marcó alguna "Revisión de estaciones") */
@@ -1041,7 +1042,7 @@
                                 <!-- Las casillas las genera extraRenderTrabajos() (una por servicio y una por tipo de estación) -->
                                 <div id="extra-trabajos" class="space-y-3"></div>
                             </div>
-                            <p class="text-[10px] text-slate-400">Si marcas una <strong>Revisión de estaciones</strong>, abajo aparece la captura solo de ese tipo de estación, con sus gráficas. La auditoría NMX-F-605 y la evidencia fotográfica también forman parte de este servicio. Al terminar todo, guarda con el botón del final de la página.</p>
+                            <p class="text-[10px] text-slate-400">Si marcas una <strong>Revisión de estaciones</strong>, abajo aparece la captura solo de ese tipo de estación, con sus gráficas. La auditoría NMX-F-605 y la evidencia fotográfica también forman parte de este servicio. Este servicio se guarda en "Servicios Registrados" al exportar el proyecto (JSON).</p>
                         </div>
 
                         <!-- Vista de impresión (texto fijo, los campos de arriba se cortan al imprimir) -->
@@ -1711,21 +1712,6 @@
                     <p id="sig-pos-print-autorizado" style="display:none" class="text-xs font-semibold text-slate-700 py-0.5 border-b border-slate-200">—</p>
                 </div>
 
-            </div>
-        </div>
-    </section>
-
-    <!-- SERVICIO EXTRAORDINARIO: guardar / descartar, al final de todo el reporte (solo modo extraordinario, no se imprime) -->
-    <section id="extra-actions-bar" class="no-print max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-8">
-        <div class="bg-white rounded-2xl shadow-sm border border-violet-200 p-4 flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs text-slate-500"><i class="fa-solid fa-screwdriver-wrench text-violet-600 mr-1.5"></i> Servicio extraordinario en captura: revisa que la auditoría, las fotos y las firmas estén completas antes de guardar.</p>
-            <div class="flex flex-wrap gap-2 justify-end">
-                <button onclick="descartarServicioExtra()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-ban mr-1"></i> Descartar
-                </button>
-                <button onclick="guardarServicioExtra()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-5 rounded-lg text-xs transition-all shadow-md">
-                    <i class="fa-solid fa-circle-check mr-1"></i> Guardar servicio extraordinario
-                </button>
             </div>
         </div>
     </section>
@@ -2410,8 +2396,8 @@
                     '<div class="flex items-center gap-1.5 mb-0.5">' +
                     '<span class="bg-violet-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full leading-none">EXTRAORDINARIO · EN CURSO</span>' +
                     '<p class="font-bold text-slate-800"><i class="fa-regular fa-calendar mr-1"></i>' + formatDisplayDate(state.extraActivo.date) + '</p>' +
-                    '</div><p class="text-[10px] text-slate-500 mt-0.5">Pendiente de guardar</p></div>' +
-                    '<span class="text-violet-500 text-base"><i class="fa-solid fa-circle-dot"></i></span>';
+                    '</div><p class="text-[10px] text-slate-500 mt-0.5">Pendiente: se guarda al exportar el JSON</p></div>' +
+                    '<button onclick="descartarServicioExtra()" class="text-rose-600 hover:text-rose-800 p-1 flex-shrink-0" title="Descartar servicio extraordinario"><i class="fa-regular fa-trash-can text-sm"></i></button>';
                 historyList.appendChild(draft);
             }
             state.extraordinarios.forEach(function(x, i) {
@@ -2942,6 +2928,11 @@
 
         if (startServiceBtn) {
             startServiceBtn.addEventListener("click", function() {
+                // El botón sigue visible aunque no aplique (se ve deshabilitado): ya hay un servicio normal en curso
+                if (state.isServiceStarted && !state.extraActivo) return;
+                // Estando en un extraordinario, este botón cambia al servicio normal: guarda el extraordinario primero
+                if (state.extraActivo && !extraCerrarParaCambiar()) return;
+
                 const selectedDate = serviceDateInput.value;
                 if (!selectedDate) {
                     showToast("Por favor selecciona una fecha válida en el calendario.", "error");
@@ -4916,12 +4907,18 @@
                 return;
             }
 
+            // Guardar = exportar: el servicio extraordinario abierto entra a "Servicios Registrados" y
+            // por lo tanto viaja dentro de la lista "extraordinarios" del JSON.
+            const estadoExtra = extraGuardarEnServicios();
+
             const snapshot = buildProjectSnapshot();
             const defaultFilename = buildReportBaseFilename() + '.json';
             const jsonStr = JSON.stringify(snapshot, null, 2);
             const resumen = snapshot.history.length + ' servicio(s), ' +
                 (snapshot.extraordinarios.length ? snapshot.extraordinarios.length + ' extraordinario(s), ' : '') +
-                (snapshot.extraActivo ? 'extraordinario abierto (borrador), ' : '') +
+                // Incompleto: no se pudo agregar a servicios, solo viaja como borrador
+                ((estadoExtra === 'sin-trabajos' || estadoExtra === 'sin-otro')
+                    ? 'ATENCIÓN: el extraordinario abierto NO se guardó en servicios (' + extraMotivoIncompleto(estadoExtra) + '), ' : '') +
                 snapshot.stations.length + ' estaciones.';
 
             // Preferir el diálogo nativo "Guardar como" (Chrome/Edge de escritorio): permite
@@ -5136,7 +5133,7 @@
 
                     if (!silent) showToast('Importado: ' + state.clientName + ' — ' + state.history.length + ' servicio(s), ' +
                         (state.extraordinarios.length ? state.extraordinarios.length + ' extraordinario(s), ' : '') +
-                        (state.extraActivo ? 'extraordinario abierto (borrador), ' : '') +
+                        (state.extraActivo && state.extraActivo.idx === null ? 'extraordinario abierto sin guardar (borrador), ' : '') +
                         state.stations.length + ' estaciones.', 'success');
                 }
             }
@@ -6341,8 +6338,9 @@
         extraRenderTrabajos();
 
         window.iniciarServicioExtra = function() {
+            if (state.extraActivo) return;   // ya está abierto (el botón se ve deshabilitado)
             if (state.isServiceStarted) {
-                showToast('Termina o descarta el servicio en curso antes de iniciar uno extraordinario.', 'error');
+                showToast('Termina o cancela el servicio en curso antes de iniciar uno extraordinario.', 'error');
                 return;
             }
             var fecha = serviceDateInput.value;
@@ -6387,25 +6385,51 @@
             if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        window.guardarServicioExtra = function() {
+        // No hay botón "Guardar": el extraordinario abierto pasa a state.extraordinarios ("Servicios Registrados")
+        // al EXPORTAR el JSON (o al cambiar al otro tipo de servicio). NO cierra la sesión: se sigue
+        // trabajando sobre ese mismo servicio (e.idx) y cada guardado lo actualiza, sin duplicarlo.
+        // Devuelve: 'ok' | 'nada' (no hay extraordinario abierto) | 'sin-trabajos' | 'sin-otro' (incompleto: no se guarda).
+        function extraGuardarEnServicios() {
             var e = state.extraActivo;
-            if (!e) return;
-            window.extraCampoCambio();
-            if (!e.trabajos.length) { showToast('Marca al menos un trabajo realizado.', 'error'); return; }
-            if (e.trabajos.indexOf(EXTRA_OTROS) !== -1 && !e.otros.trim()) { showToast('Especifica qué otro trabajo se realizó.', 'error'); return; }
+            if (!e) return 'nada';
+            extraLeerCampos(e);
+            if (!e.trabajos.length) return 'sin-trabajos';
+            if (e.trabajos.indexOf(EXTRA_OTROS) !== -1 && !e.otros.trim()) return 'sin-otro';
             var tipos = extraTiposActivos();
             var reg = { date: e.date, motivo: (e.motivo || '').trim(), trabajos: e.trabajos.slice(), otros: e.otros.trim(), auditoria: capturarAuditoria() };
             if (tipos) reg.captura = extraCapturarEstaciones(tipos);   // capturas de las estaciones revisadas
-            if (e.idx === null) state.extraordinarios.push(reg);
+            if (e.idx === null) { state.extraordinarios.push(reg); e.idx = state.extraordinarios.length - 1; }
             else state.extraordinarios[e.idx] = reg;
-            extraSalirModo();                    // apaga la captura y devuelve el reporte normal
-            showToast('Servicio extraordinario guardado. Recuerda exportar el proyecto.', 'success');
-        };
+            aplicarModoExtra();
+            renderHistoryList();
+            return 'ok';
+        }
+
+        // Motivo por el que un extraordinario incompleto no se pudo guardar (para avisos).
+        function extraMotivoIncompleto(codigo) {
+            return codigo === 'sin-otro' ? 'falta escribir qué es "Otro"' : 'no tiene trabajos marcados';
+        }
+
+        // Al tocar el botón del OTRO tipo de servicio estando en un extraordinario: lo guarda en servicios y
+        // sale del modo. Si está incompleto no se puede guardar: pide confirmar (dos pasos) que se descarte.
+        // Devuelve true cuando ya se puede continuar con el otro tipo de servicio.
+        function extraCerrarParaCambiar() {
+            var r = extraGuardarEnServicios();
+            if (r === 'nada') return true;
+            if (r === 'ok') {
+                extraSalirModo();
+                showToast('Servicio extraordinario guardado en Servicios Registrados.', 'success');
+                return true;
+            }
+            if (!extraDosPasos('cambiar', 'El servicio extraordinario está incompleto (' + extraMotivoIncompleto(r) + ') y se descartará. Presiona otra vez para continuar.')) return false;
+            extraSalirModo();
+            return true;
+        }
 
         window.descartarServicioExtra = function() {
             var e = state.extraActivo;
             if (!e) return;
-            if (!extraDosPasos('descartar', 'Se perderá lo capturado (incluidas auditoría, fotos y capturas de estaciones). Presiona Descartar otra vez para confirmar.')) return;
+            if (!extraDosPasos('descartar', 'Se perderá lo capturado (incluidas auditoría, fotos y capturas de estaciones). Presiona el bote de basura otra vez para confirmar.')) return;
             extraSalirModo();
             showToast('Servicio extraordinario descartado.', 'warning');
         };
