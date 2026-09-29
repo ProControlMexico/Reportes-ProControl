@@ -5740,13 +5740,16 @@
                     return;
                 }
 
-                // Títulos de sección tipo "1. **Qué Vimos**" (regla #10 del prompt): la línea completa,
-                // sin nada más, es "número + negritas" — se tratan como encabezado, NO como ítem de lista
-                // numerada (si no, cada título abre su propio <ol> y los tres arrancan mostrando "1.").
-                var seccionMatch = trimmed.match(/^(\d+)\.\s+\*\*([^*]+)\*\*\s*$/);
+                // Títulos de sección tipo "1. **Qué Vimos**" (regla #10 del prompt): se tratan como
+                // encabezado, NO como ítem de lista numerada (si no, cada título abre su propio <ol>
+                // y los tres arrancan mostrando "1."). Tolerante a variaciones que cambian según el
+                // modelo de Gemini: puntuación después del cierre de negritas ("1. **Qué Vimos**:") y
+                // el número metido dentro de las negritas ("**1. Qué Vimos**").
+                var seccionMatch = trimmed.match(/^(\d+)\.\s+\*\*([^*]+)\*\*\s*[:\-–.]*\s*$/) ||
+                    trimmed.match(/^\*\*(\d+)\.\s+([^*]+)\*\*\s*[:\-–.]*\s*$/);
                 if (seccionMatch) {
                     cerrarLista();
-                    resultHTML += '<p class="mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">' + seccionMatch[1] + '. ' + seccionMatch[2] + '</p>';
+                    resultHTML += '<p class="mt-3 mb-1.5 font-extrabold text-slate-900 text-[13px]">' + seccionMatch[1] + '. ' + seccionMatch[2].trim() + '</p>';
                     return;
                 }
 
@@ -6556,4 +6559,3 @@
     </script>
 </body>
 </html>
-Deja de hace
