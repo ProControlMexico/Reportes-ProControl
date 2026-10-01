@@ -4897,6 +4897,20 @@
             return snapshot;
         }
 
+        // Aviso que NO se cierra solo: queda en pantalla hasta que el usuario pulse "Entendido".
+        function avisoFijo(titulo, detalle) {
+            const o = document.createElement('div');
+            o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+            const c = document.createElement('div');
+            c.style.cssText = 'background:#fff;color:#111;max-width:440px;border-radius:12px;padding:20px;border-top:6px solid #e11d48;font-family:sans-serif';
+            const h = document.createElement('h3'); h.style.cssText = 'margin:0 0 8px;font-size:18px;font-weight:700'; h.textContent = titulo;
+            const p = document.createElement('p'); p.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:1.4'; p.textContent = detalle;
+            const b = document.createElement('button'); b.textContent = 'Entendido';
+            b.style.cssText = 'background:#e11d48;color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:600;cursor:pointer';
+            b.onclick = () => o.remove();
+            c.append(h, p, b); o.appendChild(c); document.body.appendChild(o);
+        }
+
         window.exportProject = async function() {
             if (testModeActive) {
                 showToast('Desactiva el modo TEST antes de exportar.', 'error');
@@ -4933,11 +4947,18 @@
                     const writable = await handle.createWritable();
                     await writable.write(jsonStr);
                     await writable.close();
+                    // Verificar que el archivo realmente quedó escrito (el picker ya lo creó vacío)
+                    const esperado = new Blob([jsonStr]).size;
+                    const escrito = (await handle.getFile()).size;
+                    if (escrito !== esperado) throw new Error('Tamaño escrito ' + escrito + ' de ' + esperado + ' bytes');
                     showToast('Exportado: ' + handle.name + ' — ' + resumen, 'success');
                     return;
                 } catch (err) {
                     if (err && err.name === 'AbortError') return; // el usuario canceló el diálogo
-                    // si falla por otro motivo, sigue con el método de respaldo abajo
+                    // El archivo elegido pudo quedar vacío/incompleto: avisar y descargar copia completa abajo
+                    avisoFijo('Error al guardar el archivo',
+                        'El archivo que elegiste pudo quedar vacío o incompleto (' + ((err && err.message) || 'error del navegador') +
+                        '). NO lo uses. Se descargará una copia completa a tu carpeta de Descargas; revisa que pese más de 0 KB. Si no aparece, vuelve a exportar.');
                 }
             }
 
@@ -4946,14 +4967,20 @@
             // nombre sugerido. NUNCA usar window.prompt() aquí — en varios webviews
             // embebidos está deshabilitado y devuelve null sin mostrar nada, lo que antes
             // se interpretaba como "canceló" y el archivo simplemente no se guardaba.
-            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = defaultFilename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            try {
+                const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = defaultFilename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                // No revocar de inmediato: en archivos grandes cancela la descarga y deja 0 KB
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (err) {
+                avisoFijo('Error al guardar el archivo', 'El navegador no pudo generar la descarga (' + ((err && err.message) || 'error desconocido') + '). El proyecto NO se guardó. Vuelve a exportar o prueba con Chrome/Edge.');
+                return;
+            }
 
             showToast('Exportado: ' + defaultFilename + ' — ' + resumen, 'success');
         };
