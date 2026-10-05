@@ -4996,6 +4996,7 @@
             var file = e.target.files[0];
             if (!file) return;
 
+            var input = e.target;
             var reader = new FileReader();
             reader.onload = function(evt) {
                 try {
@@ -5008,10 +5009,14 @@
 
                     applyProjectData(data);
                 } catch(err) {
-                    showToast('Error al leer el archivo. Verifica que sea un JSON válido.', 'error');
+                    showToast('Error al importar: ' + ((err && err.message) || 'JSON inválido') + '.', 'error');
+                } finally {
+                    input.value = ''; // Permite importar el mismo archivo de nuevo (también tras un error)
                 }
-
-                e.target.value = ''; // Permite importar el mismo archivo de nuevo
+            };
+            reader.onerror = function() {
+                input.value = '';
+                showToast('No se pudo leer el archivo (si está en OneDrive, descárgalo primero).', 'error');
             };
             reader.readAsText(file);
         });
@@ -5516,9 +5521,17 @@
             var files = Array.from(event.target.files);
             event.target.value = '';
             if (!files.length) return;
-            var pending = files.length;
+            var pending = files.length, fallidas = 0;
+            // Cada archivo termina SIEMPRE (leído, no-imagen o error de lectura); al terminar el último se pinta.
+            // Antes, un archivo no-imagen o con error de lectura (p. ej. foto solo en la nube de OneDrive)
+            // dejaba "pending" sin llegar a 0 y no se mostraba ninguna foto, sin avisar.
+            function terminado() {
+                if (--pending > 0) return;
+                renderPhotosGrid();
+                if (fallidas) showToast(fallidas + ' archivo(s) no se pudieron cargar como imagen.', 'error');
+            }
             files.forEach(function(file) {
-                if (!file.type.startsWith('image/')) { pending--; return; }
+                if (!file.type.startsWith('image/')) { fallidas++; terminado(); return; }
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     photoData.push({
@@ -5526,9 +5539,9 @@
                         dataUrl: e.target.result,
                         title:  ''
                     });
-                    pending--;
-                    if (pending <= 0) renderPhotosGrid();
+                    terminado();
                 };
+                reader.onerror = function() { fallidas++; terminado(); };
                 reader.readAsDataURL(file);
             });
         };
