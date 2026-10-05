@@ -39,7 +39,7 @@ export default {
     if (request.method !== "POST") return withCors(new Response("Method not allowed", { status: 405 }));
 
     // Errores de JavaScript de la página (los manda el HTML con window.onerror).
-    if (new URL(request.url).pathname === "/log") return registrarErrorPagina(request);
+    if (new URL(request.url).pathname === "/log") return registrarErrorPagina(request, env, ctx);
 
     let body;
     try {
@@ -160,14 +160,19 @@ async function intentarKeys(contents, modelo, apiKeys) {
 }
 
 // ── Errores de la página ─────────────────────────────────────────────
-// Solo se escribe en Workers Logs (Cloudflare ▸ Observability ▸ Logs, buscar
-// "page-error"). Sin email ni almacenamiento: el HTML ya limita a 5 por carga.
-async function registrarErrorPagina(request) {
+// Se escribe en Workers Logs (buscar "page-error") y se manda por email (Resend).
+// El HTML ya limita a 5 por carga; aquí además se omiten repetidos del mismo error
+// durante 10 min y se topa a 20 emails por instancia.
+// ponytail: contadores en memoria (se reinician con la instancia); usar KV si hace falta límite estricto.
+const ultimosErrores = new Map();
+let emailsErrores = 0;
+
+async function registrarErrorPagina(request, env, ctx) {
   try {
     const raw = (await request.text()).slice(0, 4000);
     const e = JSON.parse(raw);
     const corto = (v, n) => String(v ?? "").slice(0, n);
-    console.error("page-error " + JSON.stringify({
+    const info = {
       msg: corto(e.msg, 300),
       src: corto(e.src, 200),
       line: e.line,
@@ -175,11 +180,44 @@ async function registrarErrorPagina(request) {
       stack: corto(e.stack, 1200),
       page: corto(e.page, 200),
       ua: corto(e.ua, 200),
-    }));
+    };
+    console.error("page-error " + JSON.stringify(info));
+
+    const clave = info.msg + "|" + info.line;
+    const ahora = Date.now();
+    if (env.RESEND_API_KEY && env.ALERT_EMAIL && emailsErrores < 20 && ahora - (ultimosErrores.get(clave) || 0) > 600000) {
+      ultimosErrores.set(clave, ahora);
+      emailsErrores++;
+      ctx.waitUntil(enviarEmailErrorPagina(env, info));
+    }
   } catch {
     // cuerpo inválido: se ignora
   }
   return withCors(new Response(null, { status: 204 }));
+}
+
+const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function enviarEmailErrorPagina(env, i) {
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "ProControl IA <onboarding@resend.dev>",
+        to: [env.ALERT_EMAIL],
+        subject: `🐞 Error en la página ProControl — ${i.msg.slice(0, 80)}`,
+        html: `<div style="font-family:system-ui,sans-serif;font-size:14px">
+          <p><b>Error:</b> ${esc(i.msg)}</p>
+          <p><b>Archivo:</b> ${esc(i.src)} (línea ${esc(i.line)}, col ${esc(i.col)})</p>
+          <p><b>Página:</b> ${esc(i.page)}</p>
+          <p><b>Navegador:</b> ${esc(i.ua)}</p>
+          <pre style="background:#f1f5f9;padding:8px;white-space:pre-wrap">${esc(i.stack)}</pre></div>`,
+      }),
+    });
+  } catch (e) {
+    console.log(`error-pagina-email: ${e.message}`);
+  }
 }
 
 function jsonResponse(obj, status) {
