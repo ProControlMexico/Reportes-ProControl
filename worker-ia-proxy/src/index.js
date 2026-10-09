@@ -14,8 +14,8 @@
 // que el usuario tenga que reportarlo. El envío es async (no bloquea la
 // respuesta al usuario).
 
-// Modelos ESTABLES permitidos (no "-preview" — traen límites más
-// restrictivos y Google no los recomienda para producción).
+// Modelos permitidos (los "-preview" traen límites más restrictivos y Google
+// no los recomienda para producción; el que hay aquí es el único preview).
 const MODELOS_PERMITIDOS = [
   "gemini-3.8-flash",
   "gemini-3.7-flash",
@@ -32,6 +32,7 @@ const MODELO_DEFAULT = "gemini-3.5-flash-lite";
 // llegar. Con 2 keys, peor caso ahora ~50s (antes ~20s), pero deja tiempo
 // real a que Gemini termine de pensar antes de rendirse.
 const TIMEOUT_MS = 25000;
+const MAX_BODY_BYTES = 100000;
 
 export default {
   async fetch(request, env, ctx) {
@@ -40,6 +41,11 @@ export default {
 
     // Errores de JavaScript de la página (los manda el HTML con window.onerror).
     if (new URL(request.url).pathname === "/log") return registrarErrorPagina(request, env, ctx);
+
+    // Un diagnóstico real pesa pocos KB; esto evita que alguien gaste la cuota con cuerpos enormes.
+    if (Number(request.headers.get("Content-Length") || 0) > MAX_BODY_BYTES) {
+      return withCors(jsonResponse({ error: { message: "Petición demasiado grande" } }, 413));
+    }
 
     let body;
     try {
@@ -56,18 +62,22 @@ export default {
 
     const { status, text } = await intentarKeys(body.contents, modelo, apiKeys);
 
-    // Si falló con todas las keys, enviar alerta por email (sin bloquear la respuesta)
+    // Si falló con todas las keys, enviar alerta por email (sin bloquear la respuesta).
+    // Mismo tope que los errores de página: un email por modelo+status cada 10 min, máx. 20 por instancia.
     if (status >= 400) {
-      ctx.waitUntil(enviarAlertaEmail(env, modelo, status, text, apiKeys.length));
+      const clave = modelo + "|" + status;
+      const ahora = Date.now();
+      if (emailsErrores < 20 && ahora - (ultimosErrores.get(clave) || 0) > 600000) {
+        ultimosErrores.set(clave, ahora);
+        emailsErrores++;
+        ctx.waitUntil(enviarAlertaEmail(env, modelo, status, text, apiKeys.length));
+      }
     }
 
     return withCors(new Response(text, { status, headers: { "Content-Type": "application/json" } }));
   },
 };
 
-// Un intento por key, mismo modelo. Solo pasa a la siguiente key si la
-// actual está saturada (503), sin cupo (429), o se colgó (timeout) —
-// cualquier otro resultado (éxito o error real) se regresa tal cual.
 // ── Alerta por email (Resend) ────────────────────────────────────────
 async function enviarAlertaEmail(env, modelo, status, responseText, keysUsadas) {
   if (!env.RESEND_API_KEY || !env.ALERT_EMAIL) return;
@@ -123,6 +133,9 @@ async function enviarAlertaEmail(env, modelo, status, responseText, keysUsadas) 
 }
 
 // ── Intento por key ──────────────────────────────────────────────────
+// Un intento por key, mismo modelo. Solo pasa a la siguiente key si la
+// actual está saturada (503) o sin cupo (429); un timeout o cualquier otro
+// resultado (éxito o error real) se regresa tal cual.
 async function intentarKeys(contents, modelo, apiKeys) {
   let ultimo = { status: 504, text: JSON.stringify({ error: { message: "Gemini no respondió a tiempo. Intenta de nuevo." } }) };
   for (let i = 0; i < apiKeys.length; i++) {

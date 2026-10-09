@@ -1993,7 +1993,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(Object.assign({}, body, { model: modeloSel ? modeloSel.value : undefined }))
             });
-            return res.json();
+            // Si no es JSON (p. ej. un 5xx en HTML) se arma un error con el estado real
+            return res.json().catch(() => ({ error: { message: `El servidor respondió con un error (HTTP ${res.status}). Intenta de nuevo.` } }));
         }
 
         // FOLIO DE RESPALDO (AAAAMM001) SI EL CAMPO SE DEJÓ VACÍO — NUNCA UN NÚMERO DE EJEMPLO FIJO
@@ -2076,6 +2077,8 @@
         function parseMarkdownToHTML(text) {
             if (!text) return '';
 
+            // Escapar HTML de la IA antes de aplicar el formato propio (**negritas**, viñetas)
+            text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             let lines = text.split('\n');
             let resultHTML = '';
             let listType = null; // 'ul' (viñetas) u 'ol' (numeración clásica 1,2,3)
@@ -3048,7 +3051,7 @@ ESTRUCTURA (3 secciones):
                     targetDiv.textContent = "Respuesta recibida pero sin texto. Verifique la configuración de la clave API.";
                 }
             } catch (err) {
-                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión o clave API.";
+                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión a internet e intente de nuevo.";
             } finally {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
             }

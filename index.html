@@ -396,6 +396,10 @@
 
         /* === EVIDENCIA FOTOGRÁFICA === */
         .photo-title-print { display: none; }
+        /* Cita de una foto dentro del diagnóstico: "(Foto N)", ligada al id de la foto */
+        .foto-ref { font-weight: 700; color: #1d4ed8; background: #eff6ff; border-radius: 4px; padding: 0 3px; white-space: nowrap; }
+        .foto-ref-rota { color: #be123c; background: #fff1f2; }
+        @media print { .foto-ref { background: none !important; } }
         /* Nº de columnas configurable por el usuario (1 a 4), en pantalla e impresión */
         #photos-grid {
             display: grid;
@@ -428,7 +432,7 @@
             #photos-grid[data-cols="3"] > div { width: calc((100% - 20px) / 3) !important; }
             #photos-grid[data-cols="4"] > div { width: calc((100% - 30px) / 4) !important; }
             #photos-empty-state    { display: none !important; }
-            .photo-title-input     { display: none !important; }
+            .photo-title-input { display: none !important; }
             .photo-title-print {
                 display: block !important;
                 font-size: 0.72rem;
@@ -1511,7 +1515,7 @@
                             <p class="text-[10px] text-slate-400 mt-1">Mientras más específico seas sobre lo que hizo el técnico, menos tiene que inventar la IA. Se envía junto con el checklist — no lo reemplaza, lo complementa. Y si aun así algo sale mal, puedes corregir el texto generado a mano (es editable).</p>
                         </div>
                         <p class="no-print text-[10px] text-slate-400 mb-1 flex items-center gap-1">
-                            <i class="fa-regular fa-pen-to-square"></i> El texto de abajo es editable — haz clic para ajustarlo a mano después de generarlo.
+                            <i class="fa-regular fa-pen-to-square"></i> El texto de abajo es editable — haz clic para ajustarlo a mano después de generarlo (para citar una foto, pon el cursor donde quieras y presiona "Citar" en la foto, dentro de Evidencia Fotográfica; la cita se renumera sola si cambias el orden).
                         </p>
                         <div id="rptDictamenTexto" contenteditable="true"
                              class="text-xs text-slate-700 leading-relaxed space-y-2 rounded-xl transition-all border border-transparent hover:border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-500 focus:outline-none px-2 py-1.5 -mx-2">
@@ -5155,6 +5159,7 @@
                     if (contextoIAEl2 && data.contextoIA !== undefined) contextoIAEl2.value = data.contextoIA;
                     var dictamenEl2 = document.getElementById('rptDictamenTexto');
                     if (dictamenEl2 && data.dictamenIA) dictamenEl2.innerHTML = data.dictamenIA;
+                    actualizarCitasFotos();   // el diagnóstico se restaura después de las fotos
                     evaluarNOM();
 
                     renderStationsGrid();
@@ -5554,33 +5559,111 @@
             grid.innerHTML = '';
             if (photoData.length === 0) {
                 if (empty) empty.style.display = '';
+                actualizarCitasFotos();
                 return;
             }
             if (empty) empty.style.display = 'none';
 
-            photoData.forEach(function(photo) {
+            photoData.forEach(function(photo, idx) {
                 var safeId    = photo.id;
-                var safeTitle = (photo.title || '').replace(/"/g, '&quot;');
+                var safeTitle = extraEsc(photo.title);
                 var card = document.createElement('div');
                 card.className = 'flex flex-col border border-slate-100 rounded-xl overflow-hidden shadow-sm';
                 card.id = 'photo-card-' + safeId;
                 card.innerHTML =
-                    '<div class="relative bg-slate-50">' +
-                        '<img src="' + photo.dataUrl + '" alt="Evidencia" class="w-full object-contain max-h-56">' +
+                    '<div class="photo-drag-zone relative bg-slate-50 cursor-grab" title="Arrastra para reordenar">' +
+                        '<img src="' + photo.dataUrl + '" alt="Evidencia" draggable="false" class="w-full object-contain max-h-56">' +
+                        // Numeración automática por posición: sirve para citar "Foto 3" en el texto del diagnóstico
+                        '<span class="absolute top-2 left-2 bg-white text-slate-800 border border-slate-400 rounded-md px-2 py-0.5 text-[11px] font-black shadow-sm">Foto ' + (idx + 1) + '</span>' +
                         '<button onclick="removePhoto(\'' + safeId + '\')" title="Eliminar foto" ' +
                                 'class="no-print absolute top-2 right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-all">' +
                             '<i class="fa-solid fa-xmark text-xs"></i>' +
+                        '</button>' +
+                        // onmousedown/preventDefault: así el cursor del texto del diagnóstico no se pierde al hacer clic
+                        '<button onmousedown="event.preventDefault()" onclick="citarFoto(\'' + safeId + '\')" title="Insertar la cita de esta foto donde está el cursor en el diagnóstico" ' +
+                                'class="no-print absolute bottom-2 right-2 bg-white/90 hover:bg-white text-blue-700 border border-blue-200 rounded-md px-2 py-0.5 text-[11px] font-bold shadow-sm flex items-center gap-1">' +
+                            '<i class="fa-solid fa-quote-left text-[9px]"></i> Citar' +
                         '</button>' +
                     '</div>' +
                     '<div class="px-3 py-2">' +
                         '<input type="text" placeholder="Añadir título a la imagen..." value="' + safeTitle + '" ' +
                                'class="photo-title-input w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-slate-700 font-medium" ' +
                                'oninput="updatePhotoTitle(\'' + safeId + '\', this.value)">' +
-                        '<p class="photo-title-print" id="photo-title-print-' + safeId + '">' + (photo.title || '') + '</p>' +
+                        '<p class="photo-title-print" id="photo-title-print-' + safeId + '">' + safeTitle + '</p>' +
                     '</div>';
+
+                // Arrastrar con el mouse: la tarjeta solo es "draggable" mientras se presiona la imagen,
+                // para no romper la selección de texto en el título y el contexto.
+                card.querySelector('.photo-drag-zone').addEventListener('mousedown', function(e) {
+                    if (!e.target.closest('button')) card.draggable = true;
+                });
+                card.addEventListener('mouseup', function() { card.draggable = false; });
+                card.addEventListener('dragstart', function(e) {
+                    dragPhotoId = photo.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', photo.id); // Firefox exige datos para iniciar el arrastre
+                    card.classList.add('opacity-40');
+                });
+                card.addEventListener('dragend', function() {
+                    card.draggable = false;
+                    dragPhotoId = null;
+                    renderPhotosGrid();
+                });
+                card.addEventListener('dragover', function(e) {
+                    if (!dragPhotoId || dragPhotoId === photo.id) return;
+                    e.preventDefault();
+                    card.classList.add('ring-2', 'ring-blue-500');
+                });
+                card.addEventListener('dragleave', function() { card.classList.remove('ring-2', 'ring-blue-500'); });
+                card.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    var from = photoData.findIndex(function(p) { return p.id === dragPhotoId; });
+                    if (from < 0 || from === idx) return;
+                    photoData.splice(idx, 0, photoData.splice(from, 1)[0]); // la foto toma el lugar de la destino
+                });
                 grid.appendChild(card);
             });
+            actualizarCitasFotos();
         }
+
+        var dragPhotoId = null;
+
+        // Renumera las citas "(Foto N)" del diagnóstico según la posición actual de cada foto.
+        // Si la foto ya no existe, la cita queda como "(Foto ?)" en rojo.
+        function actualizarCitasFotos() {
+            var dic = document.getElementById('rptDictamenTexto');
+            if (!dic) return;
+            dic.querySelectorAll('.foto-ref[data-foto]').forEach(function(ref) {
+                var i = photoData.findIndex(function(p) { return p.id === ref.getAttribute('data-foto'); });
+                ref.textContent = '(Foto ' + (i < 0 ? '?' : i + 1) + ')';
+                ref.classList.toggle('foto-ref-rota', i < 0);
+            });
+        }
+
+        // Inserta la cita de una foto en el cursor del diagnóstico (o al final si el cursor no está ahí).
+        window.citarFoto = function(id) {
+            var dic = document.getElementById('rptDictamenTexto');
+            if (!dic) return;
+            var ref = document.createElement('span');
+            ref.className = 'foto-ref';
+            ref.contentEditable = 'false';
+            ref.setAttribute('data-foto', id);
+            var sel = window.getSelection();
+            var r = sel.rangeCount ? sel.getRangeAt(0) : null;
+            if (!r || !dic.contains(r.commonAncestorContainer)) {
+                r = document.createRange();
+                r.selectNodeContents(dic);
+                r.collapse(false);
+            }
+            r.deleteContents();
+            r.insertNode(document.createTextNode(' '));   // espacio tras la cita
+            r.insertNode(ref);                                  // queda antes del espacio
+            r.setStartAfter(ref.nextSibling);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+            actualizarCitasFotos();
+        };
 
         window.removePhoto = function(id) {
             photoData = photoData.filter(function(p) { return p.id !== id; });
@@ -5757,7 +5840,8 @@
         /* Parser de Markdown → HTML (negritas, viñetas y numeración) para el texto que devuelve la IA */
         function parseMarkdownToHTML(text) {
             if (!text) return '';
-            var lines = text.split('\n');
+            // Escapar HTML de la IA antes de aplicar el formato propio (**negritas**, viñetas)
+            var lines = extraEsc(text).split('\n');
             var resultHTML = '';
             var listType = null;
 
@@ -5951,19 +6035,86 @@
             showToast('Dirección del cliente guardada.', 'success');
         };
 
+        // <catalogo-plagas>
+        /* CATÁLOGO DE PLAGAS: si el contexto del técnico menciona alguna, se manda a la IA con su nombre
+           científico para que aparezca en el diagnóstico (regla 17 del prompt). Para agregar una plaga, añadir
+           una línea aquí. "claves" se prueba sobre el contexto en minúsculas y sin acentos. "generico" = entrada
+           de grupo (ej. "cucarachas"); se omite si ya se detectó una especie de ese "grupo".
+           (Misma copia en index.html y reporte auditoria.html.) */
+        var CATALOGO_PLAGAS = [
+            { nombre: 'cucaracha alemana',    rango: '',        taxon: 'Blattella germanica',   grupo: 'cucarachas', claves: /cucarachas? (alemanas?|germanicas?)|blattella/ },
+            { nombre: 'cucaracha americana',  rango: '',        taxon: 'Periplaneta americana', grupo: 'cucarachas', claves: /cucarachas? americanas?|periplaneta/ },
+            { nombre: 'cucaracha oriental',   rango: '',        taxon: 'Blatta orientalis',     grupo: 'cucarachas', claves: /cucarachas? oriental(es)?|blatta orientalis/ },
+            { nombre: 'cucarachas',           rango: 'orden',   taxon: 'Blattodea',             grupo: 'cucarachas', generico: true, claves: /cucarachas?|blattodea/ },
+            { nombre: 'rata de alcantarilla o noruega', rango: '', taxon: 'Rattus norvegicus',   grupo: 'roedores',   claves: /ratas? (de alcantarilla|noruegas?)|rattus norvegicus/ },
+            { nombre: 'ratón doméstico',      rango: '',        taxon: 'Mus musculus',          grupo: 'roedores',   claves: /raton(es)? domesticos?|mus musculus/ },
+            { nombre: 'rata negra',           rango: '',        taxon: 'Rattus rattus',         grupo: 'roedores',   claves: /ratas? negras?|rattus rattus/ },
+            { nombre: 'roedores',             rango: 'orden',   taxon: 'Rodentia',              grupo: 'roedores',   generico: true, claves: /roedor(es)?|\bratas?\b|\braton(es)?\b|rodentia/ },
+            { nombre: 'grillo común',         rango: '',        taxon: 'Acheta domesticus',     grupo: 'grillos',    claves: /grillos? comun(es)?|acheta/ },
+            { nombre: 'grillos',              rango: 'familia', taxon: 'Gryllidae',             grupo: 'grillos',    generico: true, claves: /grillos?|gryllidae/ },
+            { nombre: 'mosca común',          rango: '',        taxon: 'Musca domestica',       grupo: 'moscas',     claves: /moscas? comun(es)?|musca domestica/ },
+            { nombre: 'mosca de la fruta',    rango: '',        taxon: 'Drosophila melanogaster', grupo: 'moscas',   claves: /moscas? de (la )?frutas?|drosophila/ },
+            { nombre: 'mosca metálica',       rango: 'familia', taxon: 'Calliphoridae',         grupo: 'moscas',     claves: /moscas? metalicas?|calliphoridae/ },
+            { nombre: 'mosca fórida',         rango: 'familia', taxon: 'Phoridae',              grupo: 'moscas',     claves: /moscas? foridas?|phoridae/ },
+            { nombre: 'mosquitos',            rango: 'familia', taxon: 'Culicidae',             grupo: 'mosquitos',  claves: /mosquitos?|zancudos?|culicidae/ },
+            { nombre: 'chinches',             rango: 'familia', taxon: 'Cimicidae',             grupo: 'chinches',   claves: /chinches?|cimicidae/ },
+            { nombre: 'pulgas',               rango: 'familia', taxon: 'Pulicidae',             grupo: 'pulgas',     claves: /pulgas?|pulicidae/ },
+            { nombre: 'pescadito de plata',   rango: 'familia', taxon: 'Lepismatidae',          grupo: 'pescadito',  claves: /pescaditos? de plata|lepismatidae/ },
+            { nombre: 'araña violinista',     rango: 'género',  taxon: 'Loxosceles',            grupo: 'aranas',     claves: /aranas? violinistas?|loxosceles/ },
+            { nombre: 'araña viuda negra',    rango: 'género',  taxon: 'Latrodectus',           grupo: 'aranas',     claves: /aranas? viudas? negras?|viudas? negras?|latrodectus/ },
+            { nombre: 'arañas',               rango: 'orden',   taxon: 'Araneae',               grupo: 'aranas',     generico: true, claves: /\baranas?\b|araneae/ },
+            { nombre: 'alacrán común',        rango: 'orden',   taxon: 'Scorpiones',            grupo: 'alacranes',  claves: /alacran(es)?|escorpion(es)?|scorpiones/ },
+            { nombre: 'palomilla de la harina', rango: 'género', taxon: 'Plodia',               grupo: 'almacenados', claves: /palomillas? de la harina|plodia/ },
+            { nombre: 'gorgojo de granos almacenados', rango: 'género', taxon: 'Sitophilus',    grupo: 'almacenados', claves: /gorgojos?|gogojos?|sitophilus/ }
+        ];
+
+        function normalizarTextoPlagas(s) {
+            return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        // Plagas del catálogo mencionadas en el texto (sin la entrada de grupo si ya salió una especie suya).
+        function detectarPlagasEnContexto(texto) {
+            var t = normalizarTextoPlagas(texto);
+            var halladas = CATALOGO_PLAGAS.filter(function(p) { return p.claves.test(t); });
+            var conEspecie = {};
+            halladas.forEach(function(p) { if (!p.generico) conEspecie[p.grupo] = true; });
+            return halladas.filter(function(p) { return !(p.generico && conEspecie[p.grupo]); });
+        }
+
+        function designacionPlaga(p) { return (p.rango ? p.rango + ' ' : '') + p.taxon; }
+
+        // Bloque para el prompt (vacío si el contexto no menciona ninguna plaga del catálogo).
+        function bloquePlagasIA(plagas) {
+            if (!plagas.length) return '';
+            return '\n\nPLAGAS MENCIONADAS EN EL CONTEXTO DEL TÉCNICO (catálogo de ProControl, ver regla 17):\n' +
+                plagas.map(function(p) { return '- ' + p.nombre + ' → ' + designacionPlaga(p); }).join('\n');
+        }
+
+        // Garantía: si la IA omitió algún nombre científico, se agrega al final en una línea (el prompt lo pide,
+        // pero un modelo puede no obedecer).
+        function anexarPlagasFaltantes(texto, plagas) {
+            var base = normalizarTextoPlagas(texto);
+            var faltan = plagas.filter(function(p) { return base.indexOf(normalizarTextoPlagas(p.taxon)) === -1; });
+            if (!faltan.length) return texto;
+            return texto + '\n\n**Fauna nociva referida en el contexto:** ' + faltan.map(function(p) {
+                return p.nombre + ' (' + (p.rango ? p.rango + ' ' : '') + '*' + p.taxon + '*)';
+            }).join('; ') + '.';
+        }
+        // </catalogo-plagas>
+
         /************************************************************************
          * DIAGNÓSTICO TÉCNICO IA — GENERA EL REPORTE DE CONTROL (MISMO MOTOR
          * Y PROMPT QUE "reporte auditoria.html")
          ************************************************************************/
         window.generarDictamenIA = function() {
             var btn = document.getElementById('btnGenerarIA');
+            var targetDiv = document.getElementById('rptDictamenTexto');
+            if (!targetDiv) return;
             if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
 
             var cliente = state.clientName || (clientNameInput ? clientNameInput.value : '') || 'Establecimiento';
             var contextoEl = document.getElementById('contextoIA');
             var contextoIA = contextoEl ? contextoEl.value.trim() : '';
-            var targetDiv = document.getElementById('rptDictamenTexto');
-            if (!targetDiv) return;
 
             targetDiv.textContent = "Analizando diagnóstico técnico de riesgo de plagas con Gemini IA...";
 
@@ -5998,7 +6149,7 @@
                 "1. IDENTIDAD: Escribes en nombre de ProControl México, empresa certificada bajo NORMEX NMX-F-610 especializada en Manejo Integrado de Plagas (MIP). Menciona esta certificación de ProControl (NMX-F-610-NORMEX) al menos una vez en el documento, como credencial de la empresa que realiza el diagnóstico — NUNCA como si el establecimiento del cliente \"cumpliera\" o estuviera certificado bajo NMX-F-610 (esa es la certificación de ProControl como proveedor, no del cliente).\n" +
                 "2. ROL: ProControl NO es un auditor ni una entidad certificadora del cliente. Es el proveedor técnico de servicio MIP que realizó este levantamiento y presenta un diagnóstico, no un dictamen de auditoría oficial.\n" +
                 "3. ALCANCE: El diagnóstico evalúa EXCLUSIVAMENTE los puntos de la norma NMX-F-605 que se relacionan directa o indirectamente con el control de plagas del establecimiento (documentación MIP, hermeticidad y exclusión física, almacenamiento, equipos y drenajes, resguardo de químicos y dispositivos, y evidencia de fauna nociva). PROHIBIDO afirmar que el cliente \"cumple con la NMX-F-610\" o que \"cumple integralmente la NMX-F-605\".\n" +
-                "4. TERMINOLOGÍA PROHIBIDA: NUNCA uses la palabra \"fumigar\" ni sus variantes (\"fumigación\", \"fumigado\", etc.) — es un término técnicamente incorrecto en MIP. Usa en su lugar \"aplicación técnica dirigida\", \"tratamiento localizado MIP\", \"control químico focalizado\" o \"intervención técnica MIP\", según el contexto. Usa también nombres comunes e inteligibles de fauna nociva (\"roedores\", \"cucarachas\", \"moscas\", \"insectos rastreros\"); PROHIBIDO usar órdenes taxonómicos en latín (\"Blattodea\", \"Rodentia\", \"Diptera\").\n" +
+                "4. TERMINOLOGÍA PROHIBIDA: NUNCA uses la palabra \"fumigar\" ni sus variantes (\"fumigación\", \"fumigado\", etc.) — es un término técnicamente incorrecto en MIP. Usa en su lugar \"aplicación técnica dirigida\", \"tratamiento localizado MIP\", \"control químico focalizado\" o \"intervención técnica MIP\", según el contexto. Usa también nombres comunes e inteligibles de fauna nociva (\"roedores\", \"cucarachas\", \"moscas\", \"insectos rastreros\"); PROHIBIDO usar órdenes taxonómicos en latín (\"Blattodea\", \"Rodentia\", \"Diptera\") por cuenta propia; la ÚNICA excepción son los nombres científicos que reciba en el bloque \"PLAGAS MENCIONADAS EN EL CONTEXTO DEL TÉCNICO\" (ver regla 17).\n" +
                 "5. TONO B2B, SIN RELLENO: Lenguaje directo, técnico y profesional para gerencia/dirección. PROHIBIDO usar adjetivos presuntuosos o de relleno (\"excelente\", \"extraordinario\", \"de clase mundial\", \"excepcional\", \"increíble\", \"óptimo\" usado como adorno). Cada oración debe aportar un dato o una acción, no relleno retórico. Sé conciso — prioriza hechos sobre descripciones.\n" +
                 "6. FUNDAMENTACIÓN ESTRICTA EN EL FORMULARIO: Toda la información debe basarse EXCLUSIVAMENTE en los puntos evaluados abajo. NO inventes, asumas ni generalices hallazgos, riesgos o desviaciones que no estén listados.\n" +
                 "7. JUSTIFICACIÓN DE RIESGO: Para cada desviación, explica brevemente en términos técnicos por qué representa un riesgo de control de plagas (ej. genera refugio, facilita ingreso de fauna nociva, oculta evidencia de actividad, rompe la barrera de exclusión). PROHIBIDO inventar números de artículo, cláusula o inciso específico de la NMX-F-605 — refiérete a \"los criterios de control de plagas de la NMX-F-605\" de forma general, nunca a numeración que no tengas con certeza.\n" +
@@ -6010,9 +6161,11 @@
                 "13. TERMINOLOGÍA DE BARRERAS DE CONTROL: NUNCA uses la palabra \"Anillo\" para referirte a las capas de dispositivos MIP (UV, trampas mecánicas, estaciones exteriores). El término correcto de ProControl México es \"Cordón Sanitario\" (ej. \"Cordón Sanitario 1\", \"Cordón Sanitario 2\", \"Cordón Sanitario 3\").\n" +
                 "14. TONO DE AUDITORÍA INTERNA PARA CLIENTE (NO REGULATORIA): Este diagnóstico es una auditoría interna que ProControl México entrega a SUS PROPIOS CLIENTES para informarles el estado de su programa MIP — NO es una inspección de una autoridad sanitaria con facultad de sanción, y PROHIBIDO usar un tono que sugiera riesgo de clausura, multa o suspensión de operaciones. El objetivo es que la gerencia entienda con toda claridad la MAGNITUD del riesgo de plagas identificado (sé específico y directo sobre la severidad, ver regla 5), pero en un tono constructivo, profesional y nunca acusatorio ni de reprimenda hacia el cliente ni hacia terceros.\n" +
                 "15. DIVISIÓN QUÉ HACEMOS / QUÉ SUGERIMOS: Para cada desviación, clasifícala según de quién depende resolverla. Van en \"Qué Hacemos\" (acción que ProControl ejecuta o refuerza dentro de su servicio MIP) las desviaciones relacionadas con: la carpeta técnica MIP documental, los dispositivos y estaciones de control (trampas mecánicas, lámparas UV, cebaderas perimetrales) y toda evidencia o bioindicador directo de fauna nociva (insectos/roedores, restos biológicos, mordeduras, olores de infestación). Van en \"Qué Sugerimos\" (recomendación para que el establecimiento la resuelva por su parte) las desviaciones relacionadas con: hermeticidad física de puertas/ventanas/fisuras/mampostería, cierres automáticos, maleza o escombros del perímetro exterior, orden y limpieza de almacenes y mobiliario, manejo de cartón corrugado y estiba, acumulación de grasa en equipos, mantenimiento de trampas de grasa o drenajes, y manejo de residuos/contenedores de basura. Si una desviación no encaja claramente en ninguna categoría, colócala en \"Qué Sugerimos\".\n" +
-                "16. CONTEXTO ADICIONAL DEL TÉCNICO: Si recibes un bloque \"CONTEXTO ADICIONAL DEL TÉCNICO\", trátalo como información verificada en sitio que COMPLEMENTA — nunca contradice, sustituye ni tiene mayor peso que — los hallazgos del formulario (reglas 6 y 11). Úsalo para enriquecer la redacción con las circunstancias que describe (ej. obra en proceso, cambio de proveedor, temporada, colindancias, eventos particulares de la visita), integrándolo en la sección que corresponda según su naturaleza — nunca lo repitas de forma literal ni lo trates como una sección aparte. Si ese bloque no aporta nada relevante al diagnóstico de plagas, ignóralo sin mencionarlo. Si no recibes ese bloque, no menciones su ausencia.";
+                "16. CONTEXTO ADICIONAL DEL TÉCNICO: Si recibes un bloque \"CONTEXTO ADICIONAL DEL TÉCNICO\", trátalo como información verificada en sitio que COMPLEMENTA — nunca contradice, sustituye ni tiene mayor peso que — los hallazgos del formulario (reglas 6 y 11). Úsalo para enriquecer la redacción con las circunstancias que describe (ej. obra en proceso, cambio de proveedor, temporada, colindancias, eventos particulares de la visita), integrándolo en la sección que corresponda según su naturaleza — nunca lo repitas de forma literal ni lo trates como una sección aparte. Si ese bloque no aporta nada relevante al diagnóstico de plagas, ignóralo sin mencionarlo. Si no recibes ese bloque, no menciones su ausencia.\n" +
+                "17. NOMBRES CIENTÍFICOS DEL CATÁLOGO: Si recibes un bloque \"PLAGAS MENCIONADAS EN EL CONTEXTO DEL TÉCNICO\", cada línea tiene el formato \"nombre común → designación científica\". La PRIMERA vez que menciones en el texto una de esas plagas, escribe su nombre común seguido de la designación EXACTAMENTE como viene en el bloque, entre paréntesis y con la parte científica en cursiva con asteriscos simples (ej. cucaracha alemana (*Blattella germanica*); mosquitos (familia *Culicidae*)). En las menciones siguientes usa solo el nombre común. Usa únicamente las designaciones del bloque: NUNCA agregues, cambies ni inventes nombres científicos de otras plagas, y NO menciones plagas del bloque en hallazgos que el contexto no respalde (reglas 6 y 16). Todas las plagas del bloque deben aparecer al menos una vez en el diagnóstico, en la sección que corresponda según su naturaleza.";
 
-            var bloqueContextoIA = contextoIA ? "\n\nCONTEXTO ADICIONAL DEL TÉCNICO (información verificada en sitio, ver regla 16):\n" + contextoIA : '';
+            var plagasContexto = detectarPlagasEnContexto(contextoIA);
+            var bloqueContextoIA = contextoIA ? "\n\nCONTEXTO ADICIONAL DEL TÉCNICO (información verificada en sitio, ver regla 16):\n" + contextoIA + bloquePlagasIA(plagasContexto) : '';
 
             var prompt;
             if (desviaciones.length === 0) {
@@ -6050,13 +6203,20 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], model: modeloSel ? modeloSel.value : undefined })
             }).then(function(res) {
-                return res.json();
+                // Si no es JSON (p. ej. un 5xx en HTML) se arma un error con el estado real
+                return res.json().catch(function() {
+                    return { error: { message: 'El servidor respondió con un error (HTTP ' + res.status + '). Intenta de nuevo.' } };
+                });
             }).then(function(data) {
                 var text = (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
                     data.candidates[0].content.parts && data.candidates[0].content.parts[0]) ? data.candidates[0].content.parts[0].text : null;
 
                 if (text) {
+                    text = anexarPlagasFaltantes(text, plagasContexto);   // garantiza los nombres científicos del catálogo
                     targetDiv.innerHTML = parseMarkdownToHTML(text);
+                    if (data.candidates[0].finishReason && data.candidates[0].finishReason !== 'STOP') {
+                        showToast('El diagnóstico quedó incompleto (motivo: ' + data.candidates[0].finishReason + '). Genera de nuevo.', 'warning');
+                    }
                 } else if (data && data.error && data.error.message) {
                     targetDiv.textContent = "Error de la API de Gemini: " + data.error.message;
                 } else if (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) {
@@ -6065,7 +6225,7 @@
                     targetDiv.textContent = "Respuesta recibida pero sin texto. Verifique la configuración de la clave API.";
                 }
             }).catch(function() {
-                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión o clave API.";
+                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión a internet e intente de nuevo.";
             }).finally(function() {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
             });
