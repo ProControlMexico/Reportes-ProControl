@@ -74,6 +74,7 @@
                     <a href="#sec-exportar"    class="toc-link"><i class="fa-solid fa-file-export text-teal-500 w-4"></i> 10. Exportar / Importar</a>
                     <a href="#sec-historial"   class="toc-link"><i class="fa-solid fa-clock-rotate-left text-teal-500 w-4"></i> 11. Historial</a>
                     <a href="#sec-test"        class="toc-link"><i class="fa-solid fa-flask text-teal-500 w-4"></i> 12. Modo TEST</a>
+                    <a href="#sec-ia"          class="toc-link"><i class="fa-solid fa-wand-magic-sparkles text-teal-500 w-4"></i> 13. Diagnóstico IA</a>
                 </nav>
             </div>
         </aside>
@@ -531,6 +532,18 @@
                         <span class="step-badge bg-blue-100 text-blue-700">4</span>
                         <p class="text-sm text-slate-600">Para eliminar una foto, haz clic en el botón <strong>×</strong> rojo que aparece en la esquina superior derecha de cada imagen.</p>
                     </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">5</span>
+                        <p class="text-sm text-slate-600">Cada foto lleva una <strong>numeración automática</strong> ("Foto 1", "Foto 2"…) en la esquina superior izquierda, según su posición en la cuadrícula.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">6</span>
+                        <p class="text-sm text-slate-600"><strong>Arrastra</strong> una foto (presionando sobre la imagen) y suéltala sobre otra para reordenarlas. La foto arrastrada toma el lugar de la de destino y la numeración se actualiza sola.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-blue-100 text-blue-700">7</span>
+                        <p class="text-sm text-slate-600">Para referirte a una foto en el diagnóstico técnico, haz clic en <strong>Citar</strong> (esquina inferior derecha de la imagen). Ver <a href="#sec-ia" class="text-teal-600 underline">sección 13</a>.</p>
+                    </div>
                 </div>
                 <div class="mt-6">
                     <figure class="flex flex-col gap-2">
@@ -538,6 +551,14 @@
                              alt="Módulo de evidencia fotográfica vacío"
                              class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
                         <figcaption class="text-xs text-slate-400 text-center">Estado inicial del módulo — haz clic en "Agregar Foto" para cargar imágenes</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-6">
+                    <figure class="flex flex-col gap-2 max-w-md">
+                        <img src="manual-foto-numerada.png"
+                             alt="Foto numerada con el botón Citar"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Foto con su número (arriba a la izquierda), indicación "Arrastra para reordenar" y botón Citar (abajo a la derecha)</figcaption>
                     </figure>
                 </div>
                 <div class="mt-4 info-box border-blue-400 bg-blue-50 text-blue-800">
@@ -756,6 +777,74 @@
                 <div class="mt-4 info-box border-violet-400 bg-violet-50 text-violet-800">
                     <i class="fa-solid fa-triangle-exclamation mr-2"></i>
                     No es posible exportar el proyecto mientras el modo TEST está activo.
+                </div>
+            </section>
+
+            <!-- 13. DIAGNÓSTICO IA -->
+            <section id="sec-ia" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-teal-100 text-teal-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">13. Diagnóstico Técnico con IA</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-4">Redacta el diagnóstico técnico y análisis de riesgo del servicio a partir del checklist NMX-F-605 y de lo que escribas como contexto.</p>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">1</span>
+                        <p class="text-sm text-slate-600">Completa el checklist y, si quieres, escribe en <em>"Contexto Adicional para el Diagnóstico IA"</em> lo que el técnico hizo en sitio. Mientras más específico, menos tiene que inventar la IA.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">2</span>
+                        <p class="text-sm text-slate-600">Haz clic en <strong>Generar Análisis IA</strong>. El texto aparece en el recuadro inferior y es <strong>editable</strong>: puedes corregirlo a mano.</p>
+                    </div>
+                </div>
+
+                <h3 class="text-sm font-bold text-slate-800 mt-6 mb-2">Nombres científicos de las plagas</h3>
+                <p class="text-sm text-slate-600 mb-3">Si en el contexto mencionas una plaga del catálogo de ProControl (por ejemplo <em>"cucaracha alemana"</em> o <em>"ratón doméstico"</em>), el diagnóstico la incluye con su nombre científico en cursivas, como <em>Blattella germanica</em>. Si la IA lo omite, el sistema lo agrega al final en una línea llamada <strong>"Fauna nociva referida en el contexto"</strong>.</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-600">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Cucarachas:</strong> alemana, americana, oriental</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Roedores:</strong> rata noruega, rata negra, ratón doméstico</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Moscas:</strong> común, de la fruta, metálica, fórida</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Arañas:</strong> violinista, viuda negra</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Otras:</strong> grillos, mosquitos, chinches, pulgas, pescadito de plata, alacrán</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5"><strong>Almacenados:</strong> palomilla de la harina, gorgojo</div>
+                </div>
+                <p class="text-sm text-slate-500 mt-3">Si nombras solo el grupo ("cucarachas") se usa el nombre del orden o familia (<em>Blattodea</em>); si nombras la especie, se usa la especie.</p>
+
+                <h3 class="text-sm font-bold text-slate-800 mt-6 mb-2">Citar fotos en el diagnóstico</h3>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">1</span>
+                        <p class="text-sm text-slate-600">Haz clic dentro del texto del diagnóstico, en el punto donde quieras la referencia.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">2</span>
+                        <p class="text-sm text-slate-600">En <em>Evidencia Fotográfica</em>, presiona <strong>Citar</strong> en la foto. Se inserta <strong>(Foto N)</strong> en el cursor (o al final si el cursor no estaba en el diagnóstico).</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="step-badge bg-teal-100 text-teal-700">3</span>
+                        <p class="text-sm text-slate-600">Si después reordenas o eliminas fotos, la cita se <strong>renumera sola</strong>. Si la foto citada ya no existe, aparece en rojo como <strong>(Foto ?)</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-end gap-6">
+                    <figure class="flex flex-col gap-2 max-w-[160px]">
+                        <img src="manual-boton-citar.png"
+                             alt="Botón Citar"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Botón Citar en la foto</figcaption>
+                    </figure>
+                    <figure class="flex flex-col gap-2 max-w-sm">
+                        <img src="manual-cita-diagnostico.png"
+                             alt="Cita (Foto 1) en el diagnóstico"
+                             class="rounded-xl border border-slate-200 shadow-sm w-full object-contain bg-slate-50">
+                        <figcaption class="text-xs text-slate-400 text-center">Cita insertada en el diagnóstico: (Foto 1)</figcaption>
+                    </figure>
+                </div>
+                <div class="mt-4 info-box border-teal-400 bg-teal-50 text-teal-800">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Si el diagnóstico queda incompleto, se muestra un aviso con el motivo; genera de nuevo. Revisa siempre el texto antes de exportar el PDF.
                 </div>
             </section>
 
