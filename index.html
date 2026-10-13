@@ -2955,6 +2955,8 @@
                 state.isServiceStarted = true;
                 state.currentServiceDate = selectedDate;
                 state.editingHistoryIndex = null; // Es un servicio totalmente nuevo
+                var ctxNuevo = document.getElementById("contextoIA");
+                if (ctxNuevo) ctxNuevo.value = "";   // el reporte nuevo no hereda el contexto del anterior
 
                 serviceDateInput.disabled = true;
                 startServiceBtn.classList.add("hidden");
@@ -6214,6 +6216,7 @@
                 if (text) {
                     text = anexarPlagasFaltantes(text, plagasContexto);   // garantiza los nombres científicos del catálogo
                     targetDiv.innerHTML = parseMarkdownToHTML(text);
+                    if (contextoEl) contextoEl.value = '';   // el contexto es de un solo uso: ya quedó en el análisis
                     if (data.candidates[0].finishReason && data.candidates[0].finishReason !== 'STOP') {
                         showToast('El diagnóstico quedó incompleto (motivo: ' + data.candidates[0].finishReason + '). Genera de nuevo.', 'warning');
                     }
