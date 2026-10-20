@@ -2416,7 +2416,9 @@
                     '</div><p class="text-[10px] text-slate-600 mt-0.5 truncate">' +
                     extraEsc((x.motivo ? x.motivo + ' · ' : '') + extraListaTrabajos(x).join(', ')) + '</p></div>' +
                     '<div class="flex items-center flex-shrink-0">' +
-                    '<button onclick="editarServicioExtra(' + i + ')" class="text-amber-600 hover:text-amber-800 p-1 mr-1" title="Editar servicio extraordinario"><i class="fa-regular fa-edit text-sm"></i></button>' +
+                    (editando
+                        ? '<button onclick="cerrarServicioExtra()" class="text-emerald-600 hover:text-emerald-800 p-1 mr-1" title="Terminar: guarda y cierra este extraordinario para poder iniciar otro"><i class="fa-solid fa-circle-check text-sm"></i></button>'
+                        : '<button onclick="editarServicioExtra(' + i + ')" class="text-amber-600 hover:text-amber-800 p-1 mr-1" title="Editar servicio extraordinario"><i class="fa-regular fa-edit text-sm"></i></button>') +
                     '<button onclick="eliminarServicioExtra(' + i + ')" class="text-rose-600 hover:text-rose-800 p-1" title="Eliminar servicio extraordinario"><i class="fa-regular fa-trash-can text-sm"></i></button>' +
                     '</div>';
                 historyList.appendChild(it);
@@ -5060,6 +5062,18 @@
                     // Proyectos exportados antes de existir el servicio extraordinario no traen estos campos.
                     state.extraordinarios = Array.isArray(data.extraordinarios) ? data.extraordinarios.map(extraNormalizar) : [];
                     state.extraActivo = data.extraActivo ? extraNormalizar(data.extraActivo) : null;
+                    // Exportar deja el extraordinario abierto en el archivo. Si ya está en la lista (idx), al importar
+                    // NO se reabre: quedaba atrapado en "EDITANDO" sin poder iniciar otro. Solo el borrador sin guardar
+                    // (idx null) y la restauración del autoguardado (silent) conservan la sesión abierta.
+                    var extraYaGuardado = !silent && state.extraActivo && state.extraActivo.idx !== null;
+                    if (extraYaGuardado) {
+                        state.extraActivo = null;
+                        if (state.isServiceStarted) {   // era la sesión de captura del extraordinario
+                            extraLimpiarCapturas();
+                            state.isServiceStarted = false;
+                            state.currentServiceDate = '';
+                        }
+                    }
 
                     // Restaurar header: solo la versión — la fecha nunca se restaura desde el
                     // archivo, siempre es la fecha en que se está generando el reporte (hoy).
@@ -5092,7 +5106,7 @@
                     if (state.isServiceStarted) {
                         serviceDateInput.value    = state.currentServiceDate;
                         serviceDateInput.disabled = !state.extraActivo; // en un extraordinario la fecha sigue editable
-                        startServiceBtn.classList.add('hidden');
+                        if (!state.extraActivo) startServiceBtn.classList.add('hidden'); // en un extraordinario sigue activo (cambia al servicio normal)
                         document.getElementById('active-service-controls').classList.remove('hidden');
                     } else {
                         serviceDateInput.disabled = false;
@@ -5161,8 +5175,13 @@
                     if (contextoIAEl2 && data.contextoIA !== undefined) contextoIAEl2.value = data.contextoIA;
                     var dictamenEl2 = document.getElementById('rptDictamenTexto');
                     if (dictamenEl2 && data.dictamenIA) dictamenEl2.innerHTML = data.dictamenIA;
+                    if (extraYaGuardado) aplicarAuditoria(null);   // fotos/checklist/IA del archivo eran del extraordinario (ya viajan dentro de su registro)
                     actualizarCitasFotos();   // el diagnóstico se restaura después de las fotos
                     evaluarNOM();
+
+                    // Un aviso de "restaurar avance" pendiente ya no aplica: se cargó otro proyecto y debe volver a autoguardar
+                    var bannerAuto = document.getElementById('autosave-banner');
+                    if (bannerAuto && !silent) { bannerAuto.remove(); autosavePausado = false; }
 
                     renderStationsGrid();
                     renderHistoryList();
@@ -6631,6 +6650,10 @@
             extraSalirModo();
             return true;
         }
+
+        // Salida de un extraordinario ya registrado (EDITANDO): sin esto no había forma de cerrarlo ni de
+        // iniciar otro, porque exportar deja la sesión abierta y solo el borrador nuevo tenía el bote de descartar.
+        window.cerrarServicioExtra = function() { extraCerrarParaCambiar(); };
 
         window.descartarServicioExtra = function() {
             var e = state.extraActivo;
