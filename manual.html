@@ -75,6 +75,7 @@
                     <a href="#sec-historial"   class="toc-link"><i class="fa-solid fa-clock-rotate-left text-teal-500 w-4"></i> 11. Historial</a>
                     <a href="#sec-test"        class="toc-link"><i class="fa-solid fa-flask text-teal-500 w-4"></i> 12. Modo TEST</a>
                     <a href="#sec-ia"          class="toc-link"><i class="fa-solid fa-wand-magic-sparkles text-teal-500 w-4"></i> 13. Diagnóstico IA</a>
+                    <a href="#sec-errores"     class="toc-link"><i class="fa-solid fa-triangle-exclamation text-teal-500 w-4"></i> 14. Códigos de error</a>
                 </nav>
             </div>
         </aside>
@@ -848,6 +849,22 @@
                 </div>
             </section>
 
+            <!-- 14. CÓDIGOS DE ERROR (tabla generada desde errores.js, el mismo catálogo que usa el sistema) -->
+            <section id="sec-errores" class="section-anchor bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="bg-rose-100 text-rose-700 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">14. Códigos de error</h2>
+                </div>
+                <p class="text-sm text-slate-600 mb-3">Cuando algo no se puede hacer o falla, el sistema muestra un recuadro arriba a la derecha con un código (por ejemplo <strong>E403</strong>) y lo que hay que hacer. Los <strong>errores</strong> (rojo) se quedan hasta pulsar <em>Entendido</em>; los <strong>avisos</strong> (ámbar) se cierran solos a los 8 segundos. Si necesitas ayuda, manda a soporte el código y el "Detalle" que aparece debajo.</p>
+                <div class="info-box border-teal-400 bg-teal-50 text-teal-800 mb-4">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    El primer dígito del código indica el tipo de problema: <strong>E1xx</strong> configuración · <strong>E2xx</strong> servicio · <strong>E3xx</strong> extraordinario · <strong>E4xx</strong> exportar · <strong>E5xx</strong> importar y autoguardado · <strong>E6xx</strong> fotos y cliente · <strong>E7xx</strong> IA · <strong>E8xx</strong> gráficas e impresión · <strong>E9xx</strong> fallos inesperados.
+                </div>
+                <div id="tabla-errores" class="space-y-6"></div>
+            </section>
+
         </main>
     </div>
 
@@ -861,7 +878,43 @@
         </div>
     </footer>
 
+    <script src="errores.js"></script>
     <script>
+        // Tabla de códigos de error, agrupada por categoría, desde el catálogo compartido con el sistema
+        (function() {
+            var cont = document.getElementById('tabla-errores'), cat = window.ERRORES;
+            if (!cont || !cat) { if (cont) cont.textContent = 'No se pudo cargar errores.js'; return; }
+            var grupos = {};
+            Object.keys(cat).forEach(function(cod) { (grupos[cat[cod].c] = grupos[cat[cod].c] || []).push(cod); });
+            Object.keys(grupos).forEach(function(nombre) {
+                var h = document.createElement('h3');
+                h.className = 'text-sm font-bold text-slate-800 mb-2';
+                h.textContent = nombre;
+                var wrap = document.createElement('div');
+                wrap.className = 'overflow-x-auto';
+                var t = document.createElement('table');
+                t.className = 'w-full text-xs text-left border border-slate-200 rounded-lg';
+                t.innerHTML = '<thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider"><tr><th class="p-2">Código</th><th class="p-2">Dónde</th><th class="p-2">Qué significa</th><th class="p-2">Qué hacer</th></tr></thead>';
+                var tb = document.createElement('tbody');
+                grupos[nombre].forEach(function(cod) {
+                    var d = cat[cod], tr = document.createElement('tr');
+                    tr.className = 'border-t border-slate-100 align-top';
+                    [cod + (d.n === 'a' ? ' (aviso)' : ''), d.d, d.m, d.s].forEach(function(txt, i) {
+                        var td = document.createElement('td');
+                        td.className = 'p-2 ' + (i === 0 ? 'font-mono font-bold whitespace-nowrap ' + (d.n === 'a' ? 'text-amber-700' : 'text-rose-700') : 'text-slate-600');
+                        td.textContent = txt;
+                        tr.appendChild(td);
+                    });
+                    tb.appendChild(tr);
+                });
+                t.appendChild(tb);
+                wrap.appendChild(t);
+                var bloque = document.createElement('div');
+                bloque.append(h, wrap);
+                cont.appendChild(bloque);
+            });
+        })();
+
         // Resaltar sección activa en el índice al hacer scroll
         const sections = document.querySelectorAll('.section-anchor');
         const tocLinks = document.querySelectorAll('.toc-link');

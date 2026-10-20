@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Procontrol - Sistema de Control de Plagas</title>
+    <!-- Catálogo de códigos de error (mismo archivo que usa el manual) -->
+    <script src="errores.js"></script>
     <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js para generación de analítica en tiempo real -->
@@ -635,8 +637,8 @@
         /* Los dos botones principales (servicio normal / extraordinario) NUNCA desaparecen: el del tipo que
            está en uso solo se ve deshabilitado. El servicio normal marca "en uso" poniéndole la clase hidden
            a su botón (por eso se fuerza a mostrarlo); el extraordinario, con la clase modo-extra del body. */
-        #start-service-btn.hidden { display: flex !important; opacity: .4; pointer-events: none; cursor: not-allowed; }
-        body.modo-extra #start-extra-btn { opacity: .4; pointer-events: none; cursor: not-allowed; }
+        #start-service-btn.hidden { display: flex !important; opacity: .4; cursor: not-allowed; }
+        body.modo-extra #start-extra-btn { opacity: .4; cursor: not-allowed; }
         body.modo-extra #extra-service-card { display: block; }
         body.modo-extra #extra-mode-title { display: block; }
         #extra-estaciones-hint { display: none; }
@@ -675,6 +677,7 @@
         }
         window.addEventListener('error', function (ev) { reportar(ev.message, ev.filename, ev.lineno, ev.colno, ev.error && ev.error.stack); });
         window.addEventListener('unhandledrejection', function (ev) { var r = ev.reason; reportar('Promesa rechazada: ' + ((r && r.message) || r), '', 0, 0, r && r.stack); });
+        window.reportarAlWorker = reportar;   // mostrarError() manda por aquí los errores con código marcados r:1 (errores.js)
     })();
     </script>
 </head>
@@ -2286,6 +2289,94 @@
             }, 3000);
         }
 
+        /************************************************************************
+         * ERRORES CON CÓDIGO (catálogo en errores.js, tabla en el manual)
+         * mostrarError('E401', detalle): panel fijo arriba a la derecha. Los errores se quedan hasta
+         * "Entendido" (antes eran toasts de 3 s que el usuario no alcanzaba a ver); los avisos se cierran a los 8 s.
+         ************************************************************************/
+        function textoError(cod, detalle) {
+            var d = (window.ERRORES && window.ERRORES[cod]) || { m: 'Error.', s: '' };
+            return '[' + cod + '] ' + d.m + (d.s ? ' ' + d.s : '') + (detalle ? ' (' + detalle + ')' : '');
+        }
+
+        // Estado de la sesión que acompaña al email de error (sin datos del cliente), para reproducirlo.
+        function contextoParaSoporte() {
+            try {
+                return 'Contexto: servicio en curso=' + !!state.isServiceStarted +
+                    ', extraordinario abierto=' + (state.extraActivo ? (state.extraActivo.idx === null ? 'borrador' : 'guardado #' + state.extraActivo.idx) : 'no') +
+                    ', historial=' + state.history.length + ', extraordinarios=' + state.extraordinarios.length +
+                    ', estaciones=' + state.stations.length + ', fotos=' + photoData.length + ', modo TEST=' + testModeActive;
+            } catch (e) { return ''; }
+        }
+
+        function mostrarError(cod, detalle) {
+            try {
+                detalle = detalle ? String(detalle).slice(0, 300) : '';
+                var d = (window.ERRORES && window.ERRORES[cod]) || { n: 'e', m: 'Error.', s: '' };
+                console.error('[' + cod + '] ' + d.m + (detalle ? ' — ' + detalle : ''));
+                // Email al administrador vía Worker /log (mismo canal y topes que los errores de JavaScript)
+                if (d.r && window.reportarAlWorker) window.reportarAlWorker('[' + cod + '] ' + d.m + (detalle ? ' — ' + detalle : ''), 'codigo-error', 0, 0, contextoParaSoporte());
+                if (!document.body) return;
+                var panel = document.getElementById('error-panel');
+                if (!panel) {
+                    panel = document.createElement('div');
+                    panel.id = 'error-panel';
+                    panel.className = 'no-print';
+                    panel.style.cssText = 'position:fixed;top:76px;right:12px;z-index:99990;width:min(420px,92vw);display:flex;flex-direction:column;gap:8px';
+                    document.body.appendChild(panel);
+                }
+                var clave = cod + '|' + detalle;
+                for (var i = 0; i < panel.children.length; i++) if (panel.children[i].dataset.k === clave) return; // ya está en pantalla
+                while (panel.children.length >= 4) panel.removeChild(panel.firstChild);
+
+                var aviso = d.n === 'a';
+                var it = document.createElement('div');
+                it.dataset.k = clave;
+                it.setAttribute('role', 'alert');
+                it.style.cssText = 'background:#fff;color:#0f172a;border-radius:12px;border-left:6px solid ' + (aviso ? '#f59e0b' : '#e11d48') +
+                    ';box-shadow:0 10px 30px rgba(0,0,0,.3);padding:12px 14px;font-size:13px;line-height:1.4';
+                var cab = document.createElement('div');
+                cab.style.cssText = 'font-weight:800;margin-bottom:4px;color:' + (aviso ? '#b45309' : '#be123c');
+                cab.textContent = (aviso ? 'Aviso ' : 'Error ') + cod;
+                var cuerpo = document.createElement('div');
+                cuerpo.textContent = d.m + (d.s ? ' ' + d.s : '');
+                it.append(cab, cuerpo);
+                if (detalle) {
+                    var det = document.createElement('div');
+                    det.style.cssText = 'margin-top:4px;font-size:11px;color:#64748b;word-break:break-word';
+                    det.textContent = 'Detalle: ' + detalle;
+                    it.appendChild(det);
+                }
+                var ok = document.createElement('button');
+                ok.textContent = 'Entendido';
+                ok.style.cssText = 'margin-top:8px;background:#0f172a;color:#fff;border:0;border-radius:8px;padding:5px 12px;font-weight:600;cursor:pointer';
+                ok.onclick = function() { it.remove(); };
+                it.appendChild(ok);
+                panel.appendChild(it);
+                if (aviso) setTimeout(function() { it.remove(); }, 8000);
+            } catch (e) { /* mostrar un error nunca debe provocar otro */ }
+        }
+
+        // Cualquier fallo no previsto también sale en pantalla con código (E900/E901/E902); el Worker ya los recibe por /log.
+        (function() {
+            var ruido = /message channel closed|chrome-extension:|moz-extension:|ResizeObserver loop|^Script error/;
+            window.addEventListener('error', function(ev) {
+                var t = ev.target;
+                if (t && t !== window) {   // fallo de carga de un elemento: solo importan scripts y estilos (una imagen con onerror ya tiene su respaldo)
+                    if (t.tagName === 'SCRIPT' || t.tagName === 'LINK') mostrarError('E902', t.src || t.href);
+                    return;
+                }
+                var msg = String(ev.message || '');
+                if (ruido.test(msg) || ruido.test(String(ev.filename || ''))) return;
+                mostrarError('E900', msg + (ev.lineno ? ' (línea ' + ev.lineno + ')' : ''));
+            }, true);
+            window.addEventListener('unhandledrejection', function(ev) {
+                var r = ev.reason, msg = String((r && r.message) || r || '');
+                if (ruido.test(msg)) return;
+                mostrarError('E901', msg);
+            });
+        })();
+
         function openServiceDatePicker() {
             if (serviceDateInput && !serviceDateInput.disabled) {
                 if (serviceDateInput.showPicker) {
@@ -2427,7 +2518,7 @@
 
         window.confirmEditHistory = function(idx) {
             if (state.extraActivo) {
-                showToast('Guarda o descarta el servicio extraordinario abierto antes de editar otro servicio.', 'error');
+                mostrarError('E301');
                 return;
             }
             pendingEditIndex = idx;
@@ -2540,12 +2631,12 @@
                 const qty = parseInt(stationQtyInput.value);
 
                 if (!cordon || !type) {
-                    showToast("Selecciona un cordón y un tipo de estación.", "error");
+                    mostrarError("E101");
                     return;
                 }
 
                 if (qty < 1 || isNaN(qty)) {
-                    showToast("Por favor ingresa una cantidad de estaciones válida.", "error");
+                    mostrarError("E102");
                     return;
                 }
 
@@ -2643,7 +2734,7 @@
                 if (newId && newId !== currentId) {
                     const exists = state.stations.some(function(s) { return s.id === newId; });
                     if (exists) {
-                        showToast("Ya existe una estación con ese ID.", "error");
+                        mostrarError("E103", newId);
                         renderStationsGrid();
                         return;
                     }
@@ -2682,7 +2773,7 @@
                 if (newId && newId !== currentId) {
                     const exists = state.stations.some(function(s) { return s.id === newId && s.id !== currentId; });
                     if (exists) {
-                        showToast("Ya existe una estación con ese ID.", "error");
+                        mostrarError("E103", newId);
                         updateRealtimeConfigList();
                         return;
                     }
@@ -2848,11 +2939,11 @@
             finalizeSetupBtn.addEventListener("click", function() {
                 const clientName = clientNameInput.value.trim();
                 if (!clientName) {
-                    showToast("Debes ingresar el nombre del cliente para registrar el máster.", "error");
+                    mostrarError("E104");
                     return;
                 }
                 if (state.stations.length === 0) {
-                    showToast("Por favor, agrega al menos una estación antes de guardar.", "error");
+                    mostrarError("E105");
                     return;
                 }
 
@@ -2935,13 +3026,13 @@
         if (startServiceBtn) {
             startServiceBtn.addEventListener("click", function() {
                 // El botón sigue visible aunque no aplique (se ve deshabilitado): ya hay un servicio normal en curso
-                if (state.isServiceStarted && !state.extraActivo) return;
+                if (state.isServiceStarted && !state.extraActivo) { mostrarError("E203"); return; }
                 // Estando en un extraordinario, este botón cambia al servicio normal: guarda el extraordinario primero
                 if (state.extraActivo && !extraCerrarParaCambiar()) return;
 
                 const selectedDate = serviceDateInput.value;
                 if (!selectedDate) {
-                    showToast("Por favor selecciona una fecha válida en el calendario.", "error");
+                    mostrarError("E201");
                     return;
                 }
 
@@ -2950,7 +3041,7 @@
                     return h.date === selectedDate;
                 });
                 if (dateExists) {
-                    showToast("Ya existe un servicio guardado para la fecha seleccionada. Elige otra o edita el servicio desde la lista.", "error");
+                    mostrarError("E202", selectedDate);
                     return;
                 }
 
@@ -3819,14 +3910,14 @@
             var currentCebStations = state.stations.filter(function(s) { return s.type === 'Cebadera'; });
             var timeline = buildBaitTimeline(currentCebStations);
             var hasAny = timeline.some(function(t) { return Object.keys(t.bait).length > 0; });
-            if (!hasAny) { showToast('No hay datos de consumo de cebo registrados aún.', 'warning'); return; }
+            if (!hasAny) { mostrarError('E804', 'consumo de cebo'); return; }
 
             var allCebStations = getAllBaitStations(timeline);
-            if (allCebStations.length === 0) { showToast('No hay estaciones Cebadera.', 'warning'); return; }
+            if (allCebStations.length === 0) { mostrarError('E804', 'no hay estaciones Cebadera'); return; }
 
             var yMax = calcBaitYMax(allCebStations, timeline);
             var nw = window.open('', '_blank');
-            if (!nw) { showToast('Habilita las ventanas emergentes.', 'warning'); return; }
+            if (!nw) { mostrarError('E803'); return; }
 
             var lineLabels = timeline.map(function(t) {
                 return new Date(t.date + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
@@ -3987,10 +4078,10 @@
                 var actT = Object.values(act).reduce(function(a,b){return a+b;},0);
                 if (actT > 0) services.push({ label: "Servicio Activo ("+state.currentServiceDate+")", totals: act });
             }
-            if (services.length === 0) { showToast("No hay servicios con capturas registradas.", "warning"); return; }
+            if (services.length === 0) { mostrarError("E804", "servicios con capturas"); return; }
 
             var nw = window.open("", "_blank");
-            if (!nw) { showToast("Habilita las ventanas emergentes.", "warning"); return; }
+            if (!nw) { mostrarError("E803"); return; }
 
             var css =
                 'body{font-family:"Inter",sans-serif;background:#0f172a;color:#f1f5f9;margin:0;min-height:100vh;display:flex;flex-direction:column;}' +
@@ -4134,16 +4225,16 @@
             }
             timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
 
-            if (timeline.length === 0) { showToast("Esta estación aún no tiene historial de capturas.", "warning"); return; }
+            if (timeline.length === 0) { mostrarError("E804", "esta estación no tiene historial"); return; }
 
             // Especies con al menos un valor > 0 en esta estación
             var activeSpecies = ALL_SPECIES.filter(function(sp) {
                 return timeline.some(function(t) { return (t.totals[sp] || 0) > 0; });
             });
-            if (activeSpecies.length === 0) { showToast("Sin capturas registradas en esta estación.", "warning"); return; }
+            if (activeSpecies.length === 0) { mostrarError("E804", "esta estación no tiene capturas"); return; }
 
             var nw = window.open("", "_blank");
-            if (!nw) { showToast("Habilita las ventanas emergentes.", "warning"); return; }
+            if (!nw) { mostrarError("E803"); return; }
 
             var css = [
                 'body{font-family:"Inter",sans-serif;background:#0f172a;color:#f1f5f9;margin:0;min-height:100vh;display:flex;flex-direction:column;}',
@@ -4268,7 +4359,7 @@
          ************************************************************************/
         window.maximizeTrendChart = function() {
             if (!state.clientName) {
-                showToast("Configura un cliente antes de maximizar tendencias.", "error");
+                mostrarError("E801");
                 return;
             }
 
@@ -4285,10 +4376,10 @@
             }
             timeline.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
 
-            if (timeline.length === 0) { showToast("No hay servicios con datos para mostrar.", "warning"); return; }
+            if (timeline.length === 0) { mostrarError("E804", "servicios con datos"); return; }
 
             var nw = window.open('', '_blank');
-            if (!nw) { showToast("Habilita las ventanas emergentes (popups) para abrir el analizador.", "warning"); return; }
+            if (!nw) { mostrarError("E803"); return; }
 
             var css =
                 'body{font-family:"Inter",sans-serif;background:#0f172a;color:#f1f5f9;margin:0;padding:0;min-height:100vh;display:flex;flex-direction:column;}' +
@@ -4905,37 +4996,30 @@
             return snapshot;
         }
 
-        // Aviso que NO se cierra solo: queda en pantalla hasta que el usuario pulse "Entendido".
-        function avisoFijo(titulo, detalle) {
-            const o = document.createElement('div');
-            o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
-            const c = document.createElement('div');
-            c.style.cssText = 'background:#fff;color:#111;max-width:440px;border-radius:12px;padding:20px;border-top:6px solid #e11d48;font-family:sans-serif';
-            const h = document.createElement('h3'); h.style.cssText = 'margin:0 0 8px;font-size:18px;font-weight:700'; h.textContent = titulo;
-            const p = document.createElement('p'); p.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:1.4'; p.textContent = detalle;
-            const b = document.createElement('button'); b.textContent = 'Entendido';
-            b.style.cssText = 'background:#e11d48;color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:600;cursor:pointer';
-            b.onclick = () => o.remove();
-            c.append(h, p, b); o.appendChild(c); document.body.appendChild(o);
-        }
-
         window.exportProject = async function() {
             if (testModeActive) {
-                showToast('Desactiva el modo TEST antes de exportar.', 'error');
+                mostrarError('E401');
                 return;
             }
             if (!state.clientName) {
-                showToast('Configura un cliente antes de exportar.', 'error');
+                mostrarError('E402');
                 return;
             }
 
             // Guardar = exportar: el servicio extraordinario abierto entra a "Servicios Registrados" y
             // por lo tanto viaja dentro de la lista "extraordinarios" del JSON.
-            const estadoExtra = extraGuardarEnServicios();
-
-            const snapshot = buildProjectSnapshot();
-            const defaultFilename = buildReportBaseFilename() + '.json';
-            const jsonStr = JSON.stringify(snapshot, null, 2);
+            let estadoExtra, snapshot, defaultFilename, jsonStr;
+            try {
+                estadoExtra = extraGuardarEnServicios();
+                snapshot = buildProjectSnapshot();
+                defaultFilename = buildReportBaseFilename() + '.json';
+                jsonStr = JSON.stringify(snapshot, null, 2);
+            } catch (err) {
+                mostrarError('E406', err && err.message);
+                return;
+            }
+            // Incompleto: el archivo se exporta, pero el extraordinario abierto no entró a Servicios Registrados
+            if (estadoExtra === 'sin-trabajos' || estadoExtra === 'sin-otro') mostrarError('E405', extraMotivoIncompleto(estadoExtra));
             const resumen = snapshot.history.length + ' servicio(s), ' +
                 (snapshot.extraordinarios.length ? snapshot.extraordinarios.length + ' extraordinario(s), ' : '') +
                 // Incompleto: no se pudo agregar a servicios, solo viaja como borrador
@@ -4964,9 +5048,7 @@
                 } catch (err) {
                     if (err && err.name === 'AbortError') return; // el usuario canceló el diálogo
                     // El archivo elegido pudo quedar vacío/incompleto: avisar y descargar copia completa abajo
-                    avisoFijo('Error al guardar el archivo',
-                        'El archivo que elegiste pudo quedar vacío o incompleto (' + ((err && err.message) || 'error del navegador') +
-                        '). NO lo uses. Se descargará una copia completa a tu carpeta de Descargas; revisa que pese más de 0 KB. Si no aparece, vuelve a exportar.');
+                    mostrarError('E403', (err && err.message) || 'error del navegador');
                 }
             }
 
@@ -4986,7 +5068,7 @@
                 // No revocar de inmediato: en archivos grandes cancela la descarga y deja 0 KB
                 setTimeout(() => URL.revokeObjectURL(url), 60000);
             } catch (err) {
-                avisoFijo('Error al guardar el archivo', 'El navegador no pudo generar la descarga (' + ((err && err.message) || 'error desconocido') + '). El proyecto NO se guardó. Vuelve a exportar o prueba con Chrome/Edge.');
+                mostrarError('E404', (err && err.message) || 'error desconocido');
                 return;
             }
 
@@ -5008,23 +5090,24 @@
             var reader = new FileReader();
             reader.onload = function(evt) {
                 try {
-                    var data = JSON.parse(evt.target.result);
+                    var data;
+                    try { data = JSON.parse(evt.target.result); }
+                    catch (errJson) { mostrarError('E502', errJson && errJson.message); return; }
 
-                    if (!data.clientName || !Array.isArray(data.stations) || !Array.isArray(data.history)) {
-                        showToast('Archivo inválido o corrupto.', 'error');
+                    if (!data || !data.clientName || !Array.isArray(data.stations) || !Array.isArray(data.history)) {
+                        mostrarError('E501', file.name);
                         return;
                     }
 
-                    applyProjectData(data);
-                } catch(err) {
-                    showToast('Error al importar: ' + ((err && err.message) || 'JSON inválido') + '.', 'error');
+                    try { applyProjectData(data); }
+                    catch (errAplicar) { mostrarError('E503', errAplicar && errAplicar.message); }
                 } finally {
                     input.value = ''; // Permite importar el mismo archivo de nuevo (también tras un error)
                 }
             };
             reader.onerror = function() {
                 input.value = '';
-                showToast('No se pudo leer el archivo (si está en OneDrive, descárgalo primero).', 'error');
+                mostrarError('E504', file.name);
             };
             reader.readAsText(file);
         });
@@ -5202,7 +5285,7 @@
          ************************************************************************/
         window.printReport = function() {
             if (!state.clientName) {
-                showToast("Configura un cliente antes de imprimir.", "error");
+                mostrarError("E802");
                 return;
             }
 
@@ -5335,7 +5418,8 @@
             var originalTitle = document.title;
             document.title = buildReportBaseFilename();
 
-            window.print();
+            try { window.print(); }
+            catch (err) { document.title = originalTitle; mostrarError('E805', err && err.message); return; }
 
             // Restaurar el título cuando el diálogo de impresión realmente cierre —
             // NUNCA con un setTimeout fijo: si el usuario tarda más de ese tiempo en
@@ -5554,7 +5638,7 @@
             function terminado() {
                 if (--pending > 0) return;
                 renderPhotosGrid();
-                if (fallidas) showToast(fallidas + ' archivo(s) no se pudieron cargar como imagen.', 'error');
+                if (fallidas) mostrarError('E601', fallidas + ' de ' + files.length + ' archivo(s)');
             }
             files.forEach(function(file) {
                 if (!file.type.startsWith('image/')) { fallidas++; terminado(); return; }
@@ -6034,7 +6118,7 @@
                         }
                     })
                     .catch(function() {
-                        if (statusEl) statusEl.textContent = 'C.P. no encontrado. Ingresa Ciudad y Estado manualmente.';
+                        if (statusEl) statusEl.textContent = textoError('E604');
                     })
                     .finally(function() {
                         if (spinner) spinner.classList.add('hidden');
@@ -6127,7 +6211,7 @@
          * DIAGNÓSTICO TÉCNICO IA — GENERA EL REPORTE DE CONTROL (MISMO MOTOR
          * Y PROMPT QUE "reporte auditoria.html")
          ************************************************************************/
-        window.generarDictamenIA = function() {
+        function generarDictamenIAEjecutar() {
             var btn = document.getElementById('btnGenerarIA');
             var targetDiv = document.getElementById('rptDictamenTexto');
             if (!targetDiv) return;
@@ -6218,6 +6302,8 @@
 
             // El reintento por saturación (503) ya lo maneja el Worker — aquí solo se
             // espera la respuesta final.
+            // Falla de la IA: el código queda en el recuadro del diagnóstico Y en el panel de errores
+            function iaFalla(cod, det) { targetDiv.textContent = textoError(cod, det); mostrarError(cod, det); }
             var modeloSel = document.getElementById('iaModeloSelect');
             fetch(IA_PROXY_URL, {
                 method: 'POST',
@@ -6237,20 +6323,32 @@
                     targetDiv.innerHTML = parseMarkdownToHTML(text);
                     if (contextoEl) contextoEl.value = '';   // el contexto es de un solo uso: ya quedó en el análisis
                     if (data.candidates[0].finishReason && data.candidates[0].finishReason !== 'STOP') {
-                        showToast('El diagnóstico quedó incompleto (motivo: ' + data.candidates[0].finishReason + '). Genera de nuevo.', 'warning');
+                        mostrarError('E705', 'motivo: ' + data.candidates[0].finishReason);
                     }
                 } else if (data && data.error && data.error.message) {
-                    targetDiv.textContent = "Error de la API de Gemini: " + data.error.message;
+                    iaFalla('E701', data.error.message);
                 } else if (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason) {
-                    targetDiv.textContent = "Gemini no devolvió texto (motivo: " + data.candidates[0].finishReason + "). Intenta de nuevo.";
+                    iaFalla('E702', 'motivo: ' + data.candidates[0].finishReason);
                 } else {
-                    targetDiv.textContent = "Respuesta recibida pero sin texto. Verifique la configuración de la clave API.";
+                    iaFalla('E703');
                 }
-            }).catch(function() {
-                targetDiv.textContent = "Error al conectar con la IA de Gemini. Verifique su conexión a internet e intente de nuevo.";
+            }).catch(function(err) {
+                iaFalla('E704', err && err.message);
             }).finally(function() {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
             });
+        }
+
+        // Si algo falla ANTES de enviar (armar el prompt), el botón no debe quedar bloqueado para siempre.
+        window.generarDictamenIA = function() {
+            try { generarDictamenIAEjecutar(); }
+            catch (err) {
+                var b = document.getElementById('btnGenerarIA');
+                if (b) { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; }
+                var t = document.getElementById('rptDictamenTexto');
+                if (t) t.textContent = textoError('E706', err && err.message);
+                mostrarError('E706', err && err.message);
+            }
         };
 
         /************************************************************************
@@ -6563,14 +6661,14 @@
         extraRenderTrabajos();
 
         window.iniciarServicioExtra = function() {
-            if (state.extraActivo) return;   // ya está abierto (el botón se ve deshabilitado)
+            if (state.extraActivo) { mostrarError('E304'); return; }   // ya está abierto (el botón se ve atenuado)
             if (state.isServiceStarted) {
-                showToast('Termina o cancela el servicio en curso antes de iniciar uno extraordinario.', 'error');
+                mostrarError('E302');
                 return;
             }
             var fecha = serviceDateInput.value;
             if (!fecha) {
-                showToast('Por favor selecciona una fecha válida en el calendario.', 'error');
+                mostrarError('E201');
                 return;
             }
             extraPrevio = capturarAuditoria();   // aparta el reporte normal que hubiera en pantalla
@@ -6583,11 +6681,11 @@
 
         window.editarServicioExtra = function(i) {
             if (state.extraActivo) {
-                showToast('Guarda o descarta el servicio extraordinario abierto antes de editar otro.', 'error');
+                mostrarError('E301');
                 return;
             }
             if (state.isServiceStarted) {
-                showToast('Termina o descarta el servicio en curso primero.', 'error');
+                mostrarError('E303');
                 return;
             }
             var s = state.extraordinarios[i];
@@ -6695,6 +6793,7 @@
         var AUTOSAVE_KEY = 'procontrol_autosave_v1';
         var autosaveTimer = null;
         var autosavePausado = false; // true mientras el aviso de restaurar espera respuesta
+        var autosaveAvisado = false; // el aviso E505 sale una sola vez por sesión (no cada 2 s)
 
         function autosaveNow() {
             try {
@@ -6710,7 +6809,9 @@
                     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
                 }
             } catch (err) {
-                // localStorage bloqueado o lleno: el autoguardado es un extra, no debe romper nada.
+                // localStorage bloqueado o lleno: el autoguardado es un extra y no rompe nada, pero hay que avisar
+                // una vez: sin él, un refresh pierde todo lo no exportado.
+                if (!autosaveAvisado) { autosaveAvisado = true; mostrarError('E505', err && err.message); }
             }
         }
 
@@ -6720,8 +6821,10 @@
         }
 
         function autosaveOfrecerRestaurar() {
-            var saved = null;
-            try { saved = JSON.parse(localStorage.getItem(AUTOSAVE_KEY) || 'null'); } catch (e) {}
+            var saved = null, bruto = null;
+            try { bruto = localStorage.getItem(AUTOSAVE_KEY); } catch (e) { return; } // bloqueado: E505 saldrá al intentar guardar
+            try { saved = JSON.parse(bruto || 'null'); }
+            catch (e) { mostrarError('E506', 'avance dañado, se descartó'); try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e2) {} return; }
             if (!saved || !saved.data || !saved.data.clientName) return;
             if (state.clientName) return; // ya hay algo cargado en pantalla
 
@@ -6755,7 +6858,7 @@
                     autosavePausado = false;
                     showToast('Avance restaurado: ' + saved.data.clientName + '. Recuerda exportarlo cuando termines.', 'success');
                 } catch (err) {
-                    showToast('No se pudo restaurar el avance guardado.', 'error');
+                    mostrarError('E506', err && err.message);
                 }
             };
         }
@@ -6776,6 +6879,8 @@
             if (headerDate) {
                 headerDate.value = getLocalDateStr();
             }
+            if (typeof Chart === 'undefined') mostrarError('E902', 'Chart.js (gráficas)');
+            if (typeof tailwind === 'undefined') mostrarError('E902', 'Tailwind (estilos)');
             initializeFromState();
             updateCharts();
             initSigCanvas();
