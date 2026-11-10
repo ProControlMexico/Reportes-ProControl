@@ -688,10 +688,10 @@
 
             <!-- Logo + Título apilados verticalmente -->
             <div class="flex flex-col items-start gap-0.5 min-w-0 flex-shrink-0">
-                <img src="https://github.com/gavainc/Procontrol-Mexico/blob/main/Logo%20Procontrol%20Vectores.png?raw=true"
+                <img src="Logo Procontrol Vectores.png"
                      alt="Procontrol México"
                      class="h-8 sm:h-12 w-auto object-contain"
-                     onerror="this.src='https://placehold.co/150x60/0f766e/ffffff?text=Procontrol';">
+                     onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='https://raw.githubusercontent.com/gavainc/Procontrol-Mexico/main/Logo%20Procontrol%20Vectores.png';}else{this.onerror=null;}">
                 <div class="leading-tight">
                     <p class="text-[11px] sm:text-sm font-bold text-white tracking-tight">Plataforma de control</p>
                     <p class="text-[11px] sm:text-sm font-bold text-teal-300 tracking-tight">Tendencias y seguimiento</p>
@@ -779,11 +779,11 @@
     <div class="print-header-visible">
         <!-- Solo el logo (se quitó el subtítulo "Plataforma de control / Tendencias y seguimiento") -->
         <div style="display:flex; flex-direction:column; align-items:flex-start; gap:5px;">
-            <img src="https://github.com/gavainc/Procontrol-Mexico/blob/main/Logo%20Procontrol%20Vectores.png?raw=true"
+            <img src="Logo Procontrol Vectores.png"
                  alt="Procontrol México"
                  class="print-header-logo"
                  style="height:76px; width:auto; object-fit:contain;"
-                 onerror="this.src='https://placehold.co/150x60/0f766e/ffffff?text=Procontrol';">
+                 onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='https://raw.githubusercontent.com/gavainc/Procontrol-Mexico/main/Logo%20Procontrol%20Vectores.png';}else{this.onerror=null;}">
         </div>
         <!-- Datos del documento (derecha) -->
         <div class="print-doc-meta" style="text-align:right;">
@@ -5288,7 +5288,7 @@
         /************************************************************************
          * IMPRIMIR / GUARDAR PDF
          ************************************************************************/
-        window.printReport = function() {
+        window.printReport = async function() {
             if (!state.clientName) {
                 mostrarError("E802");
                 return;
@@ -5422,6 +5422,21 @@
             // Sugerir nombre de archivo en el diálogo "Guardar como PDF" del navegador
             var originalTitle = document.title;
             document.title = buildReportBaseFilename();
+
+            // Esperar a que los logos del encabezado/pie estén cargados (máx. 4 s) para que
+            // el PDF no salga con el logo faltante o con el texto de respaldo.
+            var imgsPendientes = Array.prototype.filter.call(
+                document.querySelectorAll('.print-header-visible img, .print-footer-visible img'),
+                function(im) { return !im.complete; }
+            );
+            if (imgsPendientes.length) {
+                await Promise.race([
+                    Promise.all(imgsPendientes.map(function(im) {
+                        return new Promise(function(res) { im.addEventListener('load', res, {once:true}); im.addEventListener('error', res, {once:true}); });
+                    })),
+                    new Promise(function(res) { setTimeout(res, 4000); })
+                ]);
+            }
 
             try { window.print(); }
             catch (err) { document.title = originalTitle; mostrarError('E805', err && err.message); return; }
